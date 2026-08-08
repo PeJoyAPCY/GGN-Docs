@@ -21,6 +21,10 @@ window.addEventListener("load", function () {
 
     waitForGoogle();
 
+    setupNavigation();
+
+    setupLogout();
+
 });
 
 
@@ -63,9 +67,15 @@ async function testAPI() {
             data
         );
 
-        document.getElementById(
-            "api-status"
-        ).textContent = data.message;
+        const apiStatus =
+            document.getElementById("api-status");
+
+        if (apiStatus) {
+
+            apiStatus.textContent =
+                data.message;
+
+        }
 
     } catch (error) {
 
@@ -74,10 +84,15 @@ async function testAPI() {
             error
         );
 
-        document.getElementById(
-            "api-status"
-        ).textContent =
-            "ไม่สามารถเชื่อมต่อ Google Apps Script ได้";
+        const apiStatus =
+            document.getElementById("api-status");
+
+        if (apiStatus) {
+
+            apiStatus.textContent =
+                "ไม่สามารถเชื่อมต่อ Google Apps Script ได้";
+
+        }
 
     }
 
@@ -85,7 +100,7 @@ async function testAPI() {
 
 
 // ========================================
-// เริ่ม Google Login
+// Google Login
 // ========================================
 
 function initGoogleLogin() {
@@ -103,11 +118,22 @@ function initGoogleLogin() {
     });
 
 
+    const loginButton =
+        document.getElementById("google-login");
+
+    if (!loginButton) {
+
+        console.error(
+            "ไม่พบ #google-login"
+        );
+
+        return;
+    }
+
+
     google.accounts.id.renderButton(
 
-        document.getElementById(
-            "google-login"
-        ),
+        loginButton,
 
         {
             theme: "outline",
@@ -136,16 +162,14 @@ async function handleGoogleLogin(response) {
 
     if (!credential) {
 
-        showUserMessage(
+        showLoginMessage(
             "ไม่พบข้อมูลจาก Google"
         );
 
         return;
     }
 
-    await loginToGGN(
-        credential
-    );
+    await loginToGGN(credential);
 
 }
 
@@ -154,13 +178,11 @@ async function handleGoogleLogin(response) {
 // ส่งข้อมูลไป Apps Script
 // ========================================
 
-async function loginToGGN(
-    credential
-) {
+async function loginToGGN(credential) {
 
     try {
 
-        showUserMessage(
+        showLoginMessage(
             "กำลังตรวจสอบผู้ใช้งาน..."
         );
 
@@ -180,8 +202,7 @@ async function loginToGGN(
 
                     action: "googleLogin",
 
-                    credential:
-                        credential
+                    credential: credential
 
                 })
 
@@ -210,7 +231,7 @@ async function loginToGGN(
 
         } else {
 
-            showUserMessage(
+            showLoginMessage(
                 data.message ||
                 "ไม่พบผู้ใช้งานในระบบ"
             );
@@ -224,7 +245,7 @@ async function loginToGGN(
             error
         );
 
-        showUserMessage(
+        showLoginMessage(
             "เกิดข้อผิดพลาดในการตรวจสอบผู้ใช้งาน"
         );
 
@@ -234,7 +255,26 @@ async function loginToGGN(
 
 
 // ========================================
-// แสดงข้อมูลผู้ใช้
+// แสดงข้อความบนหน้า Login
+// ========================================
+
+function showLoginMessage(message) {
+
+    const apiStatus =
+        document.getElementById("api-status");
+
+    if (apiStatus) {
+
+        apiStatus.textContent =
+            message;
+
+    }
+
+}
+
+
+// ========================================
+// Login สำเร็จ → เปิด Dashboard
 // ========================================
 
 function showUserInfo(user) {
@@ -245,32 +285,80 @@ function showUserInfo(user) {
         JSON.stringify(user)
     );
 
-    // ซ่อนหน้า Login
-    document.getElementById("login-page").style.display = "none";
 
-    // แสดงระบบหลัก
-    document.getElementById("app-page").style.display = "block";
+    // ซ่อน Login
+    const loginPage =
+        document.getElementById("login-page");
 
-    // แสดงชื่อบน Header
-    document.getElementById(
-        "header-user-name"
-    ).textContent = user.name || user.email;
+    if (loginPage) {
 
-    // แสดง Role
-    document.getElementById(
-        "header-user-role"
-    ).textContent = user.role || "";
+        loginPage.style.display =
+            "none";
 
-    // แสดงข้อความต้อนรับ
-    document.getElementById(
-        "welcome-message"
-    ).textContent =
-        "ยินดีต้อนรับ คุณ " +
-        (user.name || "");
+    }
 
-    // แสดงข้อมูลในหน้าตั้งค่า
+
+    // แสดง Application
+    const appPage =
+        document.getElementById("app-page");
+
+    if (appPage) {
+
+        appPage.style.display =
+            "block";
+
+    }
+
+
+    // ชื่อผู้ใช้บน Header
+    const headerName =
+        document.getElementById(
+            "header-user-name"
+        );
+
+    if (headerName) {
+
+        headerName.textContent =
+            user.name ||
+            user.email;
+
+    }
+
+
+    // Role
+    const headerRole =
+        document.getElementById(
+            "header-user-role"
+        );
+
+    if (headerRole) {
+
+        headerRole.textContent =
+            user.role || "";
+
+    }
+
+
+    // ข้อความต้อนรับ
+    const welcomeMessage =
+        document.getElementById(
+            "welcome-message"
+        );
+
+    if (welcomeMessage) {
+
+        welcomeMessage.textContent =
+            "ยินดีต้อนรับ คุณ " +
+            (user.name || "");
+
+    }
+
+
+    // ข้อมูลผู้ใช้ใน Settings
     const userInfo =
-        document.getElementById("user-info");
+        document.getElementById(
+            "user-info"
+        );
 
     if (userInfo) {
 
@@ -278,7 +366,9 @@ function showUserInfo(user) {
 
             <div class="user-card">
 
-                <h3>เข้าสู่ระบบสำเร็จ</h3>
+                <h3>
+                    เข้าสู่ระบบสำเร็จ
+                </h3>
 
                 <p>
                     <strong>ชื่อ:</strong>
@@ -308,64 +398,63 @@ function showUserInfo(user) {
             </div>
 
         `;
+
     }
 
-}
 
-
-// ========================================
-// แสดงข้อความ
-// ========================================
-
-function showUserMessage(message) {
-
-    document.getElementById(
-        "user-info"
-    ).textContent = message;
+    console.log(
+        "เข้าสู่ระบบสำเร็จ:",
+        user
+    );
 
 }
 
 
 // ========================================
-// ป้องกัน HTML Injection
+// Restore Session
 // ========================================
 
-function escapeHTML(value) {
+function restoreSession() {
 
-    return String(
-        value ?? ""
-    )
-        .replace(
-            /&/g,
-            "&amp;"
-        )
-        .replace(
-            /</g,
-            "&lt;"
-        )
-        .replace(
-            />/g,
-            "&gt;"
-        )
-        .replace(
-            /"/g,
-            "&quot;"
-        )
-        .replace(
-            /'/g,
-            "&#039;"
-        );
+    const user =
+        getCurrentUser();
+
+    if (!user) {
+
+        return;
+
+    }
+
+
+    console.log(
+        "กู้คืน Session สำเร็จ:",
+        user
+    );
+
+
+    showUserInfo(user);
 
 }
+
+
+// ========================================
+// อ่าน User จาก Session
+// ========================================
 
 function getCurrentUser() {
 
     const user =
-        localStorage.getItem("ggnDocsUser");
+        localStorage.getItem(
+            "ggnDocsUser"
+        );
+
 
     if (!user) {
+
         return null;
+
     }
+
 
     try {
 
@@ -383,65 +472,194 @@ function getCurrentUser() {
         );
 
         return null;
-    }
-}
 
-function logout() {
-
-    localStorage.removeItem(
-        "ggnDocsUser"
-    );
-
-    if (
-        window.google &&
-        google.accounts &&
-        google.accounts.id
-    ) {
-        google.accounts.id.disableAutoSelect();
     }
 
-    location.reload();
 }
 
-function restoreSession() {
 
-    const user = getCurrentUser();
+// ========================================
+// Navigation
+// ========================================
 
-    if (!user) {
-        return;
+function setupNavigation() {
+
+    const navItems =
+        document.querySelectorAll(
+            ".nav-item"
+        );
+
+
+    navItems.forEach(function (item) {
+
+        item.addEventListener(
+            "click",
+            function () {
+
+                const page =
+                    item.dataset.page;
+
+                if (!page) {
+
+                    return;
+
+                }
+
+                showPage(page);
+
+            }
+        );
+
+    });
+
+}
+
+
+// ========================================
+// เปลี่ยนหน้า
+// ========================================
+
+function showPage(page) {
+
+    const pages =
+        document.querySelectorAll(
+            ".page"
+        );
+
+
+    pages.forEach(function (item) {
+
+        item.style.display =
+            "none";
+
+    });
+
+
+    const selectedPage =
+        document.getElementById(
+            "page-" + page
+        );
+
+
+    if (selectedPage) {
+
+        selectedPage.style.display =
+            "block";
+
     }
 
-    showUserInfo(user);
 
-    console.log("กู้คืน Session สำเร็จ:", user);
-}
+    const navItems =
+        document.querySelectorAll(
+            ".nav-item"
+        );
 
-function logout() {
 
-    localStorage.removeItem(
-        "ggnDocsUser"
-    );
+    navItems.forEach(function (item) {
 
-    if (
-        window.google &&
-        google.accounts &&
-        google.accounts.id
-    ) {
-        google.accounts.id.disableAutoSelect();
-    }
+        item.classList.remove(
+            "active"
+        );
 
-    location.reload();
-}
-
-document.addEventListener(
-    "click",
-    function (event) {
 
         if (
-            event.target.id === "logout-button"
+            item.dataset.page === page
         ) {
-            logout();
+
+            item.classList.add(
+                "active"
+            );
+
         }
 
+    });
+
+}
+
+
+// ========================================
+// Logout
+// ========================================
+
+function setupLogout() {
+
+    const logoutButton =
+        document.getElementById(
+            "logout-button"
+        );
+
+
+    if (!logoutButton) {
+
+        return;
+
     }
-);
+
+
+    logoutButton.addEventListener(
+        "click",
+        logout
+    );
+
+}
+
+
+function logout() {
+
+    localStorage.removeItem(
+        "ggnDocsUser"
+    );
+
+
+    if (
+        window.google &&
+        google.accounts &&
+        google.accounts.id
+    ) {
+
+        google.accounts.id.disableAutoSelect();
+
+    }
+
+
+    location.reload();
+
+}
+
+
+// ========================================
+// ป้องกัน HTML Injection
+// ========================================
+
+function escapeHTML(value) {
+
+    return String(
+        value ?? ""
+    )
+
+        .replace(
+            /&/g,
+            "&amp;"
+        )
+
+        .replace(
+            /</g,
+            "&lt;"
+        )
+
+        .replace(
+            />/g,
+            "&gt;"
+        )
+
+        .replace(
+            /"/g,
+            "&quot;"
+        )
+
+        .replace(
+            /'/g,
+            "&#039;"
+        );
+
+}
