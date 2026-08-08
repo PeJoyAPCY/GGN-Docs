@@ -17,6 +17,8 @@ window.addEventListener("load", function () {
 
     testAPI();
 
+    restoreSession();
+
     waitForGoogle();
 
 });
@@ -376,4 +378,17 @@ function logout() {
     }
 
     location.reload();
+}
+
+function restoreSession() {
+
+    const user = getCurrentUser();
+
+    if (!user) {
+        return;
+    }
+
+    showUserInfo(user);
+
+    console.log("กู้คืน Session สำเร็จ:", user);
 }
