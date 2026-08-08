@@ -332,3 +332,48 @@ function escapeHTML(value) {
         );
 
 }
+
+function getCurrentUser() {
+
+    const user =
+        localStorage.getItem("ggnDocsUser");
+
+    if (!user) {
+        return null;
+    }
+
+    try {
+
+        return JSON.parse(user);
+
+    } catch (error) {
+
+        console.error(
+            "อ่านข้อมูลผู้ใช้ไม่สำเร็จ:",
+            error
+        );
+
+        localStorage.removeItem(
+            "ggnDocsUser"
+        );
+
+        return null;
+    }
+}
+
+function logout() {
+
+    localStorage.removeItem(
+        "ggnDocsUser"
+    );
+
+    if (
+        window.google &&
+        google.accounts &&
+        google.accounts.id
+    ) {
+        google.accounts.id.disableAutoSelect();
+    }
+
+    location.reload();
+}
