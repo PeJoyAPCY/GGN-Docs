@@ -237,6 +237,12 @@ async function loginToGGN(
 
 function showUserInfo(user) {
 
+    // บันทึกข้อมูลผู้ใช้ไว้ใน Session ของเบราว์เซอร์
+    localStorage.setItem(
+        "ggnDocsUser",
+        JSON.stringify(user)
+    );
+
     const userInfo =
         document.getElementById(
             "user-info"
@@ -279,7 +285,6 @@ function showUserInfo(user) {
         </div>
 
     `;
-
 }
 
 
