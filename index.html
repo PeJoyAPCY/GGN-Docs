@@ -1,34 +1,378 @@
 <!DOCTYPE html>
 <html lang="th">
+
 <head>
+
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
 
     <title>GGN Docs</title>
 
-    <link rel="stylesheet" href="css/style.css">
+    <link
+        rel="stylesheet"
+        href="css/style.css"
+    >
 
     <!-- Google Identity Services -->
-    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script
+        src="https://accounts.google.com/gsi/client"
+        async
+        defer
+    ></script>
+
 </head>
+
 
 <body>
 
-    <h1>GGN Docs</h1>
+    <!-- ==========================================
+         LOGIN AREA
+    =========================================== -->
 
-    <p>ระบบจัดการเอกสาร GGN</p>
+    <section id="login-page">
 
-    <p id="api-status">
-        กำลังเชื่อมต่อ Google Apps Script...
-    </p>
+        <div class="login-container">
 
-    <!-- Google Login -->
-    <div id="google-login"></div>
+            <h1>GGN Docs</h1>
 
-    <!-- ข้อมูลผู้ใช้งาน -->
-    <div id="user-info"></div>
+            <p>
+                ระบบจัดการเอกสาร GGN
+            </p>
+
+            <p id="api-status">
+                กำลังเชื่อมต่อ Google Apps Script...
+            </p>
+
+            <div id="google-login"></div>
+
+        </div>
+
+    </section>
+
+
+    <!-- ==========================================
+         APPLICATION
+    =========================================== -->
+
+    <section
+        id="app-page"
+        style="display: none;"
+    >
+
+        <!-- HEADER -->
+
+        <header class="app-header">
+
+            <div class="brand">
+
+                <h1>GGN Docs</h1>
+
+                <span>
+                    ระบบจัดการเอกสาร
+                </span>
+
+            </div>
+
+
+            <div class="user-menu">
+
+                <div
+                    id="header-user-name"
+                    class="header-user-name"
+                >
+                    -
+                </div>
+
+                <div
+                    id="header-user-role"
+                    class="header-user-role"
+                >
+                    -
+                </div>
+
+                <button
+                    id="logout-button"
+                    type="button"
+                >
+                    ออกจากระบบ
+                </button>
+
+            </div>
+
+        </header>
+
+
+        <!-- MAIN LAYOUT -->
+
+        <div class="app-layout">
+
+
+            <!-- SIDEBAR -->
+
+            <aside class="sidebar">
+
+                <nav>
+
+                    <button
+                        class="nav-item active"
+                        data-page="dashboard"
+                    >
+                        🏠
+                        <span>หน้าหลัก</span>
+                    </button>
+
+
+                    <button
+                        class="nav-item"
+                        data-page="documents"
+                    >
+                        📄
+                        <span>เอกสาร</span>
+                    </button>
+
+
+                    <button
+                        class="nav-item"
+                        data-page="search"
+                    >
+                        🔍
+                        <span>ค้นหา</span>
+                    </button>
+
+
+                    <button
+                        class="nav-item"
+                        data-page="settings"
+                    >
+                        ⚙️
+                        <span>ตั้งค่า</span>
+                    </button>
+
+                </nav>
+
+            </aside>
+
+
+            <!-- CONTENT -->
+
+            <main class="main-content">
+
+
+                <!-- DASHBOARD -->
+
+                <section
+                    id="page-dashboard"
+                    class="page active"
+                >
+
+                    <div class="page-header">
+
+                        <h2>
+                            หน้าหลัก
+                        </h2>
+
+                        <p id="welcome-message">
+                            ยินดีต้อนรับเข้าสู่ GGN Docs
+                        </p>
+
+                    </div>
+
+
+                    <div class="dashboard-cards">
+
+
+                        <div class="dashboard-card">
+
+                            <div class="card-icon">
+                                📄
+                            </div>
+
+                            <div>
+
+                                <h3>
+                                    เอกสารทั้งหมด
+                                </h3>
+
+                                <strong>
+                                    0
+                                </strong>
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="dashboard-card">
+
+                            <div class="card-icon">
+                                📝
+                            </div>
+
+                            <div>
+
+                                <h3>
+                                    เอกสารของฉัน
+                                </h3>
+
+                                <strong>
+                                    0
+                                </strong>
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="dashboard-card">
+
+                            <div class="card-icon">
+                                🔍
+                            </div>
+
+                            <div>
+
+                                <h3>
+                                    ค้นหาเอกสาร
+                                </h3>
+
+                                <span>
+                                    ค้นหาเอกสารในระบบ
+                                </span>
+
+                            </div>
+
+                        </div>
+
+
+                    </div>
+
+                </section>
+
+
+                <!-- DOCUMENTS -->
+
+                <section
+                    id="page-documents"
+                    class="page"
+                    style="display: none;"
+                >
+
+                    <div class="page-header">
+
+                        <h2>
+                            เอกสาร
+                        </h2>
+
+                        <p>
+                            จัดการเอกสารของ GGN
+                        </p>
+
+                    </div>
+
+
+                    <div class="empty-state">
+
+                        <div>
+                            📄
+                        </div>
+
+                        <h3>
+                            ยังไม่มีเอกสาร
+                        </h3>
+
+                        <p>
+                            ส่วนจัดการเอกสารจะพัฒนาต่อในขั้นถัดไป
+                        </p>
+
+                    </div>
+
+                </section>
+
+
+                <!-- SEARCH -->
+
+                <section
+                    id="page-search"
+                    class="page"
+                    style="display: none;"
+                >
+
+                    <div class="page-header">
+
+                        <h2>
+                            ค้นหาเอกสาร
+                        </h2>
+
+                        <p>
+                            ค้นหาเอกสารในระบบ GGN Docs
+                        </p>
+
+                    </div>
+
+
+                    <div class="search-box">
+
+                        <input
+                            type="search"
+                            id="document-search"
+                            placeholder="ค้นหาชื่อเอกสาร..."
+                        >
+
+                        <button
+                            type="button"
+                        >
+                            ค้นหา
+                        </button>
+
+                    </div>
+
+                </section>
+
+
+                <!-- SETTINGS -->
+
+                <section
+                    id="page-settings"
+                    class="page"
+                    style="display: none;"
+                >
+
+                    <div class="page-header">
+
+                        <h2>
+                            ตั้งค่า
+                        </h2>
+
+                        <p>
+                            ข้อมูลบัญชีผู้ใช้งาน
+                        </p>
+
+                    </div>
+
+
+                    <div
+                        id="user-info"
+                        class="user-info-card"
+                    >
+
+                    </div>
+
+                </section>
+
+
+            </main>
+
+        </div>
+
+    </section>
+
 
     <script src="js/app.js"></script>
 
 </body>
+
 </html>
