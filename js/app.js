@@ -1,6 +1,5 @@
-javascript
 // ========================================
-// GGN Docs - Google Login
+// GGN Docs
 // ========================================
 
 const API_URL =
@@ -14,13 +13,35 @@ const GOOGLE_CLIENT_ID =
 // เริ่มต้นระบบ
 // ========================================
 
-window.addEventListener("load", () => {
+window.addEventListener("load", function () {
 
     testAPI();
 
-    initGoogleLogin();
+    waitForGoogle();
 
 });
+
+
+// ========================================
+// รอ Google Identity Services
+// ========================================
+
+function waitForGoogle() {
+
+    if (
+        window.google &&
+        google.accounts &&
+        google.accounts.id
+    ) {
+
+        initGoogleLogin();
+
+        return;
+    }
+
+    setTimeout(waitForGoogle, 300);
+
+}
 
 
 // ========================================
@@ -35,16 +56,25 @@ async function testAPI() {
 
         const data = await response.json();
 
-        console.log("ข้อมูลจาก Google Apps Script:", data);
+        console.log(
+            "ข้อมูลจาก Google Apps Script:",
+            data
+        );
 
-        document.getElementById("api-status").textContent =
-            data.message;
+        document.getElementById(
+            "api-status"
+        ).textContent = data.message;
 
     } catch (error) {
 
-        console.error("เชื่อมต่อ API ไม่สำเร็จ:", error);
+        console.error(
+            "เชื่อมต่อ API ไม่สำเร็จ:",
+            error
+        );
 
-        document.getElementById("api-status").textContent =
+        document.getElementById(
+            "api-status"
+        ).textContent =
             "ไม่สามารถเชื่อมต่อ Google Apps Script ได้";
 
     }
@@ -53,18 +83,14 @@ async function testAPI() {
 
 
 // ========================================
-// Google Login
+// เริ่ม Google Login
 // ========================================
 
 function initGoogleLogin() {
 
-    if (!window.google) {
-
-        console.error("Google Identity Services ยังไม่พร้อม");
-
-        return;
-
-    }
+    console.log(
+        "Google Identity Services พร้อมใช้งาน"
+    );
 
     google.accounts.id.initialize({
 
@@ -77,7 +103,9 @@ function initGoogleLogin() {
 
     google.accounts.id.renderButton(
 
-        document.getElementById("google-login"),
+        document.getElementById(
+            "google-login"
+        ),
 
         {
             theme: "outline",
@@ -92,79 +120,107 @@ function initGoogleLogin() {
 
 
 // ========================================
-// รับผลจาก Google Login
+// Google Login สำเร็จ
 // ========================================
 
 async function handleGoogleLogin(response) {
 
-    console.log("Google Login สำเร็จ");
+    console.log(
+        "Google Login สำเร็จ"
+    );
 
-    const credential = response.credential;
+    const credential =
+        response.credential;
 
     if (!credential) {
 
-        showUserMessage("ไม่พบข้อมูลจาก Google");
+        showUserMessage(
+            "ไม่พบข้อมูลจาก Google"
+        );
 
         return;
-
     }
 
-    await loginToGGN(credential);
+    await loginToGGN(
+        credential
+    );
 
 }
 
 
 // ========================================
-// ส่ง Google Credential ไป Apps Script
+// ส่งข้อมูลไป Apps Script
 // ========================================
 
-async function loginToGGN(credential) {
+async function loginToGGN(
+    credential
+) {
 
     try {
 
-        showUserMessage("กำลังตรวจสอบผู้ใช้งาน...");
+        showUserMessage(
+            "กำลังตรวจสอบผู้ใช้งาน..."
+        );
 
 
-        const response = await fetch(API_URL, {
+        const response = await fetch(
+            API_URL,
+            {
 
-            method: "POST",
+                method: "POST",
 
-            headers: {
-                "Content-Type": "text/plain;charset=utf-8"
-            },
+                headers: {
+                    "Content-Type":
+                        "text/plain;charset=utf-8"
+                },
 
-            body: JSON.stringify({
+                body: JSON.stringify({
 
-                action: "googleLogin",
+                    action: "googleLogin",
 
-                credential: credential
+                    credential:
+                        credential
 
-            })
+                })
 
-        });
-
-
-        const data = await response.json();
-
-        console.log("ผลการตรวจสอบผู้ใช้งาน:", data);
+            }
+        );
 
 
-        if (data.success && data.found) {
+        const data =
+            await response.json();
 
-            showUserInfo(data.user);
+
+        console.log(
+            "ผลการตรวจสอบ:",
+            data
+        );
+
+
+        if (
+            data.success &&
+            data.found
+        ) {
+
+            showUserInfo(
+                data.user
+            );
 
         } else {
 
             showUserMessage(
-                data.message || "ไม่พบผู้ใช้งานในระบบ"
+                data.message ||
+                "ไม่พบผู้ใช้งานในระบบ"
             );
 
         }
 
-
     } catch (error) {
 
-        console.error("Login Error:", error);
+        console.error(
+            "Login Error:",
+            error
+        );
 
         showUserMessage(
             "เกิดข้อผิดพลาดในการตรวจสอบผู้ใช้งาน"
@@ -176,19 +232,24 @@ async function loginToGGN(credential) {
 
 
 // ========================================
-// แสดงข้อมูลผู้ใช้งาน
+// แสดงข้อมูลผู้ใช้
 // ========================================
 
 function showUserInfo(user) {
 
     const userInfo =
-        document.getElementById("user-info");
+        document.getElementById(
+            "user-info"
+        );
+
 
     userInfo.innerHTML = `
 
         <div class="user-card">
 
-            <h3>เข้าสู่ระบบสำเร็จ</h3>
+            <h3>
+                เข้าสู่ระบบสำเร็จ
+            </h3>
 
             <p>
                 <strong>ชื่อ:</strong>
@@ -228,8 +289,9 @@ function showUserInfo(user) {
 
 function showUserMessage(message) {
 
-    document.getElementById("user-info").textContent =
-        message;
+    document.getElementById(
+        "user-info"
+    ).textContent = message;
 
 }
 
@@ -240,11 +302,28 @@ function showUserMessage(message) {
 
 function escapeHTML(value) {
 
-    return String(value ?? "")
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
+    return String(
+        value ?? ""
+    )
+        .replace(
+            /&/g,
+            "&amp;"
+        )
+        .replace(
+            /</g,
+            "&lt;"
+        )
+        .replace(
+            />/g,
+            "&gt;"
+        )
+        .replace(
+            /"/g,
+            "&quot;"
+        )
+        .replace(
+            /'/g,
+            "&#039;"
+        );
 
 }
