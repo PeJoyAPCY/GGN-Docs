@@ -239,54 +239,77 @@ async function loginToGGN(
 
 function showUserInfo(user) {
 
-    // บันทึกข้อมูลผู้ใช้ไว้ใน Session ของเบราว์เซอร์
+    // บันทึก Session
     localStorage.setItem(
         "ggnDocsUser",
         JSON.stringify(user)
     );
 
+    // ซ่อนหน้า Login
+    document.getElementById("login-page").style.display = "none";
+
+    // แสดงระบบหลัก
+    document.getElementById("app-page").style.display = "block";
+
+    // แสดงชื่อบน Header
+    document.getElementById(
+        "header-user-name"
+    ).textContent = user.name || user.email;
+
+    // แสดง Role
+    document.getElementById(
+        "header-user-role"
+    ).textContent = user.role || "";
+
+    // แสดงข้อความต้อนรับ
+    document.getElementById(
+        "welcome-message"
+    ).textContent =
+        "ยินดีต้อนรับ คุณ " +
+        (user.name || "");
+
+    // แสดงข้อมูลในหน้าตั้งค่า
     const userInfo =
-        document.getElementById(
-            "user-info"
-        );
+        document.getElementById("user-info");
 
+    if (userInfo) {
 
-    userInfo.innerHTML = `
+        userInfo.innerHTML = `
 
-        <div class="user-card">
+            <div class="user-card">
 
-            <h3>
-                เข้าสู่ระบบสำเร็จ
-            </h3>
+                <h3>เข้าสู่ระบบสำเร็จ</h3>
 
-            <p>
-                <strong>ชื่อ:</strong>
-                ${escapeHTML(user.name)}
-            </p>
+                <p>
+                    <strong>ชื่อ:</strong>
+                    ${escapeHTML(user.name)}
+                </p>
 
-            <p>
-                <strong>Email:</strong>
-                ${escapeHTML(user.email)}
-            </p>
+                <p>
+                    <strong>Email:</strong>
+                    ${escapeHTML(user.email)}
+                </p>
 
-            <p>
-                <strong>แผนก:</strong>
-                ${escapeHTML(user.department)}
-            </p>
+                <p>
+                    <strong>แผนก:</strong>
+                    ${escapeHTML(user.department)}
+                </p>
 
-            <p>
-                <strong>สิทธิ์:</strong>
-                ${escapeHTML(user.role)}
-            </p>
+                <p>
+                    <strong>สิทธิ์:</strong>
+                    ${escapeHTML(user.role)}
+                </p>
 
-            <p>
-                <strong>สถานะ:</strong>
-                ${escapeHTML(user.status)}
-            </p>
+                <p>
+                    <strong>สถานะ:</strong>
+                    ${escapeHTML(user.status)}
+                </p>
 
-        </div>
+            </div>
 
-    `;
+        `;
+    }
+
 }
 
 
@@ -392,3 +415,33 @@ function restoreSession() {
 
     console.log("กู้คืน Session สำเร็จ:", user);
 }
+
+function logout() {
+
+    localStorage.removeItem(
+        "ggnDocsUser"
+    );
+
+    if (
+        window.google &&
+        google.accounts &&
+        google.accounts.id
+    ) {
+        google.accounts.id.disableAutoSelect();
+    }
+
+    location.reload();
+}
+
+document.addEventListener(
+    "click",
+    function (event) {
+
+        if (
+            event.target.id === "logout-button"
+        ) {
+            logout();
+        }
+
+    }
+);
