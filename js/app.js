@@ -663,3 +663,464 @@ function escapeHTML(value) {
         );
 
 }
+
+// ========================================
+// DOCUMENT SYSTEM
+// ========================================
+
+let documents = [];
+
+
+// ========================================
+// เริ่มต้นระบบเอกสาร
+// ========================================
+
+function setupDocuments() {
+
+    const addButton =
+        document.getElementById(
+            "add-document-button"
+        );
+
+    const closeButton =
+        document.getElementById(
+            "close-document-form"
+        );
+
+    const cancelButton =
+        document.getElementById(
+            "cancel-document-button"
+        );
+
+    const documentForm =
+        document.getElementById(
+            "document-form"
+        );
+
+
+    // -----------------------------
+    // เปิดฟอร์ม
+    // -----------------------------
+
+    if (addButton) {
+
+        addButton.addEventListener(
+            "click",
+            openDocumentForm
+        );
+
+    }
+
+
+    // -----------------------------
+    // ปิดฟอร์ม
+    // -----------------------------
+
+    if (closeButton) {
+
+        closeButton.addEventListener(
+            "click",
+            closeDocumentForm
+        );
+
+    }
+
+
+    if (cancelButton) {
+
+        cancelButton.addEventListener(
+            "click",
+            closeDocumentForm
+        );
+
+    }
+
+
+    // -----------------------------
+    // บันทึกเอกสาร
+    // -----------------------------
+
+    if (documentForm) {
+
+        documentForm.addEventListener(
+            "submit",
+            handleDocumentSubmit
+        );
+
+    }
+
+}
+
+
+// ========================================
+// เปิดฟอร์มเพิ่มเอกสาร
+// ========================================
+
+function openDocumentForm() {
+
+    const formContainer =
+        document.getElementById(
+            "document-form-container"
+        );
+
+
+    if (!formContainer) {
+
+        return;
+
+    }
+
+
+    formContainer.style.display =
+        "block";
+
+
+    // เลื่อนหน้าจอไปยังฟอร์ม
+    formContainer.scrollIntoView({
+        behavior: "smooth",
+        block: "start"
+    });
+
+
+    const documentCode =
+        document.getElementById(
+            "document-code"
+        );
+
+
+    if (documentCode) {
+
+        documentCode.focus();
+
+    }
+
+}
+
+
+// ========================================
+// ปิดฟอร์ม
+// ========================================
+
+function closeDocumentForm() {
+
+    const formContainer =
+        document.getElementById(
+            "document-form-container"
+        );
+
+
+    if (formContainer) {
+
+        formContainer.style.display =
+            "none";
+
+    }
+
+}
+
+
+// ========================================
+// บันทึกเอกสาร
+// ========================================
+
+function handleDocumentSubmit(event) {
+
+    event.preventDefault();
+
+
+    const documentCode =
+        document.getElementById(
+            "document-code"
+        ).value.trim();
+
+
+    const documentName =
+        document.getElementById(
+            "document-name"
+        ).value.trim();
+
+
+    const operator =
+        document.getElementById(
+            "document-operator"
+        ).value.trim();
+
+
+    const department =
+        document.getElementById(
+            "document-department"
+        ).value.trim();
+
+
+    // -----------------------------
+    // ตรวจสอบข้อมูล
+    // -----------------------------
+
+    if (
+        !documentCode ||
+        !documentName ||
+        !operator ||
+        !department
+    ) {
+
+        alert(
+            "กรุณากรอกข้อมูลให้ครบทุกช่อง"
+        );
+
+        return;
+
+    }
+
+
+    // -----------------------------
+    // สร้างข้อมูลเอกสาร
+    // -----------------------------
+
+    const documentData = {
+
+        id:
+            Date.now(),
+
+        documentCode:
+            documentCode,
+
+        documentName:
+            documentName,
+
+        operator:
+            operator,
+
+        department:
+            department,
+
+        createdBy:
+            getCurrentUser(),
+
+        createdAt:
+            new Date().toISOString()
+
+    };
+
+
+    // -----------------------------
+    // เพิ่มลงรายการ
+    // -----------------------------
+
+    documents.push(
+        documentData
+    );
+
+
+    console.log(
+        "เพิ่มเอกสาร:",
+        documentData
+    );
+
+
+    // -----------------------------
+    // แสดงข้อมูลในตาราง
+    // -----------------------------
+
+    renderDocuments();
+
+
+    // -----------------------------
+    // ล้างฟอร์ม
+    // -----------------------------
+
+    const form =
+        document.getElementById(
+            "document-form"
+        );
+
+
+    if (form) {
+
+        form.reset();
+
+    }
+
+
+    // -----------------------------
+    // ปิดฟอร์ม
+    // -----------------------------
+
+    closeDocumentForm();
+
+}
+
+
+// ========================================
+// แสดงรายการเอกสาร
+// ========================================
+
+function renderDocuments() {
+
+    const tableBody =
+        document.getElementById(
+            "document-table-body"
+        );
+
+
+    const documentCount =
+        document.getElementById(
+            "document-count"
+        );
+
+
+    if (!tableBody) {
+
+        return;
+
+    }
+
+
+    // จำนวนเอกสาร
+
+    if (documentCount) {
+
+        documentCount.textContent =
+            documents.length;
+
+    }
+
+
+    // ถ้ายังไม่มีเอกสาร
+
+    if (documents.length === 0) {
+
+        tableBody.innerHTML = `
+
+            <tr>
+
+                <td
+                    colspan="5"
+                    class="document-empty"
+                >
+
+                    <div>
+                        📄
+                    </div>
+
+                    <strong>
+                        ยังไม่มีเอกสาร
+                    </strong>
+
+                    <span>
+                        กดปุ่ม “เพิ่มเอกสาร”
+                        เพื่อเพิ่มเอกสารรายการแรก
+                    </span>
+
+                </td>
+
+            </tr>
+
+        `;
+
+        return;
+
+    }
+
+
+    // -----------------------------
+    // แสดงรายการ
+    // -----------------------------
+
+    tableBody.innerHTML =
+        documents
+            .map(function (documentItem) {
+
+                return `
+
+                    <tr>
+
+                        <td>
+                            ${escapeHTML(
+                                documentItem.documentCode
+                            )}
+                        </td>
+
+                        <td>
+                            ${escapeHTML(
+                                documentItem.documentName
+                            )}
+                        </td>
+
+                        <td>
+                            ${escapeHTML(
+                                documentItem.operator
+                            )}
+                        </td>
+
+                        <td>
+                            ${escapeHTML(
+                                documentItem.department
+                            )}
+                        </td>
+
+                        <td>
+
+                            <button
+                                type="button"
+                                class="document-action-button"
+                                onclick="deleteDocument(${documentItem.id})"
+                            >
+                                ลบ
+                            </button>
+
+                        </td>
+
+                    </tr>
+
+                `;
+
+            })
+            .join("");
+
+}
+
+
+// ========================================
+// ลบเอกสาร
+// ========================================
+
+function deleteDocument(id) {
+
+    const confirmed =
+        confirm(
+            "ต้องการลบเอกสารรายการนี้หรือไม่?"
+        );
+
+
+    if (!confirmed) {
+
+        return;
+
+    }
+
+
+    documents =
+        documents.filter(function (documentItem) {
+
+            return documentItem.id !== id;
+
+        });
+
+
+    renderDocuments();
+
+}
+
+
+// ========================================
+// เริ่มต้น Document System
+// ========================================
+
+window.addEventListener(
+    "load",
+    function () {
+
+        setupDocuments();
+
+    }
+);

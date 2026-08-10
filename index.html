@@ -253,45 +253,293 @@
                 </section>
 
 
-                <!-- DOCUMENTS -->
+                <!-- ==========================================
+     DOCUMENTS
+=========================================== -->
 
-                <section
-                    id="page-documents"
-                    class="page"
-                    style="display: none;"
+<section
+    id="page-documents"
+    class="page"
+    style="display: none;"
+>
+
+    <div class="page-header document-page-header">
+
+        <div>
+
+            <h2>
+                เอกสาร
+            </h2>
+
+            <p>
+                จัดการเอกสารของ GGN Docs
+            </p>
+
+        </div>
+
+
+        <button
+            id="add-document-button"
+            class="primary-button"
+            type="button"
+        >
+            ＋ เพิ่มเอกสาร
+        </button>
+
+    </div>
+
+
+    <!-- DOCUMENT LIST -->
+
+    <div class="document-list-card">
+
+        <div class="document-list-header">
+
+            <div>
+
+                <h3>
+                    รายการเอกสาร
+                </h3>
+
+                <span>
+                    เอกสารทั้งหมดในระบบ
+                </span>
+
+            </div>
+
+
+            <div class="document-count">
+
+                <strong id="document-count">
+                    0
+                </strong>
+
+                <span>
+                    รายการ
+                </span>
+
+            </div>
+
+        </div>
+
+
+        <!-- TABLE -->
+
+        <div class="document-table-wrapper">
+
+            <table class="document-table">
+
+                <thead>
+
+                    <tr>
+
+                        <th>
+                            รหัสเอกสาร
+                        </th>
+
+                        <th>
+                            ชื่อเอกสาร
+                        </th>
+
+                        <th>
+                            ผู้ปฏิบัติงาน
+                        </th>
+
+                        <th>
+                            หน่วยงาน
+                        </th>
+
+                        <th>
+                            จัดการ
+                        </th>
+
+                    </tr>
+
+                </thead>
+
+
+                <tbody id="document-table-body">
+
+                    <tr>
+
+                        <td
+                            colspan="5"
+                            class="document-empty"
+                        >
+
+                            <div>
+                                📄
+                            </div>
+
+                            <strong>
+                                ยังไม่มีเอกสาร
+                            </strong>
+
+                            <span>
+                                กดปุ่ม “เพิ่มเอกสาร”
+                                เพื่อเพิ่มเอกสารรายการแรก
+                            </span>
+
+                        </td>
+
+                    </tr>
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+
+    <!-- ADD DOCUMENT FORM -->
+
+    <div
+        id="document-form-container"
+        class="document-form-container"
+        style="display: none;"
+    >
+
+        <div class="document-form-card">
+
+            <div class="document-form-header">
+
+                <div>
+
+                    <h3>
+                        เพิ่มเอกสาร
+                    </h3>
+
+                    <p>
+                        กรอกข้อมูลเอกสารที่ต้องการเพิ่ม
+                    </p>
+
+                </div>
+
+
+                <button
+                    id="close-document-form"
+                    class="icon-button"
+                    type="button"
+                    aria-label="ปิด"
                 >
+                    ×
+                </button>
 
-                    <div class="page-header">
+            </div>
 
-                        <h2>
-                            เอกสาร
-                        </h2>
 
-                        <p>
-                            จัดการเอกสารของ GGN
-                        </p>
+            <form id="document-form">
+
+                <div class="form-grid">
+
+
+                    <!-- DOCUMENT CODE -->
+
+                    <div class="form-group">
+
+                        <label for="document-code">
+                            รหัสเอกสาร
+                        </label>
+
+                        <input
+                            type="text"
+                            id="document-code"
+                            name="documentCode"
+                            placeholder="เช่น FM-OP-11"
+                            required
+                        >
 
                     </div>
 
 
-                    <div class="empty-state">
+                    <!-- DOCUMENT NAME -->
 
-                        <div>
-                            📄
-                        </div>
+                    <div class="form-group">
 
-                        <h3>
-                            ยังไม่มีเอกสาร
-                        </h3>
+                        <label for="document-name">
+                            ชื่อเอกสาร
+                        </label>
 
-                        <p>
-                            ส่วนจัดการเอกสารจะพัฒนาต่อในขั้นถัดไป
-                        </p>
+                        <input
+                            type="text"
+                            id="document-name"
+                            name="documentName"
+                            placeholder="ระบุชื่อเอกสาร"
+                            required
+                        >
 
                     </div>
 
-                </section>
 
+                    <!-- OPERATOR -->
+
+                    <div class="form-group">
+
+                        <label for="document-operator">
+                            ผู้ปฏิบัติงาน
+                        </label>
+
+                        <input
+                            type="text"
+                            id="document-operator"
+                            name="operator"
+                            placeholder="ระบุผู้ปฏิบัติงาน"
+                            required
+                        >
+
+                    </div>
+
+
+                    <!-- DEPARTMENT -->
+
+                    <div class="form-group">
+
+                        <label for="document-department">
+                            หน่วยงาน
+                        </label>
+
+                        <input
+                            type="text"
+                            id="document-department"
+                            name="department"
+                            placeholder="ระบุหน่วยงาน"
+                            required
+                        >
+
+                    </div>
+
+                </div>
+
+
+                <div class="form-actions">
+
+                    <button
+                        id="cancel-document-button"
+                        class="secondary-button"
+                        type="button"
+                    >
+                        ยกเลิก
+                    </button>
+
+
+                    <button
+                        class="primary-button"
+                        type="submit"
+                    >
+                        บันทึกเอกสาร
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+</section>
 
                 <!-- SEARCH -->
 
