@@ -406,7 +406,6 @@ function showUserInfo(user) {
         "เข้าสู่ระบบสำเร็จ:",
         user
     );
-    loadDocuments();
 
 }
 
