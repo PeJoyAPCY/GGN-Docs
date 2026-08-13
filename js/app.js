@@ -406,6 +406,7 @@ function showUserInfo(user) {
         "เข้าสู่ระบบสำเร็จ:",
         user
     );
+    loadDocuments();
 
 }
 
@@ -672,6 +673,81 @@ let documents = [];
 
 
 // ========================================
+// โหลดเอกสารจาก Google Sheets
+// ========================================
+
+async function loadDocuments() {
+
+    try {
+
+        console.log("กำลังโหลดเอกสาร...");
+
+        const response = await fetch(
+            API_URL,
+            {
+
+                method: "POST",
+
+                headers: {
+                    "Content-Type":
+                        "text/plain;charset=utf-8"
+                },
+
+                body: JSON.stringify({
+
+                    action: "getDocuments"
+
+                })
+
+            }
+        );
+
+
+        const data =
+            await response.json();
+
+
+        console.log(
+            "ข้อมูลเอกสารจาก API:",
+            data
+        );
+
+
+        if (
+            !data.success ||
+            !Array.isArray(data.documents)
+        ) {
+
+            console.error(
+                "ไม่สามารถโหลดเอกสารได้:",
+                data
+            );
+
+            return;
+
+        }
+
+
+        documents =
+            data.documents;
+
+
+        renderDocuments();
+
+
+    } catch (error) {
+
+        console.error(
+            "โหลดเอกสารไม่สำเร็จ:",
+            error
+        );
+
+    }
+
+}
+
+
+// ========================================
 // เริ่มต้นระบบเอกสาร
 // ========================================
 
@@ -749,6 +825,13 @@ function setupDocuments() {
 
     }
 
+
+    // -----------------------------
+    // โหลดข้อมูลจากฐานข้อมูล
+    // -----------------------------
+
+    loadDocuments();
+
 }
 
 
@@ -775,7 +858,6 @@ function openDocumentForm() {
         "block";
 
 
-    // เลื่อนหน้าจอไปยังฟอร์ม
     formContainer.scrollIntoView({
         behavior: "smooth",
         block: "start"
@@ -823,7 +905,7 @@ function closeDocumentForm() {
 // บันทึกเอกสาร
 // ========================================
 
-function handleDocumentSubmit(event) {
+async function handleDocumentSubmit(event) {
 
     event.preventDefault();
 
@@ -873,79 +955,187 @@ function handleDocumentSubmit(event) {
 
 
     // -----------------------------
-    // สร้างข้อมูลเอกสาร
+    // ตรวจสอบ User
     // -----------------------------
 
-    const documentData = {
-
-        id:
-            Date.now(),
-
-        documentCode:
-            documentCode,
-
-        documentName:
-            documentName,
-
-        operator:
-            operator,
-
-        department:
-            department,
-
-        createdBy:
-            getCurrentUser(),
-
-        createdAt:
-            new Date().toISOString()
-
-    };
+    const user =
+        getCurrentUser();
 
 
-    // -----------------------------
-    // เพิ่มลงรายการ
-    // -----------------------------
+    if (!user) {
 
-    documents.push(
-        documentData
-    );
-
-
-    console.log(
-        "เพิ่มเอกสาร:",
-        documentData
-    );
-
-
-    // -----------------------------
-    // แสดงข้อมูลในตาราง
-    // -----------------------------
-
-    renderDocuments();
-
-
-    // -----------------------------
-    // ล้างฟอร์ม
-    // -----------------------------
-
-    const form =
-        document.getElementById(
-            "document-form"
+        alert(
+            "ไม่พบข้อมูลผู้ใช้งาน กรุณาเข้าสู่ระบบใหม่"
         );
 
-
-    if (form) {
-
-        form.reset();
+        return;
 
     }
 
 
     // -----------------------------
-    // ปิดฟอร์ม
+    // ปุ่มบันทึก
     // -----------------------------
 
-    closeDocumentForm();
+    const submitButton =
+        event.target.querySelector(
+            'button[type="submit"]'
+        );
+
+
+    if (submitButton) {
+
+        submitButton.disabled =
+            true;
+
+        submitButton.textContent =
+            "กำลังบันทึก...";
+
+    }
+
+
+    try {
+
+        // -----------------------------
+        // ข้อมูลที่จะส่งไป Apps Script
+        // -----------------------------
+
+        const documentData = {
+
+            documentCode:
+                documentCode,
+
+            documentName:
+                documentName,
+
+            operator:
+                operator,
+
+            department:
+                department,
+
+            createdByName:
+                user.name || "",
+
+            createdByEmail:
+                user.email || ""
+
+        };
+
+
+        console.log(
+            "กำลังส่งข้อมูลเอกสาร:",
+            documentData
+        );
+
+
+        // -----------------------------
+        // ส่งข้อมูลไป Google Apps Script
+        // -----------------------------
+
+        const response = await fetch(
+            API_URL,
+            {
+
+                method: "POST",
+
+                headers: {
+                    "Content-Type":
+                        "text/plain;charset=utf-8"
+                },
+
+                body: JSON.stringify({
+
+                    action: "addDocument",
+
+                    document:
+                        documentData
+
+                })
+
+            }
+        );
+
+
+        const data =
+            await response.json();
+
+
+        console.log(
+            "ผลการบันทึกเอกสาร:",
+            data
+        );
+
+
+        // -----------------------------
+        // บันทึกสำเร็จ
+        // -----------------------------
+
+        if (data.success) {
+
+            alert(
+                "เพิ่มเอกสารสำเร็จ"
+            );
+
+
+            // โหลดข้อมูลจากฐานข้อมูลใหม่
+            await loadDocuments();
+
+
+            // ล้างฟอร์ม
+            const form =
+                document.getElementById(
+                    "document-form"
+                );
+
+
+            if (form) {
+
+                form.reset();
+
+            }
+
+
+            // ปิดฟอร์ม
+            closeDocumentForm();
+
+
+        } else {
+
+            alert(
+                data.message ||
+                "ไม่สามารถเพิ่มเอกสารได้"
+            );
+
+        }
+
+
+    } catch (error) {
+
+        console.error(
+            "บันทึกเอกสารไม่สำเร็จ:",
+            error
+        );
+
+
+        alert(
+            "ไม่สามารถเชื่อมต่อฐานข้อมูลได้"
+        );
+
+
+    } finally {
+
+        if (submitButton) {
+
+            submitButton.disabled =
+                false;
+
+            submitButton.textContent =
+                "บันทึกเอกสาร";
+
+        }
+
+    }
 
 }
 
@@ -975,7 +1165,9 @@ function renderDocuments() {
     }
 
 
+    // -----------------------------
     // จำนวนเอกสาร
+    // -----------------------------
 
     if (documentCount) {
 
@@ -985,7 +1177,9 @@ function renderDocuments() {
     }
 
 
-    // ถ้ายังไม่มีเอกสาร
+    // -----------------------------
+    // ไม่มีเอกสาร
+    // -----------------------------
 
     if (documents.length === 0) {
 
@@ -1063,9 +1257,9 @@ function renderDocuments() {
                             <button
                                 type="button"
                                 class="document-action-button"
-                                onclick="deleteDocument(${documentItem.id})"
+                                disabled
                             >
-                                ลบ
+                                จัดการ
                             </button>
 
                         </td>
@@ -1076,38 +1270,6 @@ function renderDocuments() {
 
             })
             .join("");
-
-}
-
-
-// ========================================
-// ลบเอกสาร
-// ========================================
-
-function deleteDocument(id) {
-
-    const confirmed =
-        confirm(
-            "ต้องการลบเอกสารรายการนี้หรือไม่?"
-        );
-
-
-    if (!confirmed) {
-
-        return;
-
-    }
-
-
-    documents =
-        documents.filter(function (documentItem) {
-
-            return documentItem.id !== id;
-
-        });
-
-
-    renderDocuments();
 
 }
 
