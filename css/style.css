@@ -677,3 +677,608 @@ body {
     }
 
 }
+/* ========================================
+   ISO INSPECTION
+   FM-OP-11
+======================================== */
+
+
+/* ========================================
+   ISO FORM CARD
+======================================== */
+
+.iso-form-card {
+    max-width: 1000px;
+
+    background: #ffffff;
+
+    border: 1px solid #eaecf0;
+
+    border-radius: 16px;
+
+    box-shadow:
+        0 2px 8px rgba(0, 0, 0, 0.04);
+
+    overflow: hidden;
+}
+
+
+/* ========================================
+   ISO FORM HEADER
+======================================== */
+
+.iso-form-header {
+    padding: 24px 28px;
+
+    background: #f8fbff;
+
+    border-bottom: 1px solid #e6e9ed;
+}
+
+
+.iso-document-code {
+    display: inline-block;
+
+    margin-bottom: 8px;
+
+    padding: 5px 10px;
+
+    border-radius: 6px;
+
+    background: #eaf2ff;
+
+    color: #175cd3;
+
+    font-size: 13px;
+
+    font-weight: 700;
+}
+
+
+.iso-form-header h3 {
+    margin: 0 0 8px;
+
+    font-size: 20px;
+
+    color: #17365d;
+}
+
+
+.iso-form-header p {
+    margin: 0;
+
+    color: #667085;
+
+    font-size: 14px;
+}
+
+
+/* ========================================
+   ISO SECTION
+======================================== */
+
+.iso-section {
+    padding: 24px 28px;
+
+    border-bottom: 1px solid #eaecf0;
+}
+
+
+.iso-section-title {
+    margin-bottom: 18px;
+
+    font-size: 16px;
+
+    font-weight: 700;
+
+    color: #344054;
+}
+
+
+/* ========================================
+   FORM GRID
+======================================== */
+
+.iso-section .form-grid {
+    display: grid;
+
+    grid-template-columns:
+        repeat(2, minmax(0, 1fr));
+
+    gap: 18px;
+}
+
+
+.form-group {
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 7px;
+}
+
+
+.form-group label {
+    font-size: 14px;
+
+    font-weight: 600;
+
+    color: #344054;
+}
+
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+    width: 100%;
+
+    padding: 12px 14px;
+
+    border: 1px solid #d0d5dd;
+
+    border-radius: 10px;
+
+    background: #ffffff;
+
+    color: #1d2939;
+
+    font-family: inherit;
+
+    font-size: 15px;
+
+    outline: none;
+
+    transition:
+        border-color 0.2s ease,
+        box-shadow 0.2s ease;
+}
+
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    border-color: #84adff;
+
+    box-shadow:
+        0 0 0 3px rgba(23, 92, 211, 0.1);
+}
+
+
+/* ========================================
+   INSPECTION ITEMS
+======================================== */
+
+.inspection-items {
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 14px;
+}
+
+
+/* ========================================
+   INSPECTION ITEM CARD
+======================================== */
+
+.inspection-item {
+    padding: 18px;
+
+    background: #ffffff;
+
+    border: 1px solid #e4e7ec;
+
+    border-radius: 12px;
+
+    transition:
+        border-color 0.2s ease,
+        box-shadow 0.2s ease;
+}
+
+
+.inspection-item:hover {
+    border-color: #b2ccff;
+
+    box-shadow:
+        0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+
+/* ========================================
+   ITEM HEADER
+======================================== */
+
+.inspection-item-header {
+    display: flex;
+
+    align-items: flex-start;
+
+    gap: 12px;
+
+    margin-bottom: 14px;
+}
+
+
+.inspection-item-number {
+    width: 32px;
+
+    height: 32px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    flex-shrink: 0;
+
+    border-radius: 8px;
+
+    background: #eaf2ff;
+
+    color: #175cd3;
+
+    font-size: 14px;
+
+    font-weight: 700;
+}
+
+
+.inspection-item-name {
+    flex: 1;
+
+    padding-top: 5px;
+
+    color: #344054;
+
+    font-size: 15px;
+
+    font-weight: 600;
+
+    line-height: 1.5;
+}
+
+
+/* ========================================
+   RESULT OPTIONS
+======================================== */
+
+.inspection-result {
+    display: flex;
+
+    gap: 10px;
+
+    margin-bottom: 14px;
+}
+
+
+.result-option {
+    flex: 1;
+
+    position: relative;
+}
+
+
+.result-option input {
+    position: absolute;
+
+    opacity: 0;
+
+    pointer-events: none;
+}
+
+
+.result-option label {
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    min-height: 44px;
+
+    padding: 10px 14px;
+
+    border: 1px solid #d0d5dd;
+
+    border-radius: 10px;
+
+    background: #ffffff;
+
+    color: #475467;
+
+    font-size: 14px;
+
+    font-weight: 600;
+
+    cursor: pointer;
+
+    transition:
+        background 0.2s ease,
+        border-color 0.2s ease,
+        color 0.2s ease;
+}
+
+
+.result-option label:hover {
+    background: #f8fafc;
+}
+
+
+.result-option input:checked + label {
+    background: #eaf2ff;
+
+    border-color: #84adff;
+
+    color: #175cd3;
+}
+
+
+/* ========================================
+   REMARK / SOLUTION
+======================================== */
+
+.inspection-fields {
+    display: grid;
+
+    grid-template-columns:
+        repeat(2, minmax(0, 1fr));
+
+    gap: 12px;
+}
+
+
+.inspection-field {
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 6px;
+}
+
+
+.inspection-field label {
+    font-size: 13px;
+
+    font-weight: 600;
+
+    color: #667085;
+}
+
+
+.inspection-field textarea {
+    width: 100%;
+
+    min-height: 72px;
+
+    resize: vertical;
+
+    padding: 10px 12px;
+
+    border: 1px solid #d0d5dd;
+
+    border-radius: 9px;
+
+    font-family: inherit;
+
+    font-size: 14px;
+
+    color: #344054;
+
+    outline: none;
+}
+
+
+.inspection-field textarea:focus {
+    border-color: #84adff;
+
+    box-shadow:
+        0 0 0 3px rgba(23, 92, 211, 0.1);
+}
+
+
+/* ========================================
+   EMPTY INSPECTION
+======================================== */
+
+.inspection-empty {
+    padding: 50px 24px;
+
+    text-align: center;
+
+    background: #f9fafb;
+
+    border: 1px dashed #d0d5dd;
+
+    border-radius: 12px;
+}
+
+
+.inspection-empty > div {
+    margin-bottom: 10px;
+
+    font-size: 36px;
+}
+
+
+.inspection-empty strong {
+    display: block;
+
+    margin-bottom: 6px;
+
+    color: #344054;
+
+    font-size: 15px;
+}
+
+
+.inspection-empty span {
+    display: block;
+
+    color: #667085;
+
+    font-size: 13px;
+}
+
+
+/* ========================================
+   ISO FORM ACTIONS
+======================================== */
+
+.iso-form-actions {
+    display: flex;
+
+    justify-content: flex-end;
+
+    gap: 10px;
+
+    padding: 20px 28px;
+
+    background: #fafbfc;
+}
+
+
+/* ========================================
+   BUTTONS
+======================================== */
+
+.primary-button,
+.secondary-button {
+    min-height: 42px;
+
+    padding: 10px 18px;
+
+    border-radius: 9px;
+
+    font-family: inherit;
+
+    font-size: 14px;
+
+    font-weight: 600;
+
+    cursor: pointer;
+
+    transition:
+        background 0.2s ease,
+        border-color 0.2s ease;
+}
+
+
+.primary-button {
+    border: 1px solid #175cd3;
+
+    background: #175cd3;
+
+    color: #ffffff;
+}
+
+
+.primary-button:hover {
+    background: #1849a9;
+}
+
+
+.primary-button:disabled {
+    opacity: 0.6;
+
+    cursor: not-allowed;
+}
+
+
+.secondary-button {
+    border: 1px solid #d0d5dd;
+
+    background: #ffffff;
+
+    color: #344054;
+}
+
+
+.secondary-button:hover {
+    background: #f2f4f7;
+}
+
+
+/* ========================================
+   MOBILE
+======================================== */
+
+@media (max-width: 768px) {
+
+    .iso-form-card {
+        border-radius: 12px;
+    }
+
+
+    .iso-form-header {
+        padding: 20px 18px;
+    }
+
+
+    .iso-form-header h3 {
+        font-size: 17px;
+
+        line-height: 1.5;
+    }
+
+
+    .iso-section {
+        padding: 20px 18px;
+    }
+
+
+    .iso-section .form-grid {
+        grid-template-columns: 1fr;
+
+        gap: 14px;
+    }
+
+
+    .inspection-item {
+        padding: 15px;
+    }
+
+
+    .inspection-item-header {
+        gap: 10px;
+    }
+
+
+    .inspection-item-name {
+        font-size: 14px;
+    }
+
+
+    .inspection-result {
+        gap: 8px;
+    }
+
+
+    .result-option label {
+        min-height: 46px;
+
+        padding: 9px 8px;
+
+        font-size: 13px;
+    }
+
+
+    .inspection-fields {
+        grid-template-columns: 1fr;
+
+        gap: 10px;
+    }
+
+
+    .iso-form-actions {
+        flex-direction: column-reverse;
+
+        padding: 18px;
+    }
+
+
+    .iso-form-actions button {
+        width: 100%;
+    }
+
+}
