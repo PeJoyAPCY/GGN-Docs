@@ -126,6 +126,7 @@
                     <button
                         class="nav-item active"
                         data-page="dashboard"
+                        type="button"
                     >
                         🏠
                         <span>หน้าหลัก</span>
@@ -135,6 +136,7 @@
                     <button
                         class="nav-item"
                         data-page="documents"
+                        type="button"
                     >
                         📄
                         <span>เอกสาร</span>
@@ -144,6 +146,7 @@
                     <button
                         class="nav-item"
                         data-page="search"
+                        type="button"
                     >
                         🔍
                         <span>ค้นหา</span>
@@ -153,6 +156,7 @@
                     <button
                         class="nav-item"
                         data-page="inspections"
+                        type="button"
                     >
                         📋
                         <span>การตรวจ ISO</span>
@@ -162,6 +166,7 @@
                     <button
                         class="nav-item"
                         data-page="settings"
+                        type="button"
                     >
                         ⚙️
                         <span>ตั้งค่า</span>
@@ -552,7 +557,7 @@
 
 
                 <!-- ==========================================
-                     ISO INSPECTION
+                     ISO INSPECTION MENU
                 =========================================== -->
 
                 <section
@@ -561,21 +566,122 @@
                     style="display: none;"
                 >
 
+                    <div class="page-header">
 
-                    <!-- ======================================
-                         PAGE HEADER
-                    ======================================= -->
+                        <h2>
+                            การตรวจ ISO
+                        </h2>
+
+                        <p>
+                            ระบบบันทึกการตรวจและจัดทำเอกสาร ISO
+                        </p>
+
+                    </div>
+
+
+                    <!-- ISO MENU -->
+
+                    <div class="iso-menu">
+
+
+                        <!-- บันทึกการตรวจ -->
+
+                        <button
+                            id="open-inspection-record"
+                            class="iso-menu-card"
+                            type="button"
+                        >
+
+                            <div class="iso-menu-icon">
+                                📝
+                            </div>
+
+                            <div class="iso-menu-content">
+
+                                <h3>
+                                    บันทึกการตรวจ
+                                </h3>
+
+                                <p>
+                                    บันทึกผลการตรวจพนักงานรักษาความปลอดภัย
+                                    ทีละ 1 จุดตรวจ
+                                </p>
+
+                            </div>
+
+                            <div class="iso-menu-arrow">
+                                ›
+                            </div>
+
+                        </button>
+
+
+                        <!-- สร้างรายงาน ISO -->
+
+                        <button
+                            id="open-fmop11-generator"
+                            class="iso-menu-card"
+                            type="button"
+                        >
+
+                            <div class="iso-menu-icon">
+                                📄
+                            </div>
+
+                            <div class="iso-menu-content">
+
+                                <h3>
+                                    สร้างรายงาน ISO
+                                </h3>
+
+                                <p>
+                                    เลือกรายการตรวจที่บันทึกไว้
+                                    เพื่อสร้างแบบฟอร์ม FM-OP-11
+                                </p>
+
+                            </div>
+
+                            <div class="iso-menu-arrow">
+                                ›
+                            </div>
+
+                        </button>
+
+
+                    </div>
+
+                </section>
+
+
+                <!-- ==========================================
+                     INSPECTION RECORD
+                =========================================== -->
+
+                <section
+                    id="page-inspection-record"
+                    class="page"
+                    style="display: none;"
+                >
 
                     <div class="page-header">
+
+                        <button
+                            id="back-to-inspections-from-record"
+                            class="back-button"
+                            type="button"
+                        >
+                            ← การตรวจ ISO
+                        </button>
+
 
                         <div>
 
                             <h2>
-                                การตรวจ ISO
+                                บันทึกการตรวจ
                             </h2>
 
                             <p>
-                                FM-OP-11 รายงานการตรวจจุดพนักงานรักษาความปลอดภัย
+                                FM-OP-11 · บันทึกการตรวจ 1 จุด
                             </p>
 
                         </div>
@@ -583,13 +689,12 @@
                     </div>
 
 
-                    <!-- ======================================
-                         SECTION 1
-                         บันทึกการตรวจทีละ 1 จุด
-                    ======================================= -->
+                    <!-- INSPECTION FORM -->
 
                     <div class="iso-form-card">
 
+
+                        <!-- FORM HEADER -->
 
                         <div class="iso-form-header">
 
@@ -612,9 +717,7 @@
                         </div>
 
 
-                        <!-- ==================================
-                             INSPECTION INFORMATION
-                        =================================== -->
+                        <!-- INSPECTION INFORMATION -->
 
                         <div class="iso-section">
 
@@ -725,14 +828,13 @@
 
                                 </div>
 
+
                             </div>
 
                         </div>
 
 
-                        <!-- ==================================
-                             INSPECTION ITEMS
-                        =================================== -->
+                        <!-- INSPECTION ITEMS -->
 
                         <div class="iso-section">
 
@@ -767,9 +869,7 @@
                         </div>
 
 
-                        <!-- ==================================
-                             FORM ACTIONS
-                        =================================== -->
+                        <!-- FORM ACTIONS -->
 
                         <div class="iso-form-actions">
 
@@ -795,17 +895,51 @@
 
                     </div>
 
+                </section>
 
-                    <!-- ======================================
-                         SECTION 2
-                         สร้าง FM-OP-11
-                    ======================================= -->
 
-                    <div
-                        id="fmop11-generator"
-                        class="iso-form-card"
-                    >
+                <!-- ==========================================
+                     FM-OP-11 GENERATOR
+                =========================================== -->
 
+                <section
+                    id="page-fmop11"
+                    class="page"
+                    style="display: none;"
+                >
+
+                    <div class="page-header">
+
+                        <button
+                            id="back-to-inspections-from-fmop11"
+                            class="back-button"
+                            type="button"
+                        >
+                            ← การตรวจ ISO
+                        </button>
+
+
+                        <div>
+
+                            <h2>
+                                สร้างรายงาน ISO
+                            </h2>
+
+                            <p>
+                                FM-OP-11 รายงานการตรวจจุดพนักงานรักษาความปลอดภัย
+                            </p>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- FM-OP-11 GENERATOR -->
+
+                    <div class="iso-form-card">
+
+
+                        <!-- FORM HEADER -->
 
                         <div class="iso-form-header">
 
@@ -829,9 +963,7 @@
                         </div>
 
 
-                        <!-- ==================================
-                             SEARCH / FILTER
-                        =================================== -->
+                        <!-- SEARCH / FILTER -->
 
                         <div class="iso-section">
 
@@ -882,6 +1014,8 @@
                                 </div>
 
 
+                                <!-- SELECTED COUNT -->
+
                                 <div class="form-group">
 
                                     <label>
@@ -896,6 +1030,7 @@
                                     </div>
 
                                 </div>
+
 
                             </div>
 
@@ -915,9 +1050,7 @@
                         </div>
 
 
-                        <!-- ==================================
-                             INSPECTION RECORD LIST
-                        =================================== -->
+                        <!-- INSPECTION RECORD LIST -->
 
                         <div class="iso-section">
 
@@ -953,9 +1086,7 @@
                         </div>
 
 
-                        <!-- ==================================
-                             GENERATE ACTION
-                        =================================== -->
+                        <!-- GENERATE ACTION -->
 
                         <div class="iso-form-actions">
 
@@ -980,16 +1111,13 @@
                         </div>
 
 
-                        <!-- ==================================
-                             GENERATE STATUS
-                        =================================== -->
+                        <!-- GENERATE STATUS -->
 
                         <div
                             id="fmop11-generation-status"
                             class="generation-status"
                             style="display: none;"
                         >
-
                         </div>
 
 
@@ -1068,7 +1196,6 @@
                         id="user-info"
                         class="user-info-card"
                     >
-
                     </div>
 
                 </section>
