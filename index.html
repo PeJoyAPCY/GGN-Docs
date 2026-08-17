@@ -146,6 +146,15 @@
 
                     <button
                         class="nav-item"
+                        data-page="inspections"
+                    >
+                        📋
+                        <span>การตรวจ ISO</span>
+                    </button>
+
+
+                    <button
+                        class="nav-item"
                         data-page="settings"
                     >
                         ⚙️
@@ -254,294 +263,506 @@
 
 
                 <!-- ==========================================
-     DOCUMENTS
-=========================================== -->
+                     DOCUMENTS
+                =========================================== -->
 
-<section
-    id="page-documents"
-    class="page"
-    style="display: none;"
->
+                <section
+                    id="page-documents"
+                    class="page"
+                    style="display: none;"
+                >
 
-    <div class="page-header document-page-header">
+                    <div class="page-header document-page-header">
 
-        <div>
+                        <div>
 
-            <h2>
-                เอกสาร
-            </h2>
+                            <h2>
+                                เอกสาร
+                            </h2>
 
-            <p>
-                จัดการเอกสารของ GGN Docs
-            </p>
+                            <p>
+                                จัดการเอกสารของ GGN Docs
+                            </p>
 
-        </div>
-
-
-        <button
-            id="add-document-button"
-            class="primary-button"
-            type="button"
-        >
-            ＋ เพิ่มเอกสาร
-        </button>
-
-    </div>
+                        </div>
 
 
-    <!-- DOCUMENT LIST -->
-
-    <div class="document-list-card">
-
-        <div class="document-list-header">
-
-            <div>
-
-                <h3>
-                    รายการเอกสาร
-                </h3>
-
-                <span>
-                    เอกสารทั้งหมดในระบบ
-                </span>
-
-            </div>
-
-
-            <div class="document-count">
-
-                <strong id="document-count">
-                    0
-                </strong>
-
-                <span>
-                    รายการ
-                </span>
-
-            </div>
-
-        </div>
-
-
-        <!-- TABLE -->
-
-        <div class="document-table-wrapper">
-
-            <table class="document-table">
-
-                <thead>
-
-                    <tr>
-
-                        <th>
-                            รหัสเอกสาร
-                        </th>
-
-                        <th>
-                            ชื่อเอกสาร
-                        </th>
-
-                        <th>
-                            ผู้ปฏิบัติงาน
-                        </th>
-
-                        <th>
-                            หน่วยงาน
-                        </th>
-
-                        <th>
-                            จัดการ
-                        </th>
-
-                    </tr>
-
-                </thead>
-
-
-                <tbody id="document-table-body">
-
-                    <tr>
-
-                        <td
-                            colspan="5"
-                            class="document-empty"
+                        <button
+                            id="add-document-button"
+                            class="primary-button"
+                            type="button"
                         >
+                            ＋ เพิ่มเอกสาร
+                        </button>
+
+                    </div>
+
+
+                    <!-- DOCUMENT LIST -->
+
+                    <div class="document-list-card">
+
+                        <div class="document-list-header">
 
                             <div>
-                                📄
+
+                                <h3>
+                                    รายการเอกสาร
+                                </h3>
+
+                                <span>
+                                    เอกสารทั้งหมดในระบบ
+                                </span>
+
                             </div>
 
-                            <strong>
-                                ยังไม่มีเอกสาร
-                            </strong>
 
-                            <span>
-                                กดปุ่ม “เพิ่มเอกสาร”
-                                เพื่อเพิ่มเอกสารรายการแรก
-                            </span>
+                            <div class="document-count">
 
-                        </td>
+                                <strong id="document-count">
+                                    0
+                                </strong>
 
-                    </tr>
+                                <span>
+                                    รายการ
+                                </span>
 
-                </tbody>
+                            </div>
 
-            </table>
-
-        </div>
-
-    </div>
+                        </div>
 
 
-    <!-- ADD DOCUMENT FORM -->
+                        <!-- TABLE -->
 
-    <div
-        id="document-form-container"
-        class="document-form-container"
-        style="display: none;"
-    >
+                        <div class="document-table-wrapper">
 
-        <div class="document-form-card">
+                            <table class="document-table">
 
-            <div class="document-form-header">
+                                <thead>
 
-                <div>
+                                    <tr>
 
-                    <h3>
-                        เพิ่มเอกสาร
-                    </h3>
+                                        <th>
+                                            รหัสเอกสาร
+                                        </th>
 
-                    <p>
-                        กรอกข้อมูลเอกสารที่ต้องการเพิ่ม
-                    </p>
+                                        <th>
+                                            ชื่อเอกสาร
+                                        </th>
 
-                </div>
+                                        <th>
+                                            ผู้ปฏิบัติงาน
+                                        </th>
+
+                                        <th>
+                                            หน่วยงาน
+                                        </th>
+
+                                        <th>
+                                            จัดการ
+                                        </th>
+
+                                    </tr>
+
+                                </thead>
 
 
-                <button
-                    id="close-document-form"
-                    class="icon-button"
-                    type="button"
-                    aria-label="ปิด"
+                                <tbody id="document-table-body">
+
+                                    <tr>
+
+                                        <td
+                                            colspan="5"
+                                            class="document-empty"
+                                        >
+
+                                            <div>
+                                                📄
+                                            </div>
+
+                                            <strong>
+                                                ยังไม่มีเอกสาร
+                                            </strong>
+
+                                            <span>
+                                                กดปุ่ม “เพิ่มเอกสาร”
+                                                เพื่อเพิ่มเอกสารรายการแรก
+                                            </span>
+
+                                        </td>
+
+                                    </tr>
+
+                                </tbody>
+
+                            </table>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- ADD DOCUMENT FORM -->
+
+                    <div
+                        id="document-form-container"
+                        class="document-form-container"
+                        style="display: none;"
+                    >
+
+                        <div class="document-form-card">
+
+                            <div class="document-form-header">
+
+                                <div>
+
+                                    <h3>
+                                        เพิ่มเอกสาร
+                                    </h3>
+
+                                    <p>
+                                        กรอกข้อมูลเอกสารที่ต้องการเพิ่ม
+                                    </p>
+
+                                </div>
+
+
+                                <button
+                                    id="close-document-form"
+                                    class="icon-button"
+                                    type="button"
+                                    aria-label="ปิด"
+                                >
+                                    ×
+                                </button>
+
+                            </div>
+
+
+                            <form id="document-form">
+
+                                <div class="form-grid">
+
+
+                                    <!-- DOCUMENT CODE -->
+
+                                    <div class="form-group">
+
+                                        <label for="document-code">
+                                            รหัสเอกสาร
+                                        </label>
+
+                                        <input
+                                            type="text"
+                                            id="document-code"
+                                            name="documentCode"
+                                            placeholder="เช่น FM-OP-11"
+                                            required
+                                        >
+
+                                    </div>
+
+
+                                    <!-- DOCUMENT NAME -->
+
+                                    <div class="form-group">
+
+                                        <label for="document-name">
+                                            ชื่อเอกสาร
+                                        </label>
+
+                                        <input
+                                            type="text"
+                                            id="document-name"
+                                            name="documentName"
+                                            placeholder="ระบุชื่อเอกสาร"
+                                            required
+                                        >
+
+                                    </div>
+
+
+                                    <!-- OPERATOR -->
+
+                                    <div class="form-group">
+
+                                        <label for="document-operator">
+                                            ผู้ปฏิบัติงาน
+                                        </label>
+
+                                        <input
+                                            type="text"
+                                            id="document-operator"
+                                            name="operator"
+                                            placeholder="ระบุผู้ปฏิบัติงาน"
+                                            required
+                                        >
+
+                                    </div>
+
+
+                                    <!-- DEPARTMENT -->
+
+                                    <div class="form-group">
+
+                                        <label for="document-department">
+                                            หน่วยงาน
+                                        </label>
+
+                                        <input
+                                            type="text"
+                                            id="document-department"
+                                            name="department"
+                                            placeholder="ระบุหน่วยงาน"
+                                            required
+                                        >
+
+                                    </div>
+
+                                </div>
+
+
+                                <div class="form-actions">
+
+                                    <button
+                                        id="cancel-document-button"
+                                        class="secondary-button"
+                                        type="button"
+                                    >
+                                        ยกเลิก
+                                    </button>
+
+
+                                    <button
+                                        class="primary-button"
+                                        type="submit"
+                                    >
+                                        บันทึกเอกสาร
+                                    </button>
+
+                                </div>
+
+                            </form>
+
+                        </div>
+
+                    </div>
+
+                </section>
+
+
+                <!-- ==========================================
+                     ISO INSPECTION
+                =========================================== -->
+
+                <section
+                    id="page-inspections"
+                    class="page"
+                    style="display: none;"
                 >
-                    ×
-                </button>
 
-            </div>
+                    <div class="page-header">
 
+                        <div>
 
-            <form id="document-form">
+                            <h2>
+                                การตรวจ ISO
+                            </h2>
 
-                <div class="form-grid">
+                            <p>
+                                FM-OP-11 รายงานการตรวจจุดพนักงานรักษาความปลอดภัย
+                            </p>
 
-
-                    <!-- DOCUMENT CODE -->
-
-                    <div class="form-group">
-
-                        <label for="document-code">
-                            รหัสเอกสาร
-                        </label>
-
-                        <input
-                            type="text"
-                            id="document-code"
-                            name="documentCode"
-                            placeholder="เช่น FM-OP-11"
-                            required
-                        >
+                        </div>
 
                     </div>
 
 
-                    <!-- DOCUMENT NAME -->
+                    <!-- ISO FORM -->
 
-                    <div class="form-group">
+                    <div class="iso-form-card">
 
-                        <label for="document-name">
-                            ชื่อเอกสาร
-                        </label>
+                        <div class="iso-form-header">
 
-                        <input
-                            type="text"
-                            id="document-name"
-                            name="documentName"
-                            placeholder="ระบุชื่อเอกสาร"
-                            required
-                        >
+                            <div>
+
+                                <span class="iso-document-code">
+                                    FM-OP-11
+                                </span>
+
+                                <h3>
+                                    รายงานการตรวจจุดพนักงานรักษาความปลอดภัย
+                                </h3>
+
+                                <p>
+                                    กรุณากรอกข้อมูลการตรวจให้ครบถ้วน
+                                </p>
+
+                            </div>
+
+                        </div>
+
+
+                        <!-- INSPECTION INFORMATION -->
+
+                        <div class="iso-section">
+
+                            <div class="iso-section-title">
+                                ข้อมูลการตรวจ
+                            </div>
+
+
+                            <div class="form-grid">
+
+
+                                <!-- DATE -->
+
+                                <div class="form-group">
+
+                                    <label for="inspection-date">
+                                        วันที่ตรวจ
+                                    </label>
+
+                                    <input
+                                        type="date"
+                                        id="inspection-date"
+                                        name="inspectionDate"
+                                    >
+
+                                </div>
+
+
+                                <!-- TIME -->
+
+                                <div class="form-group">
+
+                                    <label for="inspection-time">
+                                        เวลาตรวจ
+                                    </label>
+
+                                    <input
+                                        type="time"
+                                        id="inspection-time"
+                                        name="inspectionTime"
+                                    >
+
+                                </div>
+
+
+                                <!-- LOCATION -->
+
+                                <div class="form-group">
+
+                                    <label for="inspection-location">
+                                        จุดตรวจ
+                                    </label>
+
+                                    <select
+                                        id="inspection-location"
+                                        name="locationName"
+                                    >
+
+                                        <option value="">
+                                            -- เลือกจุดตรวจ --
+                                        </option>
+
+                                    </select>
+
+                                </div>
+
+
+                                <!-- INSPECTOR -->
+
+                                <div class="form-group">
+
+                                    <label for="inspection-inspector">
+                                        ผู้ตรวจ
+                                    </label>
+
+                                    <select
+                                        id="inspection-inspector"
+                                        name="inspectorName"
+                                    >
+
+                                        <option value="">
+                                            -- เลือกผู้ตรวจ --
+                                        </option>
+
+                                    </select>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+
+                        <!-- INSPECTION ITEMS -->
+
+                        <div class="iso-section">
+
+                            <div class="iso-section-title">
+                                รายการตรวจ
+                            </div>
+
+
+                            <div
+                                id="inspection-items"
+                                class="inspection-items"
+                            >
+
+                                <!-- JavaScript จะสร้างรายการตรวจ 1 - 14 ตรงนี้ -->
+
+                                <div class="inspection-empty">
+
+                                    <div>
+                                        📋
+                                    </div>
+
+                                    <strong>
+                                        รายการตรวจ
+                                    </strong>
+
+                                    <span>
+                                        ระบบจะแสดงรายการตรวจที่นี่
+                                    </span>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+
+                        <!-- FORM ACTIONS -->
+
+                        <div class="iso-form-actions">
+
+                            <button
+                                id="reset-inspection-button"
+                                class="secondary-button"
+                                type="button"
+                            >
+                                ล้างข้อมูล
+                            </button>
+
+
+                            <button
+                                id="save-inspection-button"
+                                class="primary-button"
+                                type="button"
+                            >
+                                บันทึกการตรวจ
+                            </button>
+
+                        </div>
 
                     </div>
 
-
-                    <!-- OPERATOR -->
-
-                    <div class="form-group">
-
-                        <label for="document-operator">
-                            ผู้ปฏิบัติงาน
-                        </label>
-
-                        <input
-                            type="text"
-                            id="document-operator"
-                            name="operator"
-                            placeholder="ระบุผู้ปฏิบัติงาน"
-                            required
-                        >
-
-                    </div>
-
-
-                    <!-- DEPARTMENT -->
-
-                    <div class="form-group">
-
-                        <label for="document-department">
-                            หน่วยงาน
-                        </label>
-
-                        <input
-                            type="text"
-                            id="document-department"
-                            name="department"
-                            placeholder="ระบุหน่วยงาน"
-                            required
-                        >
-
-                    </div>
-
-                </div>
-
-
-                <div class="form-actions">
-
-                    <button
-                        id="cancel-document-button"
-                        class="secondary-button"
-                        type="button"
-                    >
-                        ยกเลิก
-                    </button>
-
-
-                    <button
-                        class="primary-button"
-                        type="submit"
-                    >
-                        บันทึกเอกสาร
-                    </button>
-
-                </div>
-
-            </form>
-
-        </div>
-
-    </div>
-
-</section>
-
-                <!-- SEARCH -->
+                </section>
+                                <!-- ==========================================
+                     SEARCH
+                =========================================== -->
 
                 <section
                     id="page-search"
@@ -581,7 +802,9 @@
                 </section>
 
 
-                <!-- SETTINGS -->
+                <!-- ==========================================
+                     SETTINGS
+                =========================================== -->
 
                 <section
                     id="page-settings"
@@ -618,6 +841,10 @@
 
     </section>
 
+
+    <!-- ==========================================
+         JAVASCRIPT
+    =========================================== -->
 
     <script src="js/app.js"></script>
 
