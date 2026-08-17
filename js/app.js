@@ -1,31 +1,55 @@
 // ========================================
 // GGN Docs
+// APP.JS
+// PART 1 / 2
 // ========================================
+
 
 const API_URL =
     "https://script.google.com/macros/s/AKfycbz9EhtzTMEMO2QvXKpiBr2oFbHvwz7w6jPfY9NsWEwRPZFnGyAbM9nxXdYcaWxKvdK0rQ/exec";
+
 
 const GOOGLE_CLIENT_ID =
     "866764029472-jmjml5iij5f6l5kut85mtmj8efeegshu.apps.googleusercontent.com";
 
 
 // ========================================
+// GLOBAL DATA
+// ========================================
+
+let documents = [];
+
+let inspectionLocations = [];
+
+let inspectionInspectors = [];
+
+let inspectionItems = [];
+
+
+// ========================================
 // เริ่มต้นระบบ
 // ========================================
 
-window.addEventListener("load", function () {
+window.addEventListener(
+    "load",
+    function () {
 
-    testAPI();
+        testAPI();
 
-    restoreSession();
+        restoreSession();
 
-    waitForGoogle();
+        waitForGoogle();
 
-    setupNavigation();
+        setupNavigation();
 
-    setupLogout();
+        setupLogout();
 
-});
+        setupDocuments();
+
+        setupInspections();
+
+    }
+);
 
 
 // ========================================
@@ -43,9 +67,14 @@ function waitForGoogle() {
         initGoogleLogin();
 
         return;
+
     }
 
-    setTimeout(waitForGoogle, 300);
+
+    setTimeout(
+        waitForGoogle,
+        300
+    );
 
 }
 
@@ -58,24 +87,34 @@ async function testAPI() {
 
     try {
 
-        const response = await fetch(API_URL);
+        const response =
+            await fetch(API_URL);
 
-        const data = await response.json();
+
+        const data =
+            await response.json();
+
 
         console.log(
             "ข้อมูลจาก Google Apps Script:",
             data
         );
 
+
         const apiStatus =
-            document.getElementById("api-status");
+            document.getElementById(
+                "api-status"
+            );
+
 
         if (apiStatus) {
 
             apiStatus.textContent =
-                data.message;
+                data.message ||
+                "เชื่อมต่อระบบสำเร็จ";
 
         }
+
 
     } catch (error) {
 
@@ -84,8 +123,12 @@ async function testAPI() {
             error
         );
 
+
         const apiStatus =
-            document.getElementById("api-status");
+            document.getElementById(
+                "api-status"
+            );
+
 
         if (apiStatus) {
 
@@ -100,7 +143,7 @@ async function testAPI() {
 
 
 // ========================================
-// Google Login
+// GOOGLE LOGIN
 // ========================================
 
 function initGoogleLogin() {
@@ -109,17 +152,23 @@ function initGoogleLogin() {
         "Google Identity Services พร้อมใช้งาน"
     );
 
+
     google.accounts.id.initialize({
 
-        client_id: GOOGLE_CLIENT_ID,
+        client_id:
+            GOOGLE_CLIENT_ID,
 
-        callback: handleGoogleLogin
+        callback:
+            handleGoogleLogin
 
     });
 
 
     const loginButton =
-        document.getElementById("google-login");
+        document.getElementById(
+            "google-login"
+        );
+
 
     if (!loginButton) {
 
@@ -128,6 +177,7 @@ function initGoogleLogin() {
         );
 
         return;
+
     }
 
 
@@ -148,7 +198,7 @@ function initGoogleLogin() {
 
 
 // ========================================
-// Google Login สำเร็จ
+// GOOGLE LOGIN SUCCESS
 // ========================================
 
 async function handleGoogleLogin(response) {
@@ -157,8 +207,10 @@ async function handleGoogleLogin(response) {
         "Google Login สำเร็จ"
     );
 
+
     const credential =
         response.credential;
+
 
     if (!credential) {
 
@@ -167,18 +219,24 @@ async function handleGoogleLogin(response) {
         );
 
         return;
+
     }
 
-    await loginToGGN(credential);
+
+    await loginToGGN(
+        credential
+    );
 
 }
 
 
 // ========================================
-// ส่งข้อมูลไป Apps Script
+// LOGIN TO GGN
 // ========================================
 
-async function loginToGGN(credential) {
+async function loginToGGN(
+    credential
+) {
 
     try {
 
@@ -187,27 +245,37 @@ async function loginToGGN(credential) {
         );
 
 
-        const response = await fetch(
-            API_URL,
-            {
+        const response =
+            await fetch(
 
-                method: "POST",
+                API_URL,
 
-                headers: {
-                    "Content-Type":
-                        "text/plain;charset=utf-8"
-                },
+                {
 
-                body: JSON.stringify({
+                    method:
+                        "POST",
 
-                    action: "googleLogin",
+                    headers: {
 
-                    credential: credential
+                        "Content-Type":
+                            "text/plain;charset=utf-8"
 
-                })
+                    },
 
-            }
-        );
+                    body:
+                        JSON.stringify({
+
+                            action:
+                                "googleLogin",
+
+                            credential:
+                                credential
+
+                        })
+
+                }
+
+            );
 
 
         const data =
@@ -232,11 +300,14 @@ async function loginToGGN(credential) {
         } else {
 
             showLoginMessage(
+
                 data.message ||
                 "ไม่พบผู้ใช้งานในระบบ"
+
             );
 
         }
+
 
     } catch (error) {
 
@@ -244,6 +315,7 @@ async function loginToGGN(credential) {
             "Login Error:",
             error
         );
+
 
         showLoginMessage(
             "เกิดข้อผิดพลาดในการตรวจสอบผู้ใช้งาน"
@@ -255,13 +327,18 @@ async function loginToGGN(credential) {
 
 
 // ========================================
-// แสดงข้อความบนหน้า Login
+// LOGIN MESSAGE
 // ========================================
 
-function showLoginMessage(message) {
+function showLoginMessage(
+    message
+) {
 
     const apiStatus =
-        document.getElementById("api-status");
+        document.getElementById(
+            "api-status"
+        );
+
 
     if (apiStatus) {
 
@@ -274,21 +351,33 @@ function showLoginMessage(message) {
 
 
 // ========================================
-// Login สำเร็จ → เปิด Dashboard
+// LOGIN SUCCESS → APP
 // ========================================
 
 function showUserInfo(user) {
 
-    // บันทึก Session
+    // ------------------------------------
+    // Save Session
+    // ------------------------------------
+
     localStorage.setItem(
+
         "ggnDocsUser",
+
         JSON.stringify(user)
+
     );
 
 
-    // ซ่อน Login
+    // ------------------------------------
+    // Hide Login
+    // ------------------------------------
+
     const loginPage =
-        document.getElementById("login-page");
+        document.getElementById(
+            "login-page"
+        );
+
 
     if (loginPage) {
 
@@ -298,9 +387,15 @@ function showUserInfo(user) {
     }
 
 
-    // แสดง Application
+    // ------------------------------------
+    // Show Application
+    // ------------------------------------
+
     const appPage =
-        document.getElementById("app-page");
+        document.getElementById(
+            "app-page"
+        );
+
 
     if (appPage) {
 
@@ -310,55 +405,76 @@ function showUserInfo(user) {
     }
 
 
-    // ชื่อผู้ใช้บน Header
+    // ------------------------------------
+    // Header Name
+    // ------------------------------------
+
     const headerName =
         document.getElementById(
             "header-user-name"
         );
 
+
     if (headerName) {
 
         headerName.textContent =
             user.name ||
-            user.email;
+            user.email ||
+            "";
 
     }
 
 
-    // Role
+    // ------------------------------------
+    // Header Role
+    // ------------------------------------
+
     const headerRole =
         document.getElementById(
             "header-user-role"
         );
 
+
     if (headerRole) {
 
         headerRole.textContent =
-            user.role || "";
+            user.role ||
+            "";
 
     }
 
 
-    // ข้อความต้อนรับ
+    // ------------------------------------
+    // Welcome
+    // ------------------------------------
+
     const welcomeMessage =
         document.getElementById(
             "welcome-message"
         );
 
+
     if (welcomeMessage) {
 
         welcomeMessage.textContent =
             "ยินดีต้อนรับ คุณ " +
-            (user.name || "");
+            (
+                user.name ||
+                ""
+            );
 
     }
 
 
-    // ข้อมูลผู้ใช้ใน Settings
+    // ------------------------------------
+    // User Information
+    // ------------------------------------
+
     const userInfo =
         document.getElementById(
             "user-info"
         );
+
 
     if (userInfo) {
 
@@ -411,13 +527,14 @@ function showUserInfo(user) {
 
 
 // ========================================
-// Restore Session
+// RESTORE SESSION
 // ========================================
 
 function restoreSession() {
 
     const user =
         getCurrentUser();
+
 
     if (!user) {
 
@@ -432,13 +549,15 @@ function restoreSession() {
     );
 
 
-    showUserInfo(user);
+    showUserInfo(
+        user
+    );
 
 }
 
 
 // ========================================
-// อ่าน User จาก Session
+// GET CURRENT USER
 // ========================================
 
 function getCurrentUser() {
@@ -458,7 +577,9 @@ function getCurrentUser() {
 
     try {
 
-        return JSON.parse(user);
+        return JSON.parse(
+            user
+        );
 
     } catch (error) {
 
@@ -467,9 +588,11 @@ function getCurrentUser() {
             error
         );
 
+
         localStorage.removeItem(
             "ggnDocsUser"
         );
+
 
         return null;
 
@@ -479,7 +602,7 @@ function getCurrentUser() {
 
 
 // ========================================
-// Navigation
+// NAVIGATION
 // ========================================
 
 function setupNavigation() {
@@ -490,33 +613,39 @@ function setupNavigation() {
         );
 
 
-    navItems.forEach(function (item) {
+    navItems.forEach(
+        function (item) {
 
-        item.addEventListener(
-            "click",
-            function () {
+            item.addEventListener(
+                "click",
+                function () {
 
-                const page =
-                    item.dataset.page;
+                    const page =
+                        item.dataset.page;
 
-                if (!page) {
 
-                    return;
+                    if (!page) {
+
+                        return;
+
+                    }
+
+
+                    showPage(
+                        page
+                    );
 
                 }
+            );
 
-                showPage(page);
-
-            }
-        );
-
-    });
+        }
+    );
 
 }
 
 
 // ========================================
-// เปลี่ยนหน้า
+// SHOW PAGE
 // ========================================
 
 function showPage(page) {
@@ -527,12 +656,14 @@ function showPage(page) {
         );
 
 
-    pages.forEach(function (item) {
+    pages.forEach(
+        function (item) {
 
-        item.style.display =
-            "none";
+            item.style.display =
+                "none";
 
-    });
+        }
+    );
 
 
     const selectedPage =
@@ -555,30 +686,46 @@ function showPage(page) {
         );
 
 
-    navItems.forEach(function (item) {
+    navItems.forEach(
+        function (item) {
 
-        item.classList.remove(
-            "active"
-        );
-
-
-        if (
-            item.dataset.page === page
-        ) {
-
-            item.classList.add(
+            item.classList.remove(
                 "active"
             );
 
-        }
 
-    });
+            if (
+                item.dataset.page ===
+                page
+            ) {
+
+                item.classList.add(
+                    "active"
+                );
+
+            }
+
+        }
+    );
+
+
+    // ------------------------------------
+    // เมื่อเปิดหน้า Inspection
+    // ------------------------------------
+
+    if (
+        page === "inspections"
+    ) {
+
+        initializeInspectionPage();
+
+    }
 
 }
 
 
 // ========================================
-// Logout
+// LOGOUT
 // ========================================
 
 function setupLogout() {
@@ -604,6 +751,10 @@ function setupLogout() {
 }
 
 
+// ========================================
+// LOGOUT
+// ========================================
+
 function logout() {
 
     localStorage.removeItem(
@@ -617,7 +768,8 @@ function logout() {
         google.accounts.id
     ) {
 
-        google.accounts.id.disableAutoSelect();
+        google.accounts.id
+            .disableAutoSelect();
 
     }
 
@@ -628,7 +780,7 @@ function logout() {
 
 
 // ========================================
-// ป้องกัน HTML Injection
+// ESCAPE HTML
 // ========================================
 
 function escapeHTML(value) {
@@ -664,42 +816,53 @@ function escapeHTML(value) {
 
 }
 
+
 // ========================================
 // DOCUMENT SYSTEM
 // ========================================
 
-let documents = [];
-
 
 // ========================================
-// โหลดเอกสารจาก Google Sheets
+// LOAD DOCUMENTS
 // ========================================
 
 async function loadDocuments() {
 
     try {
 
-        console.log("กำลังโหลดเอกสาร...");
-
-        const response = await fetch(
-            API_URL,
-            {
-
-                method: "POST",
-
-                headers: {
-                    "Content-Type":
-                        "text/plain;charset=utf-8"
-                },
-
-                body: JSON.stringify({
-
-                    action: "getDocuments"
-
-                })
-
-            }
+        console.log(
+            "กำลังโหลดเอกสาร..."
         );
+
+
+        const response =
+            await fetch(
+
+                API_URL,
+
+                {
+
+                    method:
+                        "POST",
+
+                    headers: {
+
+                        "Content-Type":
+                            "text/plain;charset=utf-8"
+
+                    },
+
+                    body:
+                        JSON.stringify({
+
+                            action:
+                                "getDocuments"
+
+                        })
+
+                }
+
+            );
 
 
         const data =
@@ -714,7 +877,9 @@ async function loadDocuments() {
 
         if (
             !data.success ||
-            !Array.isArray(data.documents)
+            !Array.isArray(
+                data.documents
+            )
         ) {
 
             console.error(
@@ -734,6 +899,8 @@ async function loadDocuments() {
         renderDocuments();
 
 
+        updateDashboardCounts();
+
     } catch (error) {
 
         console.error(
@@ -747,7 +914,7 @@ async function loadDocuments() {
 
 
 // ========================================
-// เริ่มต้นระบบเอกสาร
+// DOCUMENT SETUP
 // ========================================
 
 function setupDocuments() {
@@ -757,25 +924,24 @@ function setupDocuments() {
             "add-document-button"
         );
 
+
     const closeButton =
         document.getElementById(
             "close-document-form"
         );
+
 
     const cancelButton =
         document.getElementById(
             "cancel-document-button"
         );
 
+
     const documentForm =
         document.getElementById(
             "document-form"
         );
 
-
-    // -----------------------------
-    // เปิดฟอร์ม
-    // -----------------------------
 
     if (addButton) {
 
@@ -786,10 +952,6 @@ function setupDocuments() {
 
     }
 
-
-    // -----------------------------
-    // ปิดฟอร์ม
-    // -----------------------------
 
     if (closeButton) {
 
@@ -811,10 +973,6 @@ function setupDocuments() {
     }
 
 
-    // -----------------------------
-    // บันทึกเอกสาร
-    // -----------------------------
-
     if (documentForm) {
 
         documentForm.addEventListener(
@@ -825,17 +983,13 @@ function setupDocuments() {
     }
 
 
-    // -----------------------------
-    // โหลดข้อมูลจากฐานข้อมูล
-    // -----------------------------
-
     loadDocuments();
 
 }
 
 
 // ========================================
-// เปิดฟอร์มเพิ่มเอกสาร
+// OPEN DOCUMENT FORM
 // ========================================
 
 function openDocumentForm() {
@@ -858,8 +1012,13 @@ function openDocumentForm() {
 
 
     formContainer.scrollIntoView({
-        behavior: "smooth",
-        block: "start"
+
+        behavior:
+            "smooth",
+
+        block:
+            "start"
+
     });
 
 
@@ -879,7 +1038,7 @@ function openDocumentForm() {
 
 
 // ========================================
-// ปิดฟอร์ม
+// CLOSE DOCUMENT FORM
 // ========================================
 
 function closeDocumentForm() {
@@ -901,10 +1060,12 @@ function closeDocumentForm() {
 
 
 // ========================================
-// บันทึกเอกสาร
+// ADD DOCUMENT
 // ========================================
 
-async function handleDocumentSubmit(event) {
+async function handleDocumentSubmit(
+    event
+) {
 
     event.preventDefault();
 
@@ -933,10 +1094,6 @@ async function handleDocumentSubmit(event) {
         ).value.trim();
 
 
-    // -----------------------------
-    // ตรวจสอบข้อมูล
-    // -----------------------------
-
     if (
         !documentCode ||
         !documentName ||
@@ -953,10 +1110,6 @@ async function handleDocumentSubmit(event) {
     }
 
 
-    // -----------------------------
-    // ตรวจสอบ User
-    // -----------------------------
-
     const user =
         getCurrentUser();
 
@@ -971,10 +1124,6 @@ async function handleDocumentSubmit(event) {
 
     }
 
-
-    // -----------------------------
-    // ปุ่มบันทึก
-    // -----------------------------
 
     const submitButton =
         event.target.querySelector(
@@ -994,10 +1143,6 @@ async function handleDocumentSubmit(event) {
 
 
     try {
-
-        // -----------------------------
-        // ข้อมูลที่จะส่งไป Apps Script
-        // -----------------------------
 
         const documentData = {
 
@@ -1028,32 +1173,37 @@ async function handleDocumentSubmit(event) {
         );
 
 
-        // -----------------------------
-        // ส่งข้อมูลไป Google Apps Script
-        // -----------------------------
+        const response =
+            await fetch(
 
-        const response = await fetch(
-            API_URL,
-            {
+                API_URL,
 
-                method: "POST",
+                {
 
-                headers: {
-                    "Content-Type":
-                        "text/plain;charset=utf-8"
-                },
+                    method:
+                        "POST",
 
-                body: JSON.stringify({
+                    headers: {
 
-                    action: "addDocument",
+                        "Content-Type":
+                            "text/plain;charset=utf-8"
 
-                    document:
-                        documentData
+                    },
 
-                })
+                    body:
+                        JSON.stringify({
 
-            }
-        );
+                            action:
+                                "addDocument",
+
+                            document:
+                                documentData
+
+                        })
+
+                }
+
+            );
 
 
         const data =
@@ -1066,10 +1216,6 @@ async function handleDocumentSubmit(event) {
         );
 
 
-        // -----------------------------
-        // บันทึกสำเร็จ
-        // -----------------------------
-
         if (data.success) {
 
             alert(
@@ -1077,11 +1223,9 @@ async function handleDocumentSubmit(event) {
             );
 
 
-            // โหลดข้อมูลจากฐานข้อมูลใหม่
             await loadDocuments();
 
 
-            // ล้างฟอร์ม
             const form =
                 document.getElementById(
                     "document-form"
@@ -1095,15 +1239,16 @@ async function handleDocumentSubmit(event) {
             }
 
 
-            // ปิดฟอร์ม
             closeDocumentForm();
 
 
         } else {
 
             alert(
+
                 data.message ||
                 "ไม่สามารถเพิ่มเอกสารได้"
+
             );
 
         }
@@ -1140,7 +1285,7 @@ async function handleDocumentSubmit(event) {
 
 
 // ========================================
-// แสดงรายการเอกสาร
+// RENDER DOCUMENTS
 // ========================================
 
 function renderDocuments() {
@@ -1164,10 +1309,6 @@ function renderDocuments() {
     }
 
 
-    // -----------------------------
-    // จำนวนเอกสาร
-    // -----------------------------
-
     if (documentCount) {
 
         documentCount.textContent =
@@ -1176,11 +1317,10 @@ function renderDocuments() {
     }
 
 
-    // -----------------------------
-    // ไม่มีเอกสาร
-    // -----------------------------
-
-    if (documents.length === 0) {
+    if (
+        documents.length ===
+        0
+    ) {
 
         tableBody.innerHTML = `
 
@@ -1215,149 +1355,632 @@ function renderDocuments() {
     }
 
 
-    // -----------------------------
-    // แสดงรายการ
-    // -----------------------------
-
     tableBody.innerHTML =
+
         documents
-            .map(function (documentItem) {
+            .map(
+                function (
+                    documentItem
+                ) {
 
-                return `
+                    return `
 
-                    <tr>
+                        <tr>
 
-                        <td>
-                            ${escapeHTML(
-                                documentItem.documentCode
-                            )}
-                        </td>
+                            <td>
+                                ${escapeHTML(
+                                    documentItem.documentCode
+                                )}
+                            </td>
 
-                        <td>
-                            ${escapeHTML(
-                                documentItem.documentName
-                            )}
-                        </td>
+                            <td>
+                                ${escapeHTML(
+                                    documentItem.documentName
+                                )}
+                            </td>
 
-                        <td>
-                            ${escapeHTML(
-                                documentItem.operator
-                            )}
-                        </td>
+                            <td>
+                                ${escapeHTML(
+                                    documentItem.operator
+                                )}
+                            </td>
 
-                        <td>
-                            ${escapeHTML(
-                                documentItem.department
-                            )}
-                        </td>
+                            <td>
+                                ${escapeHTML(
+                                    documentItem.department
+                                )}
+                            </td>
 
-                        <td>
+                            <td>
 
-                            <button
-                                type="button"
-                                class="document-action-button"
-                                disabled
-                            >
-                                จัดการ
-                            </button>
+                                <button
+                                    type="button"
+                                    class="document-action-button"
+                                    disabled
+                                >
+                                    จัดการ
+                                </button>
 
-                        </td>
+                            </td>
 
-                    </tr>
+                        </tr>
 
-                `;
+                    `;
 
-            })
+                }
+            )
             .join("");
 
 }
 
 
 // ========================================
-// เริ่มต้น Document System
+// DASHBOARD COUNTS
 // ========================================
 
-window.addEventListener(
-    "load",
-    function () {
+function updateDashboardCounts() {
 
-        setupDocuments();
+    const cards =
+        document.querySelectorAll(
+            ".dashboard-card"
+        );
+
+
+    if (
+        cards.length <
+        2
+    ) {
+
+        return;
 
     }
-);
+
+
+    const total =
+        documents.length;
+
+
+    const user =
+        getCurrentUser();
+
+
+    let myDocuments =
+        0;
+
+
+    if (user) {
+
+        myDocuments =
+            documents.filter(
+                function (
+                    item
+                ) {
+
+                    return (
+
+                        item.createdByEmail ===
+                        user.email
+
+                    );
+
+                }
+            ).length;
+
+    }
+
+
+    const totalStrong =
+        cards[0].querySelector(
+            "strong"
+        );
+
+
+    const myStrong =
+        cards[1].querySelector(
+            "strong"
+        );
+
+
+    if (totalStrong) {
+
+        totalStrong.textContent =
+            total;
+
+    }
+
+
+    if (myStrong) {
+
+        myStrong.textContent =
+            myDocuments;
+
+    }
+
+}
+
 
 // ========================================
-// ISO INSPECTION SYSTEM
-// FM-OP-11
+// END PART 1
+// ========================================
+// ส่วน Inspection จะต่อใน PART 2
+// ========================================
+// ========================================
+// GGN Docs
+// INSPECTION SYSTEM
+// PART 2 / 2
 // ========================================
 
 
 // ========================================
-// รายการตรวจ ISO
+// SETUP INSPECTION
 // ========================================
 
-const isoInspectionItems = [
+function setupInspections() {
 
-    "ตรวจสอบความพร้อมของพนักงานรักษาความปลอดภัย",
+    const saveButton =
+        document.getElementById(
+            "save-inspection-button"
+        );
 
-    "ตรวจสอบการแต่งกายและเครื่องแบบของพนักงาน",
 
-    "ตรวจสอบบัตรประจำตัวพนักงาน",
+    const resetButton =
+        document.getElementById(
+            "reset-inspection-button"
+        );
 
-    "ตรวจสอบการปฏิบัติหน้าที่ประจำจุด",
 
-    "ตรวจสอบสมุดบันทึกและเอกสารประจำจุด",
+    if (saveButton) {
 
-    "ตรวจสอบอุปกรณ์สื่อสารประจำจุด",
+        saveButton.addEventListener(
+            "click",
+            saveInspection
+        );
 
-    "ตรวจสอบอุปกรณ์และเครื่องมือรักษาความปลอดภัย",
+    }
 
-    "ตรวจสอบความเรียบร้อยของพื้นที่ประจำจุด",
 
-    "ตรวจสอบการเข้า-ออกของบุคคลและยานพาหนะ",
+    if (resetButton) {
 
-    "ตรวจสอบการปฏิบัติตามระเบียบของจุดรักษาความปลอดภัย",
+        resetButton.addEventListener(
+            "click",
+            resetInspectionForm
+        );
 
-    "ตรวจสอบการส่งมอบและรับมอบหน้าที่",
+    }
 
-    "ตรวจสอบการรายงานเหตุการณ์ผิดปกติ",
-
-    "ตรวจสอบการประสานงานกับผู้เกี่ยวข้อง",
-
-    "ตรวจสอบความเรียบร้อยโดยรวมของจุดรักษาความปลอดภัย"
-
-];
+}
 
 
 // ========================================
-// เริ่มต้นระบบ ISO
+// INITIALIZE INSPECTION PAGE
 // ========================================
 
-function setupISOInspection() {
+async function initializeInspectionPage() {
 
     console.log(
-        "กำลังเริ่มต้นระบบตรวจ ISO..."
+        "กำลังเตรียมหน้า การตรวจ ISO..."
     );
 
 
-    renderISOInspectionItems();
+    // ------------------------------------
+    // ตั้งค่าวันที่ / เวลาเริ่มต้น
+    // ------------------------------------
+
+    setDefaultInspectionDateTime();
 
 
-    setupISOForm();
+    // ------------------------------------
+    // โหลดข้อมูลจาก Settings
+    // ------------------------------------
+
+    await loadInspectionSettings();
 
 
-    console.log(
-        "ระบบตรวจ ISO พร้อมใช้งาน"
+    // ------------------------------------
+    // สร้างรายการตรวจ
+    // ------------------------------------
+
+    renderInspectionItems();
+
+}
+
+
+// ========================================
+// DEFAULT DATE / TIME
+// ========================================
+
+function setDefaultInspectionDateTime() {
+
+    const dateInput =
+        document.getElementById(
+            "inspection-date"
+        );
+
+
+    const timeInput =
+        document.getElementById(
+            "inspection-time"
+        );
+
+
+    const now =
+        new Date();
+
+
+    // ------------------------------------
+    // วันที่
+    // ------------------------------------
+
+    if (
+        dateInput &&
+        !dateInput.value
+    ) {
+
+        const year =
+            now.getFullYear();
+
+
+        const month =
+            String(
+                now.getMonth() + 1
+            ).padStart(
+                2,
+                "0"
+            );
+
+
+        const day =
+            String(
+                now.getDate()
+            ).padStart(
+                2,
+                "0"
+            );
+
+
+        dateInput.value =
+            `${year}-${month}-${day}`;
+
+    }
+
+
+    // ------------------------------------
+    // เวลา
+    // ------------------------------------
+
+    if (
+        timeInput &&
+        !timeInput.value
+    ) {
+
+        const hours =
+            String(
+                now.getHours()
+            ).padStart(
+                2,
+                "0"
+            );
+
+
+        const minutes =
+            String(
+                now.getMinutes()
+            ).padStart(
+                2,
+                "0"
+            );
+
+
+        timeInput.value =
+            `${hours}:${minutes}`;
+
+    }
+
+}
+
+
+// ========================================
+// LOAD INSPECTION SETTINGS
+// ========================================
+
+async function loadInspectionSettings() {
+
+    try {
+
+        console.log(
+            "กำลังโหลดข้อมูลการตรวจจาก Settings..."
+        );
+
+
+        const response =
+            await fetch(
+
+                API_URL,
+
+                {
+
+                    method:
+                        "POST",
+
+                    headers: {
+
+                        "Content-Type":
+                            "text/plain;charset=utf-8"
+
+                    },
+
+                    body:
+                        JSON.stringify({
+
+                            action:
+                                "getInspectionSettings"
+
+                        })
+
+                }
+
+            );
+
+
+        const data =
+            await response.json();
+
+
+        console.log(
+            "ข้อมูล Settings การตรวจ:",
+            data
+        );
+
+
+        if (!data.success) {
+
+            console.warn(
+                "ไม่สามารถโหลด Settings การตรวจได้"
+            );
+
+            return;
+
+        }
+
+
+        // ------------------------------------
+        // จุดตรวจ
+        // ------------------------------------
+
+        if (
+            Array.isArray(
+                data.locations
+            )
+        ) {
+
+            inspectionLocations =
+                data.locations;
+
+        }
+
+
+        // ------------------------------------
+        // ผู้ตรวจ
+        // ------------------------------------
+
+        if (
+            Array.isArray(
+                data.inspectors
+            )
+        ) {
+
+            inspectionInspectors =
+                data.inspectors;
+
+        }
+
+
+        // ------------------------------------
+        // รายการตรวจ
+        // ------------------------------------
+
+        if (
+            Array.isArray(
+                data.items
+            )
+        ) {
+
+            inspectionItems =
+                data.items;
+
+        }
+
+
+        renderInspectionLocations();
+
+        renderInspectionInspectors();
+
+
+    } catch (error) {
+
+        console.error(
+            "โหลดข้อมูลการตรวจไม่สำเร็จ:",
+            error
+        );
+
+    }
+
+}
+
+
+// ========================================
+// RENDER LOCATIONS
+// ========================================
+
+function renderInspectionLocations() {
+
+    const select =
+        document.getElementById(
+            "inspection-location"
+        );
+
+
+    if (!select) {
+
+        return;
+
+    }
+
+
+    select.innerHTML = `
+
+        <option value="">
+            -- เลือกจุดตรวจ --
+        </option>
+
+    `;
+
+
+    inspectionLocations.forEach(
+        function (location) {
+
+            const option =
+                document.createElement(
+                    "option"
+                );
+
+
+            // รองรับทั้ง String
+            // และ Object
+
+            if (
+                typeof location ===
+                "object"
+            ) {
+
+                option.value =
+                    location.value ||
+                    location.name ||
+                    location.locationName ||
+                    "";
+
+
+                option.textContent =
+                    location.label ||
+                    location.name ||
+                    location.locationName ||
+                    option.value;
+
+            } else {
+
+                option.value =
+                    location;
+
+
+                option.textContent =
+                    location;
+
+            }
+
+
+            if (option.value) {
+
+                select.appendChild(
+                    option
+                );
+
+            }
+
+        }
     );
 
 }
 
 
 // ========================================
-// สร้างรายการตรวจ 1–14
+// RENDER INSPECTORS
 // ========================================
 
-function renderISOInspectionItems() {
+function renderInspectionInspectors() {
+
+    const select =
+        document.getElementById(
+            "inspection-inspector"
+        );
+
+
+    if (!select) {
+
+        return;
+
+    }
+
+
+    select.innerHTML = `
+
+        <option value="">
+            -- เลือกผู้ตรวจ --
+        </option>
+
+    `;
+
+
+    inspectionInspectors.forEach(
+        function (inspector) {
+
+            const option =
+                document.createElement(
+                    "option"
+                );
+
+
+            // รองรับทั้ง String
+            // และ Object
+
+            if (
+                typeof inspector ===
+                "object"
+            ) {
+
+                option.value =
+                    inspector.value ||
+                    inspector.name ||
+                    inspector.inspectorName ||
+                    "";
+
+
+                option.textContent =
+                    inspector.label ||
+                    inspector.name ||
+                    inspector.inspectorName ||
+                    option.value;
+
+            } else {
+
+                option.value =
+                    inspector;
+
+
+                option.textContent =
+                    inspector;
+
+            }
+
+
+            if (option.value) {
+
+                select.appendChild(
+                    option
+                );
+
+            }
+
+        }
+    );
+
+}
+
+
+// ========================================
+// RENDER INSPECTION ITEMS
+// ========================================
+
+function renderInspectionItems() {
 
     const container =
         document.getElementById(
@@ -1367,24 +1990,20 @@ function renderISOInspectionItems() {
 
     if (!container) {
 
-        console.warn(
-            "ไม่พบ #inspection-items"
-        );
-
         return;
 
     }
 
 
-    // -----------------------------
-    // ไม่มีรายการ
-    // -----------------------------
+    // ------------------------------------
+    // ถ้ายังไม่มีรายการ
+    // ------------------------------------
 
     if (
         !Array.isArray(
-            isoInspectionItems
+            inspectionItems
         ) ||
-        isoInspectionItems.length === 0
+        inspectionItems.length === 0
     ) {
 
         container.innerHTML = `
@@ -1400,7 +2019,7 @@ function renderISOInspectionItems() {
                 </strong>
 
                 <span>
-                    ระบบยังไม่มีรายการตรวจสำหรับเอกสารนี้
+                    ไม่พบรายการตรวจในระบบ
                 </span>
 
             </div>
@@ -1412,319 +2031,226 @@ function renderISOInspectionItems() {
     }
 
 
-    // -----------------------------
+    // ------------------------------------
     // สร้างรายการ
-    // -----------------------------
+    // ------------------------------------
 
-    container.innerHTML =
-        isoInspectionItems
-            .map(function (item, index) {
+    container.innerHTML = "";
 
-                const itemNo =
-                    index + 1;
 
+    inspectionItems.forEach(
+        function (
+            item,
+            index
+        ) {
 
-                return `
-
-                    <div
-                        class="inspection-item"
-                        data-item-no="${itemNo}"
-                    >
-
-
-                        <!-- ITEM HEADER -->
-
-                        <div
-                            class="inspection-item-header"
-                        >
-
-                            <div
-                                class="inspection-item-number"
-                            >
-                                ${itemNo}
-                            </div>
-
-
-                            <div
-                                class="inspection-item-name"
-                            >
-                                ${escapeHTML(item)}
-                            </div>
-
-                        </div>
-
-
-                        <!-- RESULT -->
-
-                        <div
-                            class="inspection-result"
-                        >
-
-
-                            <div
-                                class="result-option"
-                            >
-
-                                <input
-                                    type="radio"
-                                    id="result-pass-${itemNo}"
-                                    name="inspection-result-${itemNo}"
-                                    value="ผ่าน"
-                                >
-
-                                <label
-                                    for="result-pass-${itemNo}"
-                                >
-                                    ✓ ผ่าน
-                                </label>
-
-                            </div>
-
-
-                            <div
-                                class="result-option"
-                            >
-
-                                <input
-                                    type="radio"
-                                    id="result-fail-${itemNo}"
-                                    name="inspection-result-${itemNo}"
-                                    value="ไม่ผ่าน"
-                                >
-
-                                <label
-                                    for="result-fail-${itemNo}"
-                                >
-                                    ✕ ไม่ผ่าน
-                                </label>
-
-                            </div>
-
-
-                        </div>
-
-
-                        <!-- REMARK / SOLUTION -->
-
-                        <div
-                            class="inspection-fields"
-                        >
-
-
-                            <div
-                                class="inspection-field"
-                            >
-
-                                <label
-                                    for="remark-${itemNo}"
-                                >
-                                    หมายเหตุ
-                                </label>
-
-                                <textarea
-                                    id="remark-${itemNo}"
-                                    name="remark-${itemNo}"
-                                    placeholder="ระบุหมายเหตุ (ถ้ามี)"
-                                ></textarea>
-
-                            </div>
-
-
-                            <div
-                                class="inspection-field"
-                            >
-
-                                <label
-                                    for="solution-${itemNo}"
-                                >
-                                    วิธีแก้ไข
-                                </label>
-
-                                <textarea
-                                    id="solution-${itemNo}"
-                                    name="solution-${itemNo}"
-                                    placeholder="ระบุวิธีแก้ไข (ถ้ามี)"
-                                ></textarea>
-
-                            </div>
-
-
-                        </div>
-
-
-                    </div>
-
-                `;
-
-            })
-            .join("");
-
-}
-
-
-// ========================================
-// ตั้งค่า ISO Form
-// ========================================
-
-function setupISOForm() {
-
-    const isoForm =
-        document.getElementById(
-            "iso-inspection-form"
-        );
-
-
-    if (!isoForm) {
-
-        console.warn(
-            "ไม่พบ #iso-inspection-form"
-        );
-
-        return;
-
-    }
-
-
-    isoForm.addEventListener(
-        "submit",
-        handleISOFormSubmit
-    );
-
-
-    // -----------------------------
-    // ปุ่มล้างข้อมูล
-    // -----------------------------
-
-    const resetButton =
-        document.getElementById(
-            "reset-iso-form"
-        );
-
-
-    if (resetButton) {
-
-        resetButton.addEventListener(
-            "click",
-            resetISOForm
-        );
-
-    }
-
-}
-
-
-// ========================================
-// บันทึกข้อมูล ISO
-// ========================================
-
-function handleISOFormSubmit(event) {
-
-    event.preventDefault();
-
-
-    console.log(
-        "กำลังตรวจสอบข้อมูล ISO..."
-    );
-
-
-    const form =
-        event.target;
-
-
-    const inspectionDate =
-        document.getElementById(
-            "inspection-date"
-        )?.value || "";
-
-
-    const inspectionTime =
-        document.getElementById(
-            "inspection-time"
-        )?.value || "";
-
-
-    const locationName =
-        document.getElementById(
-            "inspection-location"
-        )?.value || "";
-
-
-    const inspectorName =
-        document.getElementById(
-            "inspection-inspector"
-        )?.value || "";
-
-
-    // -----------------------------
-    // ตรวจสอบข้อมูลหลัก
-    // -----------------------------
-
-    if (
-        !inspectionDate ||
-        !inspectionTime ||
-        !locationName ||
-        !inspectorName
-    ) {
-
-        alert(
-            "กรุณากรอกข้อมูลการตรวจให้ครบถ้วน"
-        );
-
-        return;
-
-    }
-
-
-    // -----------------------------
-    // เก็บรายการตรวจ
-    // -----------------------------
-
-    const inspectionItems = [];
-
-
-    isoInspectionItems.forEach(
-        function (item, index) {
-
-            const itemNo =
+            const itemNumber =
+                item.itemNo ||
+                item.no ||
                 index + 1;
 
 
-            const result =
-                document.querySelector(
-                    `input[name="inspection-result-${itemNo}"]:checked`
+            const itemText =
+                item.item ||
+                item.name ||
+                item.description ||
+                "";
+
+
+            const row =
+                document.createElement(
+                    "div"
                 );
 
 
-            const remark =
-                document.getElementById(
-                    `remark-${itemNo}`
-                )?.value.trim() || "";
+            row.className =
+                "inspection-item";
 
 
-            const solution =
-                document.getElementById(
-                    `solution-${itemNo}`
-                )?.value.trim() || "";
+            row.dataset.itemNo =
+                itemNumber;
 
 
-            inspectionItems.push({
+            row.innerHTML = `
+
+                <div class="inspection-item-header">
+
+                    <div class="inspection-item-number">
+                        ${escapeHTML(
+                            itemNumber
+                        )}
+                    </div>
+
+                    <div class="inspection-item-text">
+                        ${escapeHTML(
+                            itemText
+                        )}
+                    </div>
+
+                </div>
+
+
+                <div class="inspection-result-group">
+
+                    <label class="inspection-result-option">
+
+                        <input
+                            type="radio"
+                            name="inspection-result-${escapeHTML(
+                                itemNumber
+                            )}"
+                            value="ผ่าน"
+                        >
+
+                        <span>
+                            ผ่าน
+                        </span>
+
+                    </label>
+
+
+                    <label class="inspection-result-option">
+
+                        <input
+                            type="radio"
+                            name="inspection-result-${escapeHTML(
+                                itemNumber
+                            )}"
+                            value="ไม่ผ่าน"
+                        >
+
+                        <span>
+                            ไม่ผ่าน
+                        </span>
+
+                    </label>
+
+                </div>
+
+
+                <div class="inspection-remark-group">
+
+                    <label>
+                        หมายเหตุ
+                    </label>
+
+                    <input
+                        type="text"
+                        class="inspection-remark"
+                        data-item-no="${escapeHTML(
+                            itemNumber
+                        )}"
+                        placeholder="ระบุหมายเหตุ (ถ้ามี)"
+                    >
+
+                </div>
+
+
+                <div class="inspection-solution-group">
+
+                    <label>
+                        วิธีแก้ไข
+                    </label>
+
+                    <input
+                        type="text"
+                        class="inspection-solution"
+                        data-item-no="${escapeHTML(
+                            itemNumber
+                        )}"
+                        placeholder="ระบุวิธีแก้ไข (ถ้ามี)"
+                    >
+
+                </div>
+
+            `;
+
+
+            container.appendChild(
+                row
+            );
+
+        }
+    );
+
+}
+
+
+// ========================================
+// COLLECT INSPECTION ITEMS
+// ========================================
+
+function collectInspectionItems() {
+
+    const container =
+        document.getElementById(
+            "inspection-items"
+        );
+
+
+    if (!container) {
+
+        return [];
+
+    }
+
+
+    const rows =
+        container.querySelectorAll(
+            ".inspection-item"
+        );
+
+
+    const result =
+        [];
+
+
+    rows.forEach(
+        function (row) {
+
+            const itemNo =
+                row.dataset.itemNo;
+
+
+            const resultInput =
+                row.querySelector(
+                    `input[name="inspection-result-${CSS.escape(
+                        itemNo
+                    )}"]:checked`
+                );
+
+
+            const remarkInput =
+                row.querySelector(
+                    ".inspection-remark"
+                );
+
+
+            const solutionInput =
+                row.querySelector(
+                    ".inspection-solution"
+                );
+
+
+            result.push({
 
                 itemNo:
                     itemNo,
 
-                item:
-                    item,
-
                 result:
-                    result
-                        ? result.value
+                    resultInput
+                        ? resultInput.value
                         : "",
 
                 remark:
-                    remark,
+                    remarkInput
+                        ? remarkInput.value.trim()
+                        : "",
 
                 solution:
-                    solution
+                    solutionInput
+                        ? solutionInput.value.trim()
+                        : ""
 
             });
 
@@ -1732,12 +2258,120 @@ function handleISOFormSubmit(event) {
     );
 
 
-    // -----------------------------
-    // ตรวจว่าครบทุกรายการหรือไม่
-    // -----------------------------
+    return result;
 
-    const incompleteItems =
-        inspectionItems.filter(
+}
+
+
+// ========================================
+// VALIDATE INSPECTION FORM
+// ========================================
+
+function validateInspectionForm() {
+
+    const inspectionDate =
+        document.getElementById(
+            "inspection-date"
+        );
+
+
+    const inspectionTime =
+        document.getElementById(
+            "inspection-time"
+        );
+
+
+    const location =
+        document.getElementById(
+            "inspection-location"
+        );
+
+
+    const inspector =
+        document.getElementById(
+            "inspection-inspector"
+        );
+
+
+    if (
+        !inspectionDate ||
+        !inspectionDate.value
+    ) {
+
+        alert(
+            "กรุณาเลือกวันที่ตรวจ"
+        );
+
+        return false;
+
+    }
+
+
+    if (
+        !inspectionTime ||
+        !inspectionTime.value
+    ) {
+
+        alert(
+            "กรุณาเลือกเวลาตรวจ"
+        );
+
+        return false;
+
+    }
+
+
+    if (
+        !location ||
+        !location.value
+    ) {
+
+        alert(
+            "กรุณาเลือกจุดตรวจ"
+        );
+
+        return false;
+
+    }
+
+
+    if (
+        !inspector ||
+        !inspector.value
+    ) {
+
+        alert(
+            "กรุณาเลือกผู้ตรวจ"
+        );
+
+        return false;
+
+    }
+
+
+    const items =
+        collectInspectionItems();
+
+
+    if (
+        items.length === 0
+    ) {
+
+        alert(
+            "ไม่พบรายการตรวจ"
+        );
+
+        return false;
+
+    }
+
+
+    // ------------------------------------
+    // ต้องตอบทุกรายการ
+    // ------------------------------------
+
+    const incomplete =
+        items.find(
             function (item) {
 
                 return !item.result;
@@ -1746,44 +2380,44 @@ function handleISOFormSubmit(event) {
         );
 
 
-    if (
-        incompleteItems.length > 0
-    ) {
+    if (incomplete) {
 
         alert(
-            "กรุณาเลือกผลการตรวจให้ครบทุกรายการ"
+            "กรุณาเลือกผลการตรวจให้ครบทุกข้อ"
         );
 
+        return false;
 
-        // เลื่อนไปยังรายการแรกที่ยังไม่ได้เลือก
-
-        const firstIncomplete =
-            document.querySelector(
-                `.inspection-item[data-item-no="${incompleteItems[0].itemNo}"]`
-            );
+    }
 
 
-        if (firstIncomplete) {
+    return true;
 
-            firstIncomplete.scrollIntoView({
+}
 
-                behavior: "smooth",
 
-                block: "center"
+// ========================================
+// SAVE INSPECTION
+// ========================================
 
-            });
+async function saveInspection() {
 
-        }
+    // ------------------------------------
+    // ตรวจสอบข้อมูล
+    // ------------------------------------
 
+    if (
+        !validateInspectionForm()
+    ) {
 
         return;
 
     }
 
 
-    // -----------------------------
-    // User ปัจจุบัน
-    // -----------------------------
+    // ------------------------------------
+    // User
+    // ------------------------------------
 
     const user =
         getCurrentUser();
@@ -1800,26 +2434,61 @@ function handleISOFormSubmit(event) {
     }
 
 
-    // -----------------------------
-    // สร้างข้อมูล Inspection
-    // -----------------------------
+    // ------------------------------------
+    // Elements
+    // ------------------------------------
+
+    const dateInput =
+        document.getElementById(
+            "inspection-date"
+        );
+
+
+    const timeInput =
+        document.getElementById(
+            "inspection-time"
+        );
+
+
+    const locationInput =
+        document.getElementById(
+            "inspection-location"
+        );
+
+
+    const inspectorInput =
+        document.getElementById(
+            "inspection-inspector"
+        );
+
+
+    const saveButton =
+        document.getElementById(
+            "save-inspection-button"
+        );
+
+
+    // ------------------------------------
+    // Inspection Data
+    // ------------------------------------
+
+    const items =
+        collectInspectionItems();
+
 
     const inspectionData = {
 
         inspectionDate:
-            inspectionDate,
+            dateInput.value,
 
         inspectionTime:
-            inspectionTime,
+            timeInput.value,
 
         locationName:
-            locationName,
+            locationInput.value,
 
         inspectorName:
-            inspectorName,
-
-        inspectionItems:
-            inspectionItems,
+            inspectorInput.value,
 
         documentCode:
             "FM-OP-11",
@@ -1827,90 +2496,494 @@ function handleISOFormSubmit(event) {
         documentName:
             "รายงานการตรวจจุดพนักงานรักษาความปลอดภัย",
 
+        items:
+            items,
+
         createdBy:
-            user.name || "",
+            user.name ||
+            "",
 
         createdByEmail:
-            user.email || "",
-
-        createdAt:
-            new Date().toISOString(),
-
-        documentStatus:
-            "completed"
+            user.email ||
+            ""
 
     };
 
 
     console.log(
-        "ข้อมูลการตรวจ ISO ที่เตรียมบันทึก:",
+        "ข้อมูลการตรวจที่จะบันทึก:",
         inspectionData
     );
 
 
-    // -----------------------------
-    // ขั้นนี้ยังไม่ส่ง API
-    // -----------------------------
+    // ------------------------------------
+    // Disable Button
+    // ------------------------------------
 
-    alert(
-        "ตรวจสอบข้อมูลเรียบร้อยแล้ว\n\n" +
-        "เปิด Console (F12) เพื่อดูข้อมูลที่ระบบเตรียมบันทึก"
-    );
+    if (saveButton) {
+
+        saveButton.disabled =
+            true;
+
+        saveButton.textContent =
+            "กำลังบันทึก...";
+
+    }
+
+
+    try {
+
+        // --------------------------------
+        // ส่งข้อมูลไป Apps Script
+        // --------------------------------
+
+        const response =
+            await fetch(
+
+                API_URL,
+
+                {
+
+                    method:
+                        "POST",
+
+                    headers: {
+
+                        "Content-Type":
+                            "text/plain;charset=utf-8"
+
+                    },
+
+                    body:
+                        JSON.stringify({
+
+                            action:
+                                "saveInspection",
+
+                            inspection:
+                                inspectionData
+
+                        })
+
+                }
+
+            );
+
+
+        const data =
+            await response.json();
+
+
+        console.log(
+            "ผลการบันทึกการตรวจ:",
+            data
+        );
+
+
+        // --------------------------------
+        // Success
+        // --------------------------------
+
+        if (data.success) {
+
+            alert(
+                "บันทึกการตรวจสำเร็จ"
+            );
+
+
+            // --------------------------------
+            // ถ้ามี URL ของไฟล์ ISO
+            // --------------------------------
+
+            if (
+                data.fileUrl
+            ) {
+
+                const openFile =
+                    confirm(
+                        "สร้างเอกสาร ISO สำเร็จ\n\nต้องการเปิดเอกสารหรือไม่?"
+                    );
+
+
+                if (openFile) {
+
+                    window.open(
+                        data.fileUrl,
+                        "_blank"
+                    );
+
+                }
+
+            }
+
+
+            resetInspectionForm();
+
+
+        } else {
+
+            alert(
+
+                data.message ||
+                "ไม่สามารถบันทึกการตรวจได้"
+
+            );
+
+        }
+
+
+    } catch (error) {
+
+        console.error(
+            "บันทึกการตรวจไม่สำเร็จ:",
+            error
+        );
+
+
+        alert(
+            "ไม่สามารถเชื่อมต่อฐานข้อมูลได้"
+        );
+
+
+    } finally {
+
+        if (saveButton) {
+
+            saveButton.disabled =
+                false;
+
+            saveButton.textContent =
+                "บันทึกการตรวจ";
+
+        }
+
+    }
 
 }
 
 
 // ========================================
-// ล้างข้อมูล ISO
+// RESET INSPECTION FORM
 // ========================================
 
-function resetISOForm() {
+function resetInspectionForm() {
 
-    const isoForm =
+    const dateInput =
         document.getElementById(
-            "iso-inspection-form"
+            "inspection-date"
         );
 
 
-    if (!isoForm) {
+    const timeInput =
+        document.getElementById(
+            "inspection-time"
+        );
 
-        return;
+
+    const locationInput =
+        document.getElementById(
+            "inspection-location"
+        );
+
+
+    const inspectorInput =
+        document.getElementById(
+            "inspection-inspector"
+        );
+
+
+    // ------------------------------------
+    // Reset fields
+    // ------------------------------------
+
+    if (locationInput) {
+
+        locationInput.value =
+            "";
 
     }
 
 
-    const confirmed =
-        confirm(
-            "ต้องการล้างข้อมูลการตรวจทั้งหมดหรือไม่?"
-        );
+    if (inspectorInput) {
 
-
-    if (!confirmed) {
-
-        return;
+        inspectorInput.value =
+            "";
 
     }
 
 
-    isoForm.reset();
+    // ------------------------------------
+    // ล้างรายการตรวจ
+    // ------------------------------------
+
+    const resultInputs =
+        document.querySelectorAll(
+            "#inspection-items input[type='radio']"
+        );
+
+
+    resultInputs.forEach(
+        function (input) {
+
+            input.checked =
+                false;
+
+        }
+    );
+
+
+    const remarks =
+        document.querySelectorAll(
+            "#inspection-items .inspection-remark"
+        );
+
+
+    remarks.forEach(
+        function (input) {
+
+            input.value =
+                "";
+
+        }
+    );
+
+
+    const solutions =
+        document.querySelectorAll(
+            "#inspection-items .inspection-solution"
+        );
+
+
+    solutions.forEach(
+        function (input) {
+
+            input.value =
+                "";
+
+        }
+    );
+
+
+    // ------------------------------------
+    // ตั้งวันที่/เวลาใหม่
+    // ------------------------------------
+
+    if (dateInput) {
+
+        dateInput.value =
+            "";
+
+    }
+
+
+    if (timeInput) {
+
+        timeInput.value =
+            "";
+
+    }
+
+
+    setDefaultInspectionDateTime();
 
 
     console.log(
-        "ล้างข้อมูล ISO เรียบร้อย"
+        "ล้างข้อมูลการตรวจแล้ว"
     );
 
 }
 
 
 // ========================================
-// เริ่มต้น ISO System
+// SEARCH DOCUMENTS
+// ========================================
+
+function searchDocuments(
+    keyword
+) {
+
+    const searchKeyword =
+        String(
+            keyword || ""
+        )
+        .trim()
+        .toLowerCase();
+
+
+    if (!searchKeyword) {
+
+        return documents;
+
+    }
+
+
+    return documents.filter(
+        function (item) {
+
+            const code =
+                String(
+                    item.documentCode ||
+                    ""
+                )
+                .toLowerCase();
+
+
+            const name =
+                String(
+                    item.documentName ||
+                    ""
+                )
+                .toLowerCase();
+
+
+            const operator =
+                String(
+                    item.operator ||
+                    ""
+                )
+                .toLowerCase();
+
+
+            const department =
+                String(
+                    item.department ||
+                    ""
+                )
+                .toLowerCase();
+
+
+            return (
+
+                code.includes(
+                    searchKeyword
+                ) ||
+
+                name.includes(
+                    searchKeyword
+                ) ||
+
+                operator.includes(
+                    searchKeyword
+                ) ||
+
+                department.includes(
+                    searchKeyword
+                )
+
+            );
+
+        }
+    );
+
+}
+
+
+// ========================================
+// SEARCH PAGE SETUP
+// ========================================
+
+function setupDocumentSearch() {
+
+    const input =
+        document.getElementById(
+            "document-search"
+        );
+
+
+    const button =
+        document.querySelector(
+            "#page-search .search-box button"
+        );
+
+
+    if (!input) {
+
+        return;
+
+    }
+
+
+    function executeSearch() {
+
+        const results =
+            searchDocuments(
+                input.value
+            );
+
+
+        console.log(
+            "ผลการค้นหา:",
+            results
+        );
+
+
+        // --------------------------------
+        // แสดงผลแบบง่ายใน Console
+        // --------------------------------
+
+        if (
+            results.length === 0
+        ) {
+
+            alert(
+                "ไม่พบเอกสารที่ค้นหา"
+            );
+
+            return;
+
+        }
+
+
+        alert(
+            `พบเอกสาร ${results.length} รายการ`
+        );
+
+    }
+
+
+    if (button) {
+
+        button.addEventListener(
+            "click",
+            executeSearch
+        );
+
+    }
+
+
+    input.addEventListener(
+        "keydown",
+        function (event) {
+
+            if (
+                event.key ===
+                "Enter"
+            ) {
+
+                executeSearch();
+
+            }
+
+        }
+    );
+
+}
+
+
+// ========================================
+// INITIALIZE SEARCH
 // ========================================
 
 window.addEventListener(
     "load",
     function () {
 
-        setupISOInspection();
+        setupDocumentSearch();
 
     }
 );
+
+
+// ========================================
+// END GGN DOCS APP.JS
+// ========================================
