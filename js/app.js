@@ -1,9 +1,12 @@
 // ========================================
 // GGN Docs
 // APP.JS
-// PART 1 / 2
 // ========================================
 
+
+// ========================================
+// CONFIGURATION
+// ========================================
 
 const API_URL =
     "https://script.google.com/macros/s/AKfycbz9EhtzTMEMO2QvXKpiBr2oFbHvwz7w6jPfY9NsWEwRPZFnGyAbM9nxXdYcaWxKvdK0rQ/exec";
@@ -19,15 +22,33 @@ const GOOGLE_CLIENT_ID =
 
 let documents = [];
 
+
+// ========================================
+// INSPECTION DATA
+// ========================================
+
+// จุดตรวจทั้งหมด
 let inspectionLocations = [];
 
+
+// ผู้ตรวจ / สายตรวจทั้งหมด
 let inspectionInspectors = [];
 
+
+// รายการตรวจทั้งหมด
 let inspectionItems = [];
 
 
+// ป้องกันการโหลด Settings ซ้ำโดยไม่จำเป็น
+let inspectionSettingsLoaded = false;
+
+
+// ป้องกันการ bind event ซ้ำ
+let inspectionPageInitialized = false;
+
+
 // ========================================
-// เริ่มต้นระบบ
+// APPLICATION START
 // ========================================
 
 window.addEventListener(
@@ -48,12 +69,14 @@ window.addEventListener(
 
         setupInspections();
 
+        setupDocumentSearch();
+
     }
 );
 
 
 // ========================================
-// รอ Google Identity Services
+// GOOGLE IDENTITY SERVICES
 // ========================================
 
 function waitForGoogle() {
@@ -80,7 +103,7 @@ function waitForGoogle() {
 
 
 // ========================================
-// ทดสอบ Google Apps Script
+// TEST GOOGLE APPS SCRIPT API
 // ========================================
 
 async function testAPI() {
@@ -114,7 +137,6 @@ async function testAPI() {
                 "เชื่อมต่อระบบสำเร็จ";
 
         }
-
 
     } catch (error) {
 
@@ -201,7 +223,9 @@ function initGoogleLogin() {
 // GOOGLE LOGIN SUCCESS
 // ========================================
 
-async function handleGoogleLogin(response) {
+async function handleGoogleLogin(
+    response
+) {
 
     console.log(
         "Google Login สำเร็จ"
@@ -308,7 +332,6 @@ async function loginToGGN(
 
         }
 
-
     } catch (error) {
 
         console.error(
@@ -351,10 +374,19 @@ function showLoginMessage(
 
 
 // ========================================
-// LOGIN SUCCESS → APP
+// SHOW USER INFO
 // ========================================
 
-function showUserInfo(user) {
+function showUserInfo(
+    user
+) {
+
+    if (!user) {
+
+        return;
+
+    }
+
 
     // ------------------------------------
     // Save Session
@@ -445,7 +477,7 @@ function showUserInfo(user) {
 
 
     // ------------------------------------
-    // Welcome
+    // Welcome Message
     // ------------------------------------
 
     const welcomeMessage =
@@ -648,7 +680,9 @@ function setupNavigation() {
 // SHOW PAGE
 // ========================================
 
-function showPage(page) {
+function showPage(
+    page
+) {
 
     const pages =
         document.querySelectorAll(
@@ -661,6 +695,10 @@ function showPage(page) {
 
             item.style.display =
                 "none";
+
+            item.classList.remove(
+                "active"
+            );
 
         }
     );
@@ -676,6 +714,10 @@ function showPage(page) {
 
         selectedPage.style.display =
             "block";
+
+        selectedPage.classList.add(
+            "active"
+        );
 
     }
 
@@ -718,6 +760,19 @@ function showPage(page) {
     ) {
 
         initializeInspectionPage();
+
+    }
+
+
+    // ------------------------------------
+    // เมื่อเปิดหน้า Documents
+    // ------------------------------------
+
+    if (
+        page === "documents"
+    ) {
+
+        loadDocuments();
 
     }
 
@@ -783,7 +838,9 @@ function logout() {
 // ESCAPE HTML
 // ========================================
 
-function escapeHTML(value) {
+function escapeHTML(
+    value
+) {
 
     return String(
         value ?? ""
@@ -817,9 +874,84 @@ function escapeHTML(value) {
 }
 
 
-// ========================================
+// ======================================================
 // DOCUMENT SYSTEM
+// ======================================================
+
+
 // ========================================
+// SETUP DOCUMENTS
+// ========================================
+
+function setupDocuments() {
+
+    const addButton =
+        document.getElementById(
+            "add-document-button"
+        );
+
+
+    const closeButton =
+        document.getElementById(
+            "close-document-form"
+        );
+
+
+    const cancelButton =
+        document.getElementById(
+            "cancel-document-button"
+        );
+
+
+    const documentForm =
+        document.getElementById(
+            "document-form"
+        );
+
+
+    if (addButton) {
+
+        addButton.addEventListener(
+            "click",
+            openDocumentForm
+        );
+
+    }
+
+
+    if (closeButton) {
+
+        closeButton.addEventListener(
+            "click",
+            closeDocumentForm
+        );
+
+    }
+
+
+    if (cancelButton) {
+
+        cancelButton.addEventListener(
+            "click",
+            closeDocumentForm
+        );
+
+    }
+
+
+    if (documentForm) {
+
+        documentForm.addEventListener(
+            "submit",
+            handleDocumentSubmit
+        );
+
+    }
+
+
+    loadDocuments();
+
+}
 
 
 // ========================================
@@ -898,7 +1030,6 @@ async function loadDocuments() {
 
         renderDocuments();
 
-
         updateDashboardCounts();
 
     } catch (error) {
@@ -909,81 +1040,6 @@ async function loadDocuments() {
         );
 
     }
-
-}
-
-
-// ========================================
-// DOCUMENT SETUP
-// ========================================
-
-function setupDocuments() {
-
-    const addButton =
-        document.getElementById(
-            "add-document-button"
-        );
-
-
-    const closeButton =
-        document.getElementById(
-            "close-document-form"
-        );
-
-
-    const cancelButton =
-        document.getElementById(
-            "cancel-document-button"
-        );
-
-
-    const documentForm =
-        document.getElementById(
-            "document-form"
-        );
-
-
-    if (addButton) {
-
-        addButton.addEventListener(
-            "click",
-            openDocumentForm
-        );
-
-    }
-
-
-    if (closeButton) {
-
-        closeButton.addEventListener(
-            "click",
-            closeDocumentForm
-        );
-
-    }
-
-
-    if (cancelButton) {
-
-        cancelButton.addEventListener(
-            "click",
-            closeDocumentForm
-        );
-
-    }
-
-
-    if (documentForm) {
-
-        documentForm.addEventListener(
-            "submit",
-            handleDocumentSubmit
-        );
-
-    }
-
-
-    loadDocuments();
 
 }
 
@@ -1241,7 +1297,6 @@ async function handleDocumentSubmit(
 
             closeDocumentForm();
 
-
         } else {
 
             alert(
@@ -1252,7 +1307,6 @@ async function handleDocumentSubmit(
             );
 
         }
-
 
     } catch (error) {
 
@@ -1265,7 +1319,6 @@ async function handleDocumentSubmit(
         alert(
             "ไม่สามารถเชื่อมต่อฐานข้อมูลได้"
         );
-
 
     } finally {
 
@@ -1318,8 +1371,7 @@ function renderDocuments() {
 
 
     if (
-        documents.length ===
-        0
+        documents.length === 0
     ) {
 
         tableBody.innerHTML = `
@@ -1427,8 +1479,7 @@ function updateDashboardCounts() {
 
 
     if (
-        cards.length <
-        2
+        cards.length < 2
     ) {
 
         return;
@@ -1458,8 +1509,15 @@ function updateDashboardCounts() {
 
                     return (
 
-                        item.createdByEmail ===
-                        user.email
+                        String(
+                            item.createdByEmail ||
+                            ""
+                        ).toLowerCase()
+                        ===
+                        String(
+                            user.email ||
+                            ""
+                        ).toLowerCase()
 
                     );
 
@@ -1499,16 +1557,9 @@ function updateDashboardCounts() {
 }
 
 
-// ========================================
-// END PART 1
-// ========================================
-// ส่วน Inspection จะต่อใน PART 2
-// ========================================
-// ========================================
-// GGN Docs
+// ======================================================
 // INSPECTION SYSTEM
-// PART 2 / 2
-// ========================================
+// ======================================================
 
 
 // ========================================
@@ -1562,25 +1613,27 @@ async function initializeInspectionPage() {
     );
 
 
-    // ------------------------------------
-    // ตั้งค่าวันที่ / เวลาเริ่มต้น
-    // ------------------------------------
-
     setDefaultInspectionDateTime();
 
 
-    // ------------------------------------
-    // โหลดข้อมูลจาก Settings
-    // ------------------------------------
+    if (
+        !inspectionSettingsLoaded
+    ) {
 
-    await loadInspectionSettings();
+        await loadInspectionSettings();
 
+        inspectionSettingsLoaded =
+            true;
 
-    // ------------------------------------
-    // สร้างรายการตรวจ
-    // ------------------------------------
+    } else {
 
-    renderInspectionItems();
+        renderInspectionLocations();
+
+        renderInspectionInspectors();
+
+        renderInspectionItems();
+
+    }
 
 }
 
@@ -1606,10 +1659,6 @@ function setDefaultInspectionDateTime() {
     const now =
         new Date();
 
-
-    // ------------------------------------
-    // วันที่
-    // ------------------------------------
 
     if (
         dateInput &&
@@ -1644,10 +1693,6 @@ function setDefaultInspectionDateTime() {
     }
 
 
-    // ------------------------------------
-    // เวลา
-    // ------------------------------------
-
     if (
         timeInput &&
         !timeInput.value
@@ -1680,6 +1725,52 @@ function setDefaultInspectionDateTime() {
 
 
 // ========================================
+// GET SETTINGS
+// ========================================
+
+async function getInspectionSetting(
+    settingType
+) {
+
+    const response =
+        await fetch(
+
+            API_URL,
+
+            {
+
+                method:
+                    "POST",
+
+                headers: {
+
+                    "Content-Type":
+                        "text/plain;charset=utf-8"
+
+                },
+
+                body:
+                    JSON.stringify({
+
+                        action:
+                            "getSettings",
+
+                        settingType:
+                            settingType
+
+                    })
+
+            }
+
+        );
+
+
+    return await response.json();
+
+}
+
+
+// ========================================
 // LOAD INSPECTION SETTINGS
 // ========================================
 
@@ -1688,120 +1779,146 @@ async function loadInspectionSettings() {
     try {
 
         console.log(
-            "กำลังโหลดข้อมูลการตรวจจาก Settings..."
+            "กำลังโหลดข้อมูล Inspection Settings..."
         );
 
 
-        const response =
-            await fetch(
+        // ------------------------------------
+        // LOCATION
+        // ------------------------------------
 
-                API_URL,
-
-                {
-
-                    method:
-                        "POST",
-
-                    headers: {
-
-                        "Content-Type":
-                            "text/plain;charset=utf-8"
-
-                    },
-
-                    body:
-                        JSON.stringify({
-
-                            action:
-                                "getInspectionSettings"
-
-                        })
-
-                }
-
+        const locationData =
+            await getInspectionSetting(
+                "location"
             );
-
-
-        const data =
-            await response.json();
 
 
         console.log(
-            "ข้อมูล Settings การตรวจ:",
-            data
+            "ข้อมูล Location:",
+            locationData
         );
 
 
-        if (!data.success) {
-
-            console.warn(
-                "ไม่สามารถโหลด Settings การตรวจได้"
-            );
-
-            return;
-
-        }
-
-
-        // ------------------------------------
-        // จุดตรวจ
-        // ------------------------------------
-
         if (
+            locationData.success &&
             Array.isArray(
-                data.locations
+                locationData.settings
             )
         ) {
 
             inspectionLocations =
-                data.locations;
+                locationData.settings;
+
+        } else {
+
+            inspectionLocations =
+                [];
 
         }
 
 
         // ------------------------------------
-        // ผู้ตรวจ
+        // INSPECTOR
         // ------------------------------------
 
+        const inspectorData =
+            await getInspectionSetting(
+                "inspector"
+            );
+
+
+        console.log(
+            "ข้อมูล Inspector:",
+            inspectorData
+        );
+
+
         if (
+            inspectorData.success &&
             Array.isArray(
-                data.inspectors
+                inspectorData.settings
             )
         ) {
 
             inspectionInspectors =
-                data.inspectors;
+                inspectorData.settings;
+
+        } else {
+
+            inspectionInspectors =
+                [];
 
         }
 
 
         // ------------------------------------
-        // รายการตรวจ
+        // INSPECTION ITEMS
         // ------------------------------------
 
+        const itemData =
+            await getInspectionSetting(
+                "inspectionItem"
+            );
+
+
+        console.log(
+            "ข้อมูลรายการตรวจ:",
+            itemData
+        );
+
+
         if (
+            itemData.success &&
             Array.isArray(
-                data.items
+                itemData.settings
             )
         ) {
 
             inspectionItems =
-                data.items;
+                itemData.settings;
+
+        } else {
+
+            inspectionItems =
+                [];
 
         }
+
+
+        // ------------------------------------
+        // RENDER
+        // ------------------------------------
+
+        renderInspectionLocations();
+
+        renderInspectionInspectors();
+
+        renderInspectionItems();
+
+
+    } catch (error) {
+
+        console.error(
+            "โหลด Inspection Settings ไม่สำเร็จ:",
+            error
+        );
+
+
+        inspectionLocations =
+            [];
+
+        inspectionInspectors =
+            [];
+
+        inspectionItems =
+            [];
 
 
         renderInspectionLocations();
 
         renderInspectionInspectors();
 
-
-    } catch (error) {
-
-        console.error(
-            "โหลดข้อมูลการตรวจไม่สำเร็จ:",
-            error
-        );
+        renderInspectionItems();
 
     }
 
@@ -1822,6 +1939,10 @@ function renderInspectionLocations() {
 
     if (!select) {
 
+        console.warn(
+            "ไม่พบ #inspection-location"
+        );
+
         return;
 
     }
@@ -1837,7 +1958,49 @@ function renderInspectionLocations() {
 
 
     inspectionLocations.forEach(
-        function (location) {
+        function (
+            location
+        ) {
+
+            if (!location) {
+
+                return;
+
+            }
+
+
+            // --------------------------------
+            // ตรวจ Status
+            // --------------------------------
+
+            if (
+                location.status &&
+                String(
+                    location.status
+                ).toLowerCase()
+                !==
+                "active"
+            ) {
+
+                return;
+
+            }
+
+
+            const locationName =
+                location.settingName ||
+                location.name ||
+                location.settingValue ||
+                location.locationName ||
+                "";
+
+
+            if (!locationName) {
+
+                return;
+
+            }
+
 
             const option =
                 document.createElement(
@@ -1845,46 +2008,17 @@ function renderInspectionLocations() {
                 );
 
 
-            // รองรับทั้ง String
-            // และ Object
-
-            if (
-                typeof location ===
-                "object"
-            ) {
-
-                option.value =
-                    location.value ||
-                    location.name ||
-                    location.locationName ||
-                    "";
+            option.value =
+                locationName;
 
 
-                option.textContent =
-                    location.label ||
-                    location.name ||
-                    location.locationName ||
-                    option.value;
-
-            } else {
-
-                option.value =
-                    location;
+            option.textContent =
+                locationName;
 
 
-                option.textContent =
-                    location;
-
-            }
-
-
-            if (option.value) {
-
-                select.appendChild(
-                    option
-                );
-
-            }
+            select.appendChild(
+                option
+            );
 
         }
     );
@@ -1906,6 +2040,10 @@ function renderInspectionInspectors() {
 
     if (!select) {
 
+        console.warn(
+            "ไม่พบ #inspection-inspector"
+        );
+
         return;
 
     }
@@ -1921,7 +2059,49 @@ function renderInspectionInspectors() {
 
 
     inspectionInspectors.forEach(
-        function (inspector) {
+        function (
+            inspector
+        ) {
+
+            if (!inspector) {
+
+                return;
+
+            }
+
+
+            // --------------------------------
+            // ตรวจ Status
+            // --------------------------------
+
+            if (
+                inspector.status &&
+                String(
+                    inspector.status
+                ).toLowerCase()
+                !==
+                "active"
+            ) {
+
+                return;
+
+            }
+
+
+            const inspectorName =
+                inspector.settingName ||
+                inspector.name ||
+                inspector.settingValue ||
+                inspector.inspectorName ||
+                "";
+
+
+            if (!inspectorName) {
+
+                return;
+
+            }
+
 
             const option =
                 document.createElement(
@@ -1929,46 +2109,17 @@ function renderInspectionInspectors() {
                 );
 
 
-            // รองรับทั้ง String
-            // และ Object
-
-            if (
-                typeof inspector ===
-                "object"
-            ) {
-
-                option.value =
-                    inspector.value ||
-                    inspector.name ||
-                    inspector.inspectorName ||
-                    "";
+            option.value =
+                inspectorName;
 
 
-                option.textContent =
-                    inspector.label ||
-                    inspector.name ||
-                    inspector.inspectorName ||
-                    option.value;
-
-            } else {
-
-                option.value =
-                    inspector;
+            option.textContent =
+                inspectorName;
 
 
-                option.textContent =
-                    inspector;
-
-            }
-
-
-            if (option.value) {
-
-                select.appendChild(
-                    option
-                );
-
-            }
+            select.appendChild(
+                option
+            );
 
         }
     );
@@ -1994,10 +2145,6 @@ function renderInspectionItems() {
 
     }
 
-
-    // ------------------------------------
-    // ถ้ายังไม่มีรายการ
-    // ------------------------------------
 
     if (
         !Array.isArray(
@@ -2032,27 +2179,61 @@ function renderInspectionItems() {
 
 
     // ------------------------------------
-    // สร้างรายการ
+    // Sort รายการตรวจ
     // ------------------------------------
+
+    const sortedItems =
+        [...inspectionItems]
+            .sort(
+                function (
+                    a,
+                    b
+                ) {
+
+                    const aNo =
+                        Number(
+                            a.sortOrder ||
+                            a.itemNo ||
+                            a.no ||
+                            999
+                        );
+
+
+                    const bNo =
+                        Number(
+                            b.sortOrder ||
+                            b.itemNo ||
+                            b.no ||
+                            999
+                        );
+
+
+                    return aNo - bNo;
+
+                }
+            );
+
 
     container.innerHTML = "";
 
 
-    inspectionItems.forEach(
+    sortedItems.forEach(
         function (
             item,
             index
         ) {
 
             const itemNumber =
+                item.sortOrder ||
                 item.itemNo ||
                 item.no ||
                 index + 1;
 
 
             const itemText =
-                item.item ||
+                item.settingName ||
                 item.name ||
+                item.item ||
                 item.description ||
                 "";
 
@@ -2076,15 +2257,20 @@ function renderInspectionItems() {
                 <div class="inspection-item-header">
 
                     <div class="inspection-item-number">
+
                         ${escapeHTML(
                             itemNumber
                         )}
+
                     </div>
 
+
                     <div class="inspection-item-text">
+
                         ${escapeHTML(
                             itemText
                         )}
+
                     </div>
 
                 </div>
@@ -2092,7 +2278,9 @@ function renderInspectionItems() {
 
                 <div class="inspection-result-group">
 
-                    <label class="inspection-result-option">
+                    <label
+                        class="inspection-result-option"
+                    >
 
                         <input
                             type="radio"
@@ -2109,7 +2297,9 @@ function renderInspectionItems() {
                     </label>
 
 
-                    <label class="inspection-result-option">
+                    <label
+                        class="inspection-result-option"
+                    >
 
                         <input
                             type="radio"
@@ -2127,42 +2317,6 @@ function renderInspectionItems() {
 
                 </div>
 
-
-                <div class="inspection-remark-group">
-
-                    <label>
-                        หมายเหตุ
-                    </label>
-
-                    <input
-                        type="text"
-                        class="inspection-remark"
-                        data-item-no="${escapeHTML(
-                            itemNumber
-                        )}"
-                        placeholder="ระบุหมายเหตุ (ถ้ามี)"
-                    >
-
-                </div>
-
-
-                <div class="inspection-solution-group">
-
-                    <label>
-                        วิธีแก้ไข
-                    </label>
-
-                    <input
-                        type="text"
-                        class="inspection-solution"
-                        data-item-no="${escapeHTML(
-                            itemNumber
-                        )}"
-                        placeholder="ระบุวิธีแก้ไข (ถ้ามี)"
-                    >
-
-                </div>
-
             `;
 
 
@@ -2171,6 +2325,65 @@ function renderInspectionItems() {
             );
 
         }
+    );
+
+
+    // ====================================
+    // REMARK + SOLUTION
+    // ====================================
+
+    const additionalSection =
+        document.createElement(
+            "div"
+        );
+
+
+    additionalSection.className =
+        "inspection-additional";
+
+
+    additionalSection.innerHTML = `
+
+        <div class="inspection-remark-group">
+
+            <label
+                for="inspection-remark"
+            >
+                หมายเหตุ
+            </label>
+
+            <textarea
+                id="inspection-remark"
+                class="inspection-remark"
+                rows="3"
+                placeholder="ระบุหมายเหตุ (ถ้ามี)"
+            ></textarea>
+
+        </div>
+
+
+        <div class="inspection-solution-group">
+
+            <label
+                for="inspection-solution"
+            >
+                แนวทางแก้ไข
+            </label>
+
+            <textarea
+                id="inspection-solution"
+                class="inspection-solution"
+                rows="3"
+                placeholder="ระบุแนวทางแก้ไข (ถ้ามี)"
+            ></textarea>
+
+        </div>
+
+    `;
+
+
+    container.appendChild(
+        additionalSection
     );
 
 }
@@ -2206,7 +2419,9 @@ function collectInspectionItems() {
 
 
     rows.forEach(
-        function (row) {
+        function (
+            row
+        ) {
 
             const itemNo =
                 row.dataset.itemNo;
@@ -2214,21 +2429,13 @@ function collectInspectionItems() {
 
             const resultInput =
                 row.querySelector(
-                    `input[name="inspection-result-${CSS.escape(
-                        itemNo
-                    )}"]:checked`
+                    `input[type="radio"]:checked`
                 );
 
 
-            const remarkInput =
+            const itemText =
                 row.querySelector(
-                    ".inspection-remark"
-                );
-
-
-            const solutionInput =
-                row.querySelector(
-                    ".inspection-solution"
+                    ".inspection-item-text"
                 );
 
 
@@ -2237,19 +2444,14 @@ function collectInspectionItems() {
                 itemNo:
                     itemNo,
 
+                item:
+                    itemText
+                        ? itemText.textContent.trim()
+                        : "",
+
                 result:
                     resultInput
                         ? resultInput.value
-                        : "",
-
-                remark:
-                    remarkInput
-                        ? remarkInput.value.trim()
-                        : "",
-
-                solution:
-                    solutionInput
-                        ? solutionInput.value.trim()
                         : ""
 
             });
@@ -2259,6 +2461,54 @@ function collectInspectionItems() {
 
 
     return result;
+
+}
+
+
+// ========================================
+// COLLECT REMARK
+// ========================================
+
+function collectInspectionRemark() {
+
+    const input =
+        document.getElementById(
+            "inspection-remark"
+        );
+
+
+    if (!input) {
+
+        return "";
+
+    }
+
+
+    return input.value.trim();
+
+}
+
+
+// ========================================
+// COLLECT SOLUTION
+// ========================================
+
+function collectInspectionSolution() {
+
+    const input =
+        document.getElementById(
+            "inspection-solution"
+        );
+
+
+    if (!input) {
+
+        return "";
+
+    }
+
+
+    return input.value.trim();
 
 }
 
@@ -2293,6 +2543,10 @@ function validateInspectionForm() {
         );
 
 
+    // ------------------------------------
+    // DATE
+    // ------------------------------------
+
     if (
         !inspectionDate ||
         !inspectionDate.value
@@ -2306,6 +2560,10 @@ function validateInspectionForm() {
 
     }
 
+
+    // ------------------------------------
+    // TIME
+    // ------------------------------------
 
     if (
         !inspectionTime ||
@@ -2321,6 +2579,10 @@ function validateInspectionForm() {
     }
 
 
+    // ------------------------------------
+    // LOCATION
+    // ------------------------------------
+
     if (
         !location ||
         !location.value
@@ -2335,6 +2597,10 @@ function validateInspectionForm() {
     }
 
 
+    // ------------------------------------
+    // INSPECTOR
+    // ------------------------------------
+
     if (
         !inspector ||
         !inspector.value
@@ -2348,6 +2614,10 @@ function validateInspectionForm() {
 
     }
 
+
+    // ------------------------------------
+    // ITEMS
+    // ------------------------------------
 
     const items =
         collectInspectionItems();
@@ -2367,12 +2637,14 @@ function validateInspectionForm() {
 
 
     // ------------------------------------
-    // ต้องตอบทุกรายการ
+    // CHECK EVERY ITEM
     // ------------------------------------
 
     const incomplete =
         items.find(
-            function (item) {
+            function (
+                item
+            ) {
 
                 return !item.result;
 
@@ -2397,13 +2669,43 @@ function validateInspectionForm() {
 
 
 // ========================================
+// GENERATE RECORD ID
+// ========================================
+
+function generateRecordId() {
+
+    if (
+        window.crypto &&
+        typeof crypto.randomUUID ===
+        "function"
+    ) {
+
+        return crypto.randomUUID();
+
+    }
+
+
+    return (
+
+        Date.now().toString() +
+        "-" +
+        Math.random()
+            .toString(36)
+            .substring(2)
+
+    );
+
+}
+
+
+// ========================================
 // SAVE INSPECTION
 // ========================================
 
 async function saveInspection() {
 
     // ------------------------------------
-    // ตรวจสอบข้อมูล
+    // Validate
     // ------------------------------------
 
     if (
@@ -2469,14 +2771,45 @@ async function saveInspection() {
 
 
     // ------------------------------------
-    // Inspection Data
+    // Generate Record ID
+    // ------------------------------------
+
+    const recordId =
+        generateRecordId();
+
+
+    // ------------------------------------
+    // Collect Items
     // ------------------------------------
 
     const items =
         collectInspectionItems();
 
 
+    // ------------------------------------
+    // Remark
+    // ------------------------------------
+
+    const remark =
+        collectInspectionRemark();
+
+
+    // ------------------------------------
+    // Solution
+    // ------------------------------------
+
+    const solution =
+        collectInspectionSolution();
+
+
+    // ====================================
+    // INSPECTION DATA
+    // ====================================
+
     const inspectionData = {
+
+        recordId:
+            recordId,
 
         inspectionDate:
             dateInput.value,
@@ -2489,6 +2822,12 @@ async function saveInspection() {
 
         inspectorName:
             inspectorInput.value,
+
+        remark:
+            remark,
+
+        solution:
+            solution,
 
         documentCode:
             "FM-OP-11",
@@ -2533,10 +2872,6 @@ async function saveInspection() {
 
     try {
 
-        // --------------------------------
-        // ส่งข้อมูลไป Apps Script
-        // --------------------------------
-
         const response =
             await fetch(
 
@@ -2580,9 +2915,9 @@ async function saveInspection() {
         );
 
 
-        // --------------------------------
-        // Success
-        // --------------------------------
+        // ====================================
+        // SUCCESS
+        // ====================================
 
         if (data.success) {
 
@@ -2592,7 +2927,7 @@ async function saveInspection() {
 
 
             // --------------------------------
-            // ถ้ามี URL ของไฟล์ ISO
+            // Open ISO file
             // --------------------------------
 
             if (
@@ -2601,7 +2936,10 @@ async function saveInspection() {
 
                 const openFile =
                     confirm(
-                        "สร้างเอกสาร ISO สำเร็จ\n\nต้องการเปิดเอกสารหรือไม่?"
+
+                        "สร้างเอกสาร ISO สำเร็จ\n\n" +
+                        "ต้องการเปิดเอกสารหรือไม่?"
+
                     );
 
 
@@ -2617,6 +2955,10 @@ async function saveInspection() {
             }
 
 
+            // --------------------------------
+            // Reset Form
+            // --------------------------------
+
             resetInspectionForm();
 
 
@@ -2631,7 +2973,6 @@ async function saveInspection() {
 
         }
 
-
     } catch (error) {
 
         console.error(
@@ -2643,7 +2984,6 @@ async function saveInspection() {
         alert(
             "ไม่สามารถเชื่อมต่อฐานข้อมูลได้"
         );
-
 
     } finally {
 
@@ -2693,7 +3033,7 @@ function resetInspectionForm() {
 
 
     // ------------------------------------
-    // Reset fields
+    // Reset Location
     // ------------------------------------
 
     if (locationInput) {
@@ -2704,6 +3044,10 @@ function resetInspectionForm() {
     }
 
 
+    // ------------------------------------
+    // Reset Inspector
+    // ------------------------------------
+
     if (inspectorInput) {
 
         inspectorInput.value =
@@ -2713,7 +3057,7 @@ function resetInspectionForm() {
 
 
     // ------------------------------------
-    // ล้างรายการตรวจ
+    // Reset Results
     // ------------------------------------
 
     const resultInputs =
@@ -2723,7 +3067,9 @@ function resetInspectionForm() {
 
 
     resultInputs.forEach(
-        function (input) {
+        function (
+            input
+        ) {
 
             input.checked =
                 false;
@@ -2732,40 +3078,44 @@ function resetInspectionForm() {
     );
 
 
-    const remarks =
-        document.querySelectorAll(
-            "#inspection-items .inspection-remark"
+    // ------------------------------------
+    // Reset Remark
+    // ------------------------------------
+
+    const remark =
+        document.getElementById(
+            "inspection-remark"
         );
 
 
-    remarks.forEach(
-        function (input) {
+    if (remark) {
 
-            input.value =
-                "";
+        remark.value =
+            "";
 
-        }
-    );
-
-
-    const solutions =
-        document.querySelectorAll(
-            "#inspection-items .inspection-solution"
-        );
-
-
-    solutions.forEach(
-        function (input) {
-
-            input.value =
-                "";
-
-        }
-    );
+    }
 
 
     // ------------------------------------
-    // ตั้งวันที่/เวลาใหม่
+    // Reset Solution
+    // ------------------------------------
+
+    const solution =
+        document.getElementById(
+            "inspection-solution"
+        );
+
+
+    if (solution) {
+
+        solution.value =
+            "";
+
+    }
+
+
+    // ------------------------------------
+    // Reset Date / Time
     // ------------------------------------
 
     if (dateInput) {
@@ -2794,8 +3144,13 @@ function resetInspectionForm() {
 }
 
 
-// ========================================
+// ======================================================
 // SEARCH DOCUMENTS
+// ======================================================
+
+
+// ========================================
+// SEARCH
 // ========================================
 
 function searchDocuments(
@@ -2818,7 +3173,9 @@ function searchDocuments(
 
 
     return documents.filter(
-        function (item) {
+        function (
+            item
+        ) {
 
             const code =
                 String(
@@ -2917,10 +3274,6 @@ function setupDocumentSearch() {
         );
 
 
-        // --------------------------------
-        // แสดงผลแบบง่ายใน Console
-        // --------------------------------
-
         if (
             results.length === 0
         ) {
@@ -2953,7 +3306,9 @@ function setupDocumentSearch() {
 
     input.addEventListener(
         "keydown",
-        function (event) {
+        function (
+            event
+        ) {
 
             if (
                 event.key ===
@@ -2971,19 +3326,5 @@ function setupDocumentSearch() {
 
 
 // ========================================
-// INITIALIZE SEARCH
-// ========================================
-
-window.addEventListener(
-    "load",
-    function () {
-
-        setupDocumentSearch();
-
-    }
-);
-
-
-// ========================================
-// END GGN DOCS APP.JS
+// END APP.JS
 // ========================================

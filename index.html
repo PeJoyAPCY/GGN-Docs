@@ -63,7 +63,9 @@
         style="display: none;"
     >
 
-        <!-- HEADER -->
+        <!-- ======================================
+             HEADER
+        ======================================= -->
 
         <header class="app-header">
 
@@ -106,12 +108,16 @@
         </header>
 
 
-        <!-- MAIN LAYOUT -->
+        <!-- ======================================
+             MAIN LAYOUT
+        ======================================= -->
 
         <div class="app-layout">
 
 
-            <!-- SIDEBAR -->
+            <!-- ==================================
+                 SIDEBAR
+            =================================== -->
 
             <aside class="sidebar">
 
@@ -166,12 +172,16 @@
             </aside>
 
 
-            <!-- CONTENT -->
+            <!-- ==================================
+                 CONTENT
+            =================================== -->
 
             <main class="main-content">
 
 
-                <!-- DASHBOARD -->
+                <!-- =================================
+                     DASHBOARD
+                ================================== -->
 
                 <section
                     id="page-dashboard"
@@ -262,9 +272,9 @@
                 </section>
 
 
-                <!-- ==========================================
+                <!-- =================================
                      DOCUMENTS
-                =========================================== -->
+                ================================== -->
 
                 <section
                     id="page-documents"
@@ -331,8 +341,6 @@
 
                         </div>
 
-
-                        <!-- TABLE -->
 
                         <div class="document-table-wrapper">
 
@@ -444,8 +452,6 @@
                                 <div class="form-grid">
 
 
-                                    <!-- DOCUMENT CODE -->
-
                                     <div class="form-group">
 
                                         <label for="document-code">
@@ -462,8 +468,6 @@
 
                                     </div>
 
-
-                                    <!-- DOCUMENT NAME -->
 
                                     <div class="form-group">
 
@@ -482,8 +486,6 @@
                                     </div>
 
 
-                                    <!-- OPERATOR -->
-
                                     <div class="form-group">
 
                                         <label for="document-operator">
@@ -500,8 +502,6 @@
 
                                     </div>
 
-
-                                    <!-- DEPARTMENT -->
 
                                     <div class="form-group">
 
@@ -561,6 +561,11 @@
                     style="display: none;"
                 >
 
+
+                    <!-- ======================================
+                         PAGE HEADER
+                    ======================================= -->
+
                     <div class="page-header">
 
                         <div>
@@ -578,24 +583,28 @@
                     </div>
 
 
-                    <!-- ISO FORM -->
+                    <!-- ======================================
+                         SECTION 1
+                         บันทึกการตรวจทีละ 1 จุด
+                    ======================================= -->
 
                     <div class="iso-form-card">
+
 
                         <div class="iso-form-header">
 
                             <div>
 
                                 <span class="iso-document-code">
-                                    FM-OP-11
+                                    บันทึกการตรวจ
                                 </span>
 
                                 <h3>
-                                    รายงานการตรวจจุดพนักงานรักษาความปลอดภัย
+                                    ตรวจจุดพนักงานรักษาความปลอดภัย
                                 </h3>
 
                                 <p>
-                                    กรุณากรอกข้อมูลการตรวจให้ครบถ้วน
+                                    การบันทึกแต่ละครั้ง = 1 จุดตรวจ
                                 </p>
 
                             </div>
@@ -603,7 +612,9 @@
                         </div>
 
 
-                        <!-- INSPECTION INFORMATION -->
+                        <!-- ==================================
+                             INSPECTION INFORMATION
+                        =================================== -->
 
                         <div class="iso-section">
 
@@ -649,6 +660,28 @@
                                 </div>
 
 
+                                <!-- ZONE -->
+
+                                <div class="form-group">
+
+                                    <label for="inspection-zone">
+                                        เขต
+                                    </label>
+
+                                    <select
+                                        id="inspection-zone"
+                                        name="zone"
+                                    >
+
+                                        <option value="">
+                                            -- เลือกเขต --
+                                        </option>
+
+                                    </select>
+
+                                </div>
+
+
                                 <!-- LOCATION -->
 
                                 <div class="form-group">
@@ -676,7 +709,7 @@
                                 <div class="form-group">
 
                                     <label for="inspection-inspector">
-                                        ผู้ตรวจ
+                                        ผู้ตรวจ / สายตรวจ
                                     </label>
 
                                     <select
@@ -697,7 +730,9 @@
                         </div>
 
 
-                        <!-- INSPECTION ITEMS -->
+                        <!-- ==================================
+                             INSPECTION ITEMS
+                        =================================== -->
 
                         <div class="iso-section">
 
@@ -710,8 +745,6 @@
                                 id="inspection-items"
                                 class="inspection-items"
                             >
-
-                                <!-- JavaScript จะสร้างรายการตรวจ 1 - 14 ตรงนี้ -->
 
                                 <div class="inspection-empty">
 
@@ -734,7 +767,9 @@
                         </div>
 
 
-                        <!-- FORM ACTIONS -->
+                        <!-- ==================================
+                             FORM ACTIONS
+                        =================================== -->
 
                         <div class="iso-form-actions">
 
@@ -757,12 +792,215 @@
 
                         </div>
 
+
+                    </div>
+
+
+                    <!-- ======================================
+                         SECTION 2
+                         สร้าง FM-OP-11
+                    ======================================= -->
+
+                    <div
+                        id="fmop11-generator"
+                        class="iso-form-card"
+                    >
+
+
+                        <div class="iso-form-header">
+
+                            <div>
+
+                                <span class="iso-document-code">
+                                    FM-OP-11
+                                </span>
+
+                                <h3>
+                                    สร้างรายงาน FM-OP-11
+                                </h3>
+
+                                <p>
+                                    เลือกรายการตรวจที่บันทึกไว้
+                                    เพื่อนำไปสร้างแบบฟอร์ม ISO
+                                </p>
+
+                            </div>
+
+                        </div>
+
+
+                        <!-- ==================================
+                             SEARCH / FILTER
+                        =================================== -->
+
+                        <div class="iso-section">
+
+                            <div class="iso-section-title">
+                                เลือกข้อมูลรายงาน
+                            </div>
+
+
+                            <div class="form-grid">
+
+
+                                <!-- REPORT DATE -->
+
+                                <div class="form-group">
+
+                                    <label for="fmop11-date">
+                                        วันที่ตรวจ
+                                    </label>
+
+                                    <input
+                                        type="date"
+                                        id="fmop11-date"
+                                        name="fmop11Date"
+                                    >
+
+                                </div>
+
+
+                                <!-- REPORT INSPECTOR -->
+
+                                <div class="form-group">
+
+                                    <label for="fmop11-inspector">
+                                        ผู้ตรวจ / สายตรวจ
+                                    </label>
+
+                                    <select
+                                        id="fmop11-inspector"
+                                        name="fmop11Inspector"
+                                    >
+
+                                        <option value="">
+                                            -- เลือกผู้ตรวจ --
+                                        </option>
+
+                                    </select>
+
+                                </div>
+
+
+                                <div class="form-group">
+
+                                    <label>
+                                        จำนวนที่เลือก
+                                    </label>
+
+                                    <div
+                                        id="fmop11-selected-count"
+                                        class="selected-count-display"
+                                    >
+                                        0 / 14 จุด
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+
+                            <div class="form-actions">
+
+                                <button
+                                    id="search-fmop11-button"
+                                    class="primary-button"
+                                    type="button"
+                                >
+                                    🔍 ค้นหารายการตรวจ
+                                </button>
+
+                            </div>
+
+                        </div>
+
+
+                        <!-- ==================================
+                             INSPECTION RECORD LIST
+                        =================================== -->
+
+                        <div class="iso-section">
+
+                            <div class="iso-section-title">
+                                รายการตรวจที่บันทึกไว้
+                            </div>
+
+
+                            <div
+                                id="fmop11-record-list"
+                                class="fmop11-record-list"
+                            >
+
+                                <div class="inspection-empty">
+
+                                    <div>
+                                        📋
+                                    </div>
+
+                                    <strong>
+                                        ยังไม่มีรายการให้เลือก
+                                    </strong>
+
+                                    <span>
+                                        เลือกวันที่และผู้ตรวจ
+                                        แล้วกด “ค้นหารายการตรวจ”
+                                    </span>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+
+                        <!-- ==================================
+                             GENERATE ACTION
+                        =================================== -->
+
+                        <div class="iso-form-actions">
+
+                            <button
+                                id="clear-fmop11-selection-button"
+                                class="secondary-button"
+                                type="button"
+                            >
+                                ล้างการเลือก
+                            </button>
+
+
+                            <button
+                                id="generate-fmop11-button"
+                                class="primary-button"
+                                type="button"
+                                disabled
+                            >
+                                📄 สร้าง FM-OP-11
+                            </button>
+
+                        </div>
+
+
+                        <!-- ==================================
+                             GENERATE STATUS
+                        =================================== -->
+
+                        <div
+                            id="fmop11-generation-status"
+                            class="generation-status"
+                            style="display: none;"
+                        >
+
+                        </div>
+
+
                     </div>
 
                 </section>
-<!-- ==========================================
-        SEARCH
-=========================================== -->
+
+
+                <!-- ==========================================
+                     SEARCH
+                =========================================== -->
 
                 <section
                     id="page-search"
@@ -790,6 +1028,7 @@
                             id="document-search"
                             placeholder="ค้นหาชื่อเอกสาร..."
                         >
+
 
                         <button
                             type="button"
