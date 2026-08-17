@@ -1285,3 +1285,632 @@ window.addEventListener(
 
     }
 );
+
+// ========================================
+// ISO INSPECTION SYSTEM
+// FM-OP-11
+// ========================================
+
+
+// ========================================
+// รายการตรวจ ISO
+// ========================================
+
+const isoInspectionItems = [
+
+    "ตรวจสอบความพร้อมของพนักงานรักษาความปลอดภัย",
+
+    "ตรวจสอบการแต่งกายและเครื่องแบบของพนักงาน",
+
+    "ตรวจสอบบัตรประจำตัวพนักงาน",
+
+    "ตรวจสอบการปฏิบัติหน้าที่ประจำจุด",
+
+    "ตรวจสอบสมุดบันทึกและเอกสารประจำจุด",
+
+    "ตรวจสอบอุปกรณ์สื่อสารประจำจุด",
+
+    "ตรวจสอบอุปกรณ์และเครื่องมือรักษาความปลอดภัย",
+
+    "ตรวจสอบความเรียบร้อยของพื้นที่ประจำจุด",
+
+    "ตรวจสอบการเข้า-ออกของบุคคลและยานพาหนะ",
+
+    "ตรวจสอบการปฏิบัติตามระเบียบของจุดรักษาความปลอดภัย",
+
+    "ตรวจสอบการส่งมอบและรับมอบหน้าที่",
+
+    "ตรวจสอบการรายงานเหตุการณ์ผิดปกติ",
+
+    "ตรวจสอบการประสานงานกับผู้เกี่ยวข้อง",
+
+    "ตรวจสอบความเรียบร้อยโดยรวมของจุดรักษาความปลอดภัย"
+
+];
+
+
+// ========================================
+// เริ่มต้นระบบ ISO
+// ========================================
+
+function setupISOInspection() {
+
+    console.log(
+        "กำลังเริ่มต้นระบบตรวจ ISO..."
+    );
+
+
+    renderISOInspectionItems();
+
+
+    setupISOForm();
+
+
+    console.log(
+        "ระบบตรวจ ISO พร้อมใช้งาน"
+    );
+
+}
+
+
+// ========================================
+// สร้างรายการตรวจ 1–14
+// ========================================
+
+function renderISOInspectionItems() {
+
+    const container =
+        document.getElementById(
+            "inspection-items"
+        );
+
+
+    if (!container) {
+
+        console.warn(
+            "ไม่พบ #inspection-items"
+        );
+
+        return;
+
+    }
+
+
+    // -----------------------------
+    // ไม่มีรายการ
+    // -----------------------------
+
+    if (
+        !Array.isArray(
+            isoInspectionItems
+        ) ||
+        isoInspectionItems.length === 0
+    ) {
+
+        container.innerHTML = `
+
+            <div class="inspection-empty">
+
+                <div>
+                    📋
+                </div>
+
+                <strong>
+                    ยังไม่มีรายการตรวจ
+                </strong>
+
+                <span>
+                    ระบบยังไม่มีรายการตรวจสำหรับเอกสารนี้
+                </span>
+
+            </div>
+
+        `;
+
+        return;
+
+    }
+
+
+    // -----------------------------
+    // สร้างรายการ
+    // -----------------------------
+
+    container.innerHTML =
+        isoInspectionItems
+            .map(function (item, index) {
+
+                const itemNo =
+                    index + 1;
+
+
+                return `
+
+                    <div
+                        class="inspection-item"
+                        data-item-no="${itemNo}"
+                    >
+
+
+                        <!-- ITEM HEADER -->
+
+                        <div
+                            class="inspection-item-header"
+                        >
+
+                            <div
+                                class="inspection-item-number"
+                            >
+                                ${itemNo}
+                            </div>
+
+
+                            <div
+                                class="inspection-item-name"
+                            >
+                                ${escapeHTML(item)}
+                            </div>
+
+                        </div>
+
+
+                        <!-- RESULT -->
+
+                        <div
+                            class="inspection-result"
+                        >
+
+
+                            <div
+                                class="result-option"
+                            >
+
+                                <input
+                                    type="radio"
+                                    id="result-pass-${itemNo}"
+                                    name="inspection-result-${itemNo}"
+                                    value="ผ่าน"
+                                >
+
+                                <label
+                                    for="result-pass-${itemNo}"
+                                >
+                                    ✓ ผ่าน
+                                </label>
+
+                            </div>
+
+
+                            <div
+                                class="result-option"
+                            >
+
+                                <input
+                                    type="radio"
+                                    id="result-fail-${itemNo}"
+                                    name="inspection-result-${itemNo}"
+                                    value="ไม่ผ่าน"
+                                >
+
+                                <label
+                                    for="result-fail-${itemNo}"
+                                >
+                                    ✕ ไม่ผ่าน
+                                </label>
+
+                            </div>
+
+
+                        </div>
+
+
+                        <!-- REMARK / SOLUTION -->
+
+                        <div
+                            class="inspection-fields"
+                        >
+
+
+                            <div
+                                class="inspection-field"
+                            >
+
+                                <label
+                                    for="remark-${itemNo}"
+                                >
+                                    หมายเหตุ
+                                </label>
+
+                                <textarea
+                                    id="remark-${itemNo}"
+                                    name="remark-${itemNo}"
+                                    placeholder="ระบุหมายเหตุ (ถ้ามี)"
+                                ></textarea>
+
+                            </div>
+
+
+                            <div
+                                class="inspection-field"
+                            >
+
+                                <label
+                                    for="solution-${itemNo}"
+                                >
+                                    วิธีแก้ไข
+                                </label>
+
+                                <textarea
+                                    id="solution-${itemNo}"
+                                    name="solution-${itemNo}"
+                                    placeholder="ระบุวิธีแก้ไข (ถ้ามี)"
+                                ></textarea>
+
+                            </div>
+
+
+                        </div>
+
+
+                    </div>
+
+                `;
+
+            })
+            .join("");
+
+}
+
+
+// ========================================
+// ตั้งค่า ISO Form
+// ========================================
+
+function setupISOForm() {
+
+    const isoForm =
+        document.getElementById(
+            "iso-inspection-form"
+        );
+
+
+    if (!isoForm) {
+
+        console.warn(
+            "ไม่พบ #iso-inspection-form"
+        );
+
+        return;
+
+    }
+
+
+    isoForm.addEventListener(
+        "submit",
+        handleISOFormSubmit
+    );
+
+
+    // -----------------------------
+    // ปุ่มล้างข้อมูล
+    // -----------------------------
+
+    const resetButton =
+        document.getElementById(
+            "reset-iso-form"
+        );
+
+
+    if (resetButton) {
+
+        resetButton.addEventListener(
+            "click",
+            resetISOForm
+        );
+
+    }
+
+}
+
+
+// ========================================
+// บันทึกข้อมูล ISO
+// ========================================
+
+function handleISOFormSubmit(event) {
+
+    event.preventDefault();
+
+
+    console.log(
+        "กำลังตรวจสอบข้อมูล ISO..."
+    );
+
+
+    const form =
+        event.target;
+
+
+    const inspectionDate =
+        document.getElementById(
+            "inspection-date"
+        )?.value || "";
+
+
+    const inspectionTime =
+        document.getElementById(
+            "inspection-time"
+        )?.value || "";
+
+
+    const locationName =
+        document.getElementById(
+            "inspection-location"
+        )?.value || "";
+
+
+    const inspectorName =
+        document.getElementById(
+            "inspection-inspector"
+        )?.value || "";
+
+
+    // -----------------------------
+    // ตรวจสอบข้อมูลหลัก
+    // -----------------------------
+
+    if (
+        !inspectionDate ||
+        !inspectionTime ||
+        !locationName ||
+        !inspectorName
+    ) {
+
+        alert(
+            "กรุณากรอกข้อมูลการตรวจให้ครบถ้วน"
+        );
+
+        return;
+
+    }
+
+
+    // -----------------------------
+    // เก็บรายการตรวจ
+    // -----------------------------
+
+    const inspectionItems = [];
+
+
+    isoInspectionItems.forEach(
+        function (item, index) {
+
+            const itemNo =
+                index + 1;
+
+
+            const result =
+                document.querySelector(
+                    `input[name="inspection-result-${itemNo}"]:checked`
+                );
+
+
+            const remark =
+                document.getElementById(
+                    `remark-${itemNo}`
+                )?.value.trim() || "";
+
+
+            const solution =
+                document.getElementById(
+                    `solution-${itemNo}`
+                )?.value.trim() || "";
+
+
+            inspectionItems.push({
+
+                itemNo:
+                    itemNo,
+
+                item:
+                    item,
+
+                result:
+                    result
+                        ? result.value
+                        : "",
+
+                remark:
+                    remark,
+
+                solution:
+                    solution
+
+            });
+
+        }
+    );
+
+
+    // -----------------------------
+    // ตรวจว่าครบทุกรายการหรือไม่
+    // -----------------------------
+
+    const incompleteItems =
+        inspectionItems.filter(
+            function (item) {
+
+                return !item.result;
+
+            }
+        );
+
+
+    if (
+        incompleteItems.length > 0
+    ) {
+
+        alert(
+            "กรุณาเลือกผลการตรวจให้ครบทุกรายการ"
+        );
+
+
+        // เลื่อนไปยังรายการแรกที่ยังไม่ได้เลือก
+
+        const firstIncomplete =
+            document.querySelector(
+                `.inspection-item[data-item-no="${incompleteItems[0].itemNo}"]`
+            );
+
+
+        if (firstIncomplete) {
+
+            firstIncomplete.scrollIntoView({
+
+                behavior: "smooth",
+
+                block: "center"
+
+            });
+
+        }
+
+
+        return;
+
+    }
+
+
+    // -----------------------------
+    // User ปัจจุบัน
+    // -----------------------------
+
+    const user =
+        getCurrentUser();
+
+
+    if (!user) {
+
+        alert(
+            "ไม่พบข้อมูลผู้ใช้งาน กรุณาเข้าสู่ระบบใหม่"
+        );
+
+        return;
+
+    }
+
+
+    // -----------------------------
+    // สร้างข้อมูล Inspection
+    // -----------------------------
+
+    const inspectionData = {
+
+        inspectionDate:
+            inspectionDate,
+
+        inspectionTime:
+            inspectionTime,
+
+        locationName:
+            locationName,
+
+        inspectorName:
+            inspectorName,
+
+        inspectionItems:
+            inspectionItems,
+
+        documentCode:
+            "FM-OP-11",
+
+        documentName:
+            "รายงานการตรวจจุดพนักงานรักษาความปลอดภัย",
+
+        createdBy:
+            user.name || "",
+
+        createdByEmail:
+            user.email || "",
+
+        createdAt:
+            new Date().toISOString(),
+
+        documentStatus:
+            "completed"
+
+    };
+
+
+    console.log(
+        "ข้อมูลการตรวจ ISO ที่เตรียมบันทึก:",
+        inspectionData
+    );
+
+
+    // -----------------------------
+    // ขั้นนี้ยังไม่ส่ง API
+    // -----------------------------
+
+    alert(
+        "ตรวจสอบข้อมูลเรียบร้อยแล้ว\n\n" +
+        "เปิด Console (F12) เพื่อดูข้อมูลที่ระบบเตรียมบันทึก"
+    );
+
+}
+
+
+// ========================================
+// ล้างข้อมูล ISO
+// ========================================
+
+function resetISOForm() {
+
+    const isoForm =
+        document.getElementById(
+            "iso-inspection-form"
+        );
+
+
+    if (!isoForm) {
+
+        return;
+
+    }
+
+
+    const confirmed =
+        confirm(
+            "ต้องการล้างข้อมูลการตรวจทั้งหมดหรือไม่?"
+        );
+
+
+    if (!confirmed) {
+
+        return;
+
+    }
+
+
+    isoForm.reset();
+
+
+    console.log(
+        "ล้างข้อมูล ISO เรียบร้อย"
+    );
+
+}
+
+
+// ========================================
+// เริ่มต้น ISO System
+// ========================================
+
+window.addEventListener(
+    "load",
+    function () {
+
+        setupISOInspection();
+
+    }
+);
