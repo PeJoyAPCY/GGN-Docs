@@ -829,15 +829,18 @@ function openFMOP11Page() {
 
 function setupISOMenu() {
 
+    console.log(
+        "กำลังเตรียมเมนู ISO..."
+    );
+
+
+    // ====================================
+    // OPEN INSPECTION RECORD
+    // ====================================
+
     const inspectionButton =
         document.getElementById(
             "open-inspection-record-button"
-        );
-
-
-    const fmop11Button =
-        document.getElementById(
-            "open-fmop11-button"
         );
 
 
@@ -845,35 +848,69 @@ function setupISOMenu() {
 
         inspectionButton.addEventListener(
             "click",
-            openInspectionRecordPage
+            function () {
+
+                console.log(
+                    "เปิดหน้าบันทึกการตรวจ"
+                );
+
+
+                openInspectionRecordPage();
+
+            }
+        );
+
+    } else {
+
+        console.warn(
+            "ไม่พบปุ่ม #open-inspection-record-button"
         );
 
     }
+
+
+    // ====================================
+    // OPEN FM-OP-11 GENERATOR
+    // ====================================
+
+    const fmop11Button =
+        document.getElementById(
+            "open-fmop11-button"
+        );
 
 
     if (fmop11Button) {
 
         fmop11Button.addEventListener(
             "click",
-            openFMOP11Page
+            function () {
+
+                console.log(
+                    "เปิดหน้าสร้างรายงาน FM-OP-11"
+                );
+
+
+                openFMOP11Page();
+
+            }
+        );
+
+    } else {
+
+        console.warn(
+            "ไม่พบปุ่ม #open-fmop11-button"
         );
 
     }
 
 
-    // ------------------------------------
-    // BACK BUTTON
-    // ------------------------------------
+    // ====================================
+    // BACK FROM INSPECTION RECORD
+    // ====================================
 
     const backFromRecord =
         document.getElementById(
             "back-to-inspections-from-record"
-        );
-
-
-    const backFromFMOP11 =
-        document.getElementById(
-            "back-to-inspections-from-fmop11"
         );
 
 
@@ -883,6 +920,11 @@ function setupISOMenu() {
             "click",
             function () {
 
+                console.log(
+                    "กลับไปหน้าเมนูการตรวจ ISO"
+                );
+
+
                 showPage(
                     "inspections"
                 );
@@ -890,7 +932,23 @@ function setupISOMenu() {
             }
         );
 
+    } else {
+
+        console.warn(
+            "ไม่พบปุ่ม #back-to-inspections-from-record"
+        );
+
     }
+
+
+    // ====================================
+    // BACK FROM FM-OP-11
+    // ====================================
+
+    const backFromFMOP11 =
+        document.getElementById(
+            "back-to-inspections-from-fmop11"
+        );
 
 
     if (backFromFMOP11) {
@@ -899,11 +957,22 @@ function setupISOMenu() {
             "click",
             function () {
 
+                console.log(
+                    "กลับไปหน้าเมนูการตรวจ ISO"
+                );
+
+
                 showPage(
                     "inspections"
                 );
 
             }
+        );
+
+    } else {
+
+        console.warn(
+            "ไม่พบปุ่ม #back-to-inspections-from-fmop11"
         );
 
     }
