@@ -840,7 +840,7 @@ function setupISOMenu() {
 
     const inspectionButton =
         document.getElementById(
-            "open-inspection-record-button"
+            "open-inspection-record"
         );
 
 
@@ -863,7 +863,7 @@ function setupISOMenu() {
     } else {
 
         console.warn(
-            "ไม่พบปุ่ม #open-inspection-record-button"
+            "ไม่พบ #open-inspection-record"
         );
 
     }
@@ -875,7 +875,7 @@ function setupISOMenu() {
 
     const fmop11Button =
         document.getElementById(
-            "open-fmop11-button"
+            "open-fmop11-generator"
         );
 
 
@@ -898,7 +898,7 @@ function setupISOMenu() {
     } else {
 
         console.warn(
-            "ไม่พบปุ่ม #open-fmop11-button"
+            "ไม่พบ #open-fmop11-generator"
         );
 
     }
@@ -932,12 +932,6 @@ function setupISOMenu() {
             }
         );
 
-    } else {
-
-        console.warn(
-            "ไม่พบปุ่ม #back-to-inspections-from-record"
-        );
-
     }
 
 
@@ -969,13 +963,16 @@ function setupISOMenu() {
             }
         );
 
-    } else {
-
-        console.warn(
-            "ไม่พบปุ่ม #back-to-inspections-from-fmop11"
-        );
-
     }
+
+
+    // ====================================
+    // COMPLETE
+    // ====================================
+
+    console.log(
+        "เตรียมเมนู ISO สำเร็จ"
+    );
 
 }
 
@@ -2764,50 +2761,155 @@ function openFMOP11Page() {
 // SETUP ISO MENU
 // ========================================
 
+// ========================================
+// SETUP ISO MENU
+// ========================================
+
 function setupISOMenu() {
+
+    console.log(
+        "กำลังเตรียมเมนู ISO..."
+    );
+
+
+    // ====================================
+    // OPEN INSPECTION RECORD
+    // ====================================
 
     const inspectionButton =
         document.getElementById(
-            "open-inspection-record-button"
+            "open-inspection-record"
         );
 
-
-    const fmop11Button =
-        document.getElementById(
-            "open-fmop11-button"
-        );
-
-
-    // ------------------------------------
-    // บันทึกการตรวจ
-    // ------------------------------------
 
     if (inspectionButton) {
 
         inspectionButton.addEventListener(
             "click",
-            openInspectionRecordPage
+            function () {
+
+                console.log(
+                    "เปิดหน้าบันทึกการตรวจ"
+                );
+
+
+                openInspectionRecordPage();
+
+            }
+        );
+
+    } else {
+
+        console.warn(
+            "ไม่พบปุ่ม #open-inspection-record"
         );
 
     }
 
 
-    // ------------------------------------
-    // สร้าง FM-OP-11
-    // ------------------------------------
+    // ====================================
+    // OPEN FM-OP-11 GENERATOR
+    // ====================================
+
+    const fmop11Button =
+        document.getElementById(
+            "open-fmop11-generator"
+        );
+
 
     if (fmop11Button) {
 
         fmop11Button.addEventListener(
             "click",
-            openFMOP11Page
+            function () {
+
+                console.log(
+                    "เปิดหน้าสร้างรายงาน FM-OP-11"
+                );
+
+
+                openFMOP11Page();
+
+            }
+        );
+
+    } else {
+
+        console.warn(
+            "ไม่พบปุ่ม #open-fmop11-generator"
         );
 
     }
 
 
+    // ====================================
+    // BACK FROM INSPECTION RECORD
+    // ====================================
+
+    const backFromRecord =
+        document.getElementById(
+            "back-to-inspections-from-record"
+        );
+
+
+    if (backFromRecord) {
+
+        backFromRecord.addEventListener(
+            "click",
+            function () {
+
+                console.log(
+                    "กลับไปหน้าเมนูการตรวจ ISO"
+                );
+
+
+                showPage(
+                    "inspections"
+                );
+
+            }
+        );
+
+    }
+
+
+    // ====================================
+    // BACK FROM FM-OP-11
+    // ====================================
+
+    const backFromFMOP11 =
+        document.getElementById(
+            "back-to-inspections-from-fmop11"
+        );
+
+
+    if (backFromFMOP11) {
+
+        backFromFMOP11.addEventListener(
+            "click",
+            function () {
+
+                console.log(
+                    "กลับไปหน้าเมนูการตรวจ ISO"
+                );
+
+
+                showPage(
+                    "inspections"
+                );
+
+            }
+        );
+
+    }
+
+
+    // ====================================
+    // COMPLETE
+    // ====================================
+
     console.log(
-        "ตั้งค่า ISO Menu สำเร็จ"
+        "เตรียมเมนู ISO สำเร็จ"
     );
 
 }
