@@ -4536,6 +4536,866 @@ function handleFMOP11RecordSelection(
 
 }
 
+// ========================================
+// OPEN INSPECTION RECORDS PAGE
+// ========================================
+
+async function openInspectionRecordsPage() {
+
+    showPage(
+        "inspection-records"
+    );
+
+
+    initializeInspectionRecordsPage();
+
+}
+
+// ========================================
+// INITIALIZE INSPECTION RECORDS PAGE
+// ========================================
+
+async function initializeInspectionRecordsPage() {
+
+    console.log(
+        "กำลังเตรียมหน้ารายการตรวจ..."
+    );
+
+
+    setupInspectionRecordsEvents();
+
+
+    await loadInspectionRecords();
+
+
+    loadInspectionRecordsFilters();
+
+}
+
+// ========================================
+// LOAD INSPECTION RECORDS
+// ========================================
+
+async function loadInspectionRecords() {
+
+    const list =
+        document.getElementById(
+            "inspection-records-list"
+        );
+
+
+    if (list) {
+
+        list.innerHTML = `
+
+            <div class="inspection-empty">
+
+                <div>
+                    ⏳
+                </div>
+
+                <strong>
+                    กำลังโหลดรายการตรวจ...
+                </strong>
+
+            </div>
+
+        `;
+
+    }
+
+
+    try {
+
+        console.log(
+            "กำลังโหลดรายการตรวจ..."
+        );
+
+
+        const response =
+            await fetch(
+
+                API_URL,
+
+                {
+
+                    method:
+                        "POST",
+
+                    headers: {
+
+                        "Content-Type":
+                            "text/plain;charset=utf-8"
+
+                    },
+
+                    body:
+                        JSON.stringify({
+
+                            action:
+                                "getInspections"
+
+                        })
+
+                }
+
+            );
+
+
+        const data =
+            await response.json();
+
+
+        console.log(
+            "ข้อมูลรายการตรวจ:",
+            data
+        );
+
+
+        if (
+            data.success &&
+            Array.isArray(
+                data.inspections
+            )
+        ) {
+
+            inspectionRecords =
+                data.inspections;
+
+        } else {
+
+            inspectionRecords = [];
+
+        }
+
+
+        renderInspectionRecords();
+
+
+    } catch (error) {
+
+        console.error(
+            "โหลดรายการตรวจไม่สำเร็จ:",
+            error
+        );
+
+
+        inspectionRecords = [];
+
+
+        if (list) {
+
+            list.innerHTML = `
+
+                <div class="inspection-empty">
+
+                    <div>
+                        ⚠️
+                    </div>
+
+                    <strong>
+                        ไม่สามารถโหลดรายการตรวจได้
+                    </strong>
+
+                    <span>
+                        กรุณาลองใหม่อีกครั้ง
+                    </span>
+
+                </div>
+
+            `;
+
+        }
+
+    }
+
+}
+
+// ========================================
+// RENDER INSPECTION RECORDS
+// ========================================
+
+function renderInspectionRecords(
+    records = inspectionRecords
+) {
+
+    const list =
+        document.getElementById(
+            "inspection-records-list"
+        );
+
+
+    const count =
+        document.getElementById(
+            "inspection-records-count"
+        );
+
+
+    if (!list) {
+
+        return;
+
+    }
+
+
+    if (!Array.isArray(records)) {
+
+        records = [];
+
+    }
+
+
+    if (count) {
+
+        count.textContent =
+            `${records.length} รายการ`;
+
+    }
+
+
+    if (records.length === 0) {
+
+        list.innerHTML = `
+
+            <div class="inspection-empty">
+
+                <div>
+                    📋
+                </div>
+
+                <strong>
+                    ยังไม่มีรายการตรวจ
+                </strong>
+
+                <span>
+                    ยังไม่พบข้อมูลการตรวจในระบบ
+                </span>
+
+            </div>
+
+        `;
+
+        return;
+
+    }
+
+
+    list.innerHTML = "";
+
+
+    records.forEach(
+        function(record) {
+
+            const card =
+                document.createElement(
+                    "div"
+                );
+
+
+            card.className =
+                "fmop11-record-card";
+
+
+            card.dataset.recordId =
+                record.recordId;
+
+
+            const passCount =
+                Number(
+                    record.passCount || 0
+                );
+
+
+            const failCount =
+                Number(
+                    record.failCount || 0
+                );
+
+
+            card.innerHTML = `
+
+                <div
+                    class="fmop11-record-main"
+                >
+
+                    <div
+                        class="fmop11-record-date"
+                    >
+                        ${escapeHTML(
+                            record.inspectionDate || "-"
+                        )}
+                        ·
+                        ${escapeHTML(
+                            record.inspectionTime || "-"
+                        )}
+                    </div>
+
+
+                    <div
+                        class="fmop11-record-location"
+                    >
+                        ${escapeHTML(
+                            record.zone || "-"
+                        )}
+
+                        ·
+
+                        ${escapeHTML(
+                            record.locationName || "-"
+                        )}
+                    </div>
+
+
+                    <div
+                        class="fmop11-record-inspector"
+                    >
+                        ผู้ตรวจ:
+                        ${escapeHTML(
+                            record.inspectorName || "-"
+                        )}
+                    </div>
+
+                </div>
+
+
+                <div
+                    class="fmop11-record-result"
+                >
+
+                    <span
+                        class="inspection-success-pass"
+                    >
+                        ✓ ผ่าน ${passCount}
+                    </span>
+
+
+                    <span
+                        class="inspection-success-fail"
+                    >
+                        ✕ ไม่ผ่าน ${failCount}
+                    </span>
+
+                </div>
+
+
+                <div
+                    class="fmop11-record-actions"
+                >
+
+                    <button
+                        type="button"
+                        class="secondary-button"
+                        data-action="view"
+                        data-record-id="${escapeHTML(
+                            record.recordId
+                        )}"
+                    >
+                        👁 ดูรายละเอียด
+                    </button>
+
+
+                    <button
+                        type="button"
+                        class="secondary-button"
+                        data-action="edit"
+                        data-record-id="${escapeHTML(
+                            record.recordId
+                        )}"
+                    >
+                        ✏️ แก้ไข
+                    </button>
+
+
+                    <button
+                        type="button"
+                        class="secondary-button"
+                        data-action="delete"
+                        data-record-id="${escapeHTML(
+                            record.recordId
+                        )}"
+                    >
+                        🗑 ลบ
+                    </button>
+
+                </div>
+
+            `;
+
+
+            list.appendChild(
+                card
+            );
+
+        }
+    );
+
+}
+
+// ========================================
+// LOAD INSPECTION RECORD FILTERS
+// ========================================
+
+function loadInspectionRecordsFilters() {
+
+    const inspectorSelect =
+        document.getElementById(
+            "inspection-records-inspector"
+        );
+
+
+    const zoneSelect =
+        document.getElementById(
+            "inspection-records-zone"
+        );
+
+
+    if (
+        inspectorSelect &&
+        Array.isArray(
+            inspectionInspectors
+        )
+    ) {
+
+        inspectorSelect.innerHTML = `
+
+            <option value="">
+                -- ทั้งหมด --
+            </option>
+
+        `;
+
+
+        inspectionInspectors.forEach(
+            function(inspector) {
+
+                const option =
+                    document.createElement(
+                        "option"
+                    );
+
+
+                option.value =
+                    inspector.name || "";
+
+
+                option.textContent =
+                    inspector.name || "";
+
+
+                inspectorSelect.appendChild(
+                    option
+                );
+
+            }
+        );
+
+    }
+
+
+    if (
+        zoneSelect &&
+        Array.isArray(
+            inspectionLocations
+        )
+    ) {
+
+        const zones =
+            [
+                ...new Set(
+
+                    inspectionLocations
+
+                        .map(
+                            function(location) {
+
+                                return location.zone;
+
+                            }
+                        )
+
+                        .filter(
+                            function(zone) {
+
+                                return zone;
+
+                            }
+                        )
+
+                )
+            ];
+
+
+        zoneSelect.innerHTML = `
+
+            <option value="">
+                -- ทั้งหมด --
+            </option>
+
+        `;
+
+
+        zones.forEach(
+            function(zone) {
+
+                const option =
+                    document.createElement(
+                        "option"
+                    );
+
+
+                option.value =
+                    zone;
+
+
+                option.textContent =
+                    zone;
+
+
+                zoneSelect.appendChild(
+                    option
+                );
+
+            }
+        );
+
+    }
+
+}
+
+// ========================================
+// SETUP INSPECTION RECORDS EVENTS
+// ========================================
+
+function setupInspectionRecordsEvents() {
+
+    const searchButton =
+        document.getElementById(
+            "search-inspection-records-button"
+        );
+
+
+    const clearButton =
+        document.getElementById(
+            "clear-inspection-records-filter-button"
+        );
+
+
+    const backButton =
+        document.getElementById(
+            "back-to-inspections-from-records"
+        );
+
+
+    if (
+        searchButton &&
+        !searchButton.dataset.bound
+    ) {
+
+        searchButton.addEventListener(
+            "click",
+            filterInspectionRecords
+        );
+
+
+        searchButton.dataset.bound =
+            "true";
+
+    }
+
+
+    if (
+        clearButton &&
+        !clearButton.dataset.bound
+    ) {
+
+        clearButton.addEventListener(
+            "click",
+            clearInspectionRecordsFilter
+        );
+
+
+        clearButton.dataset.bound =
+            "true";
+
+    }
+
+
+    if (
+        backButton &&
+        !backButton.dataset.bound
+    ) {
+
+        backButton.addEventListener(
+            "click",
+            function() {
+
+                showPage(
+                    "inspections"
+                );
+
+            }
+        );
+
+
+        backButton.dataset.bound =
+            "true";
+
+    }
+
+
+    const list =
+        document.getElementById(
+            "inspection-records-list"
+        );
+
+
+    if (
+        list &&
+        !list.dataset.bound
+    ) {
+
+        list.addEventListener(
+            "click",
+            handleInspectionRecordAction
+        );
+
+
+        list.dataset.bound =
+            "true";
+
+    }
+
+}
+
+// ========================================
+// FILTER INSPECTION RECORDS
+// ========================================
+
+function filterInspectionRecords() {
+
+    const dateInput =
+        document.getElementById(
+            "inspection-records-date"
+        );
+
+
+    const inspectorInput =
+        document.getElementById(
+            "inspection-records-inspector"
+        );
+
+
+    const zoneInput =
+        document.getElementById(
+            "inspection-records-zone"
+        );
+
+
+    const date =
+        dateInput
+            ? dateInput.value
+            : "";
+
+
+    const inspector =
+        inspectorInput
+            ? inspectorInput.value
+            : "";
+
+
+    const zone =
+        zoneInput
+            ? zoneInput.value
+            : "";
+
+
+    let filtered =
+        [...inspectionRecords];
+
+
+    if (date) {
+
+        const parts =
+            date.split("-");
+
+
+        const formattedDate =
+            `${parts[2]}/${parts[1]}/${parts[0]}`;
+
+
+        filtered =
+            filtered.filter(
+                function(record) {
+
+                    return (
+                        record.inspectionDate ===
+                        formattedDate
+                    );
+
+                }
+            );
+
+    }
+
+
+    if (inspector) {
+
+        filtered =
+            filtered.filter(
+                function(record) {
+
+                    return (
+                        record.inspectorName ===
+                        inspector
+                    );
+
+                }
+            );
+
+    }
+
+
+    if (zone) {
+
+        filtered =
+            filtered.filter(
+                function(record) {
+
+                    return (
+                        record.zone ===
+                        zone
+                    );
+
+                }
+            );
+
+    }
+
+
+    renderInspectionRecords(
+        filtered
+    );
+
+}
+
+// ========================================
+// CLEAR INSPECTION RECORDS FILTER
+// ========================================
+
+function clearInspectionRecordsFilter() {
+
+    const dateInput =
+        document.getElementById(
+            "inspection-records-date"
+        );
+
+
+    const inspectorInput =
+        document.getElementById(
+            "inspection-records-inspector"
+        );
+
+
+    const zoneInput =
+        document.getElementById(
+            "inspection-records-zone"
+        );
+
+
+    if (dateInput) {
+
+        dateInput.value = "";
+
+    }
+
+
+    if (inspectorInput) {
+
+        inspectorInput.value = "";
+
+    }
+
+
+    if (zoneInput) {
+
+        zoneInput.value = "";
+
+    }
+
+
+    renderInspectionRecords();
+
+}
+
+// ========================================
+// HANDLE INSPECTION RECORD ACTION
+// ========================================
+
+function handleInspectionRecordAction(
+    event
+) {
+
+    const button =
+        event.target.closest(
+            "button[data-action]"
+        );
+
+
+    if (!button) {
+
+        return;
+
+    }
+
+
+    const action =
+        button.dataset.action;
+
+
+    const recordId =
+        button.dataset.recordId;
+
+
+    if (!recordId) {
+
+        return;
+
+    }
+
+
+    if (action === "view") {
+
+        viewInspectionRecord(
+            recordId
+        );
+
+        return;
+
+    }
+
+
+    if (action === "edit") {
+
+        alert(
+            "ฟังก์ชันแก้ไขจะทำในขั้นถัดไป"
+        );
+
+        return;
+
+    }
+
+
+    if (action === "delete") {
+
+        alert(
+            "ฟังก์ชันลบจะทำในขั้นถัดไป"
+        );
+
+        return;
+
+    }
+
+}
 
 // ========================================
 // UPDATE SELECTED COUNT
@@ -5220,6 +6080,32 @@ function searchDocuments(
 
 }
 
+// ========================================
+// VIEW INSPECTION RECORD
+// ========================================
+
+async function viewInspectionRecord(
+    recordId
+) {
+
+    console.log(
+        "กำลังเปิดรายละเอียด Record:",
+        recordId
+    );
+
+
+    await loadInspectionItems(
+        recordId
+    );
+
+
+    alert(
+        "โหลดรายการตรวจของ Record นี้สำเร็จแล้ว\n\n" +
+        "Record ID:\n" +
+        recordId
+    );
+
+}
 
 // ========================================
 // SEARCH PAGE SETUP

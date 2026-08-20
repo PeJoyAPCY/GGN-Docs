@@ -897,6 +897,193 @@
 
                 </section>
 
+                <!-- ==========================================
+                    INSPECTION RECORDS LIST
+                =========================================== -->
+
+                <section
+                    id="page-inspection-records"
+                    class="page"
+                    style="display: none;"
+                >
+
+                    <div class="page-header">
+
+                        <button
+                            id="back-to-inspections-from-records"
+                            class="back-button"
+                            type="button"
+                        >
+                            ← การตรวจ ISO
+                        </button>
+
+
+                        <div>
+
+                            <h2>
+                                รายการตรวจ
+                            </h2>
+
+                            <p>
+                                รายการบันทึกการตรวจทั้งหมด
+                            </p>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- ======================================
+                        FILTER
+                    ======================================= -->
+
+                    <div class="iso-form-card">
+
+                        <div class="iso-section">
+
+                            <div class="iso-section-title">
+                                ค้นหารายการตรวจ
+                            </div>
+
+
+                            <div class="form-grid">
+
+
+                                <!-- DATE -->
+
+                                <div class="form-group">
+
+                                    <label for="inspection-records-date">
+                                        วันที่ตรวจ
+                                    </label>
+
+                                    <input
+                                        type="date"
+                                        id="inspection-records-date"
+                                    >
+
+                                </div>
+
+
+                                <!-- INSPECTOR -->
+
+                                <div class="form-group">
+
+                                    <label for="inspection-records-inspector">
+                                        ผู้ตรวจ / สายตรวจ
+                                    </label>
+
+                                    <select
+                                        id="inspection-records-inspector"
+                                    >
+
+                                        <option value="">
+                                            -- ทั้งหมด --
+                                        </option>
+
+                                    </select>
+
+                                </div>
+
+
+                                <!-- ZONE -->
+
+                                <div class="form-group">
+
+                                    <label for="inspection-records-zone">
+                                        เขต
+                                    </label>
+
+                                    <select
+                                        id="inspection-records-zone"
+                                    >
+
+                                        <option value="">
+                                            -- ทั้งหมด --
+                                        </option>
+
+                                    </select>
+
+                                </div>
+
+
+                            </div>
+
+
+                            <div class="form-actions">
+
+                                <button
+                                    id="search-inspection-records-button"
+                                    class="primary-button"
+                                    type="button"
+                                >
+                                    🔍 ค้นหา
+                                </button>
+
+
+                                <button
+                                    id="clear-inspection-records-filter-button"
+                                    class="secondary-button"
+                                    type="button"
+                                >
+                                    ล้างตัวกรอง
+                                </button>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- ======================================
+                        RECORD LIST
+                    ======================================= -->
+
+                    <div class="iso-form-card">
+
+                        <div class="iso-section">
+
+                            <div class="iso-section-title">
+
+                                <div>
+                                    รายการตรวจ
+                                </div>
+
+                                <span
+                                    id="inspection-records-count"
+                                    class="document-count"
+                                >
+                                    0 รายการ
+                                </span>
+
+                            </div>
+
+
+                            <div
+                                id="inspection-records-list"
+                                class="fmop11-record-list"
+                            >
+
+                                <div class="inspection-empty">
+
+                                    <div>
+                                        📋
+                                    </div>
+
+                                    <strong>
+                                        กำลังโหลดรายการตรวจ...
+                                    </strong>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </section>                
 
                 <!-- ==========================================
                      FM-OP-11 GENERATOR
