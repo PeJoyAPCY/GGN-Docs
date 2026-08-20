@@ -30,6 +30,7 @@ let documents = [];
 // จุดตรวจทั้งหมด
 let inspectionLocations = [];
 
+let inspectionRecords = [];
 
 // เขตทั้งหมด
 let inspectionZones = [];
@@ -1825,8 +1826,6 @@ async function initializeInspectionPage() {
 
     } else {
 
-        renderInspectionZones();
-
         renderInspectionLocations();
 
         renderInspectionInspectors();
@@ -1835,8 +1834,14 @@ async function initializeInspectionPage() {
 
     }
 
-}
 
+    // ------------------------------------
+    // LOAD REAL INSPECTION DATA
+    // ------------------------------------
+
+    await loadInspections();
+
+}
 
 // ========================================
 // DEFAULT DATE / TIME
@@ -4091,6 +4096,98 @@ async function loadInspectionSettings() {
 
 }
 
+// ========================================
+// LOAD INSPECTIONS
+// ========================================
+
+async function loadInspections() {
+
+    try {
+
+        console.log(
+            "กำลังโหลดข้อมูล Inspections..."
+        );
+
+
+        const response =
+            await fetch(
+                API_URL,
+                {
+                    method: "POST",
+
+                    headers: {
+                        "Content-Type":
+                            "application/json"
+                    },
+
+                    body: JSON.stringify({
+                        action: "getInspections"
+                    })
+                }
+            );
+
+
+        const data =
+            await response.json();
+
+
+        console.log(
+            "getInspections response:",
+            data
+        );
+
+
+        if (
+            !data.success
+        ) {
+
+            console.error(
+                "ไม่สามารถโหลด Inspections:",
+                data.message
+            );
+
+            inspectionRecords = [];
+
+            return;
+
+        }
+
+
+        // ------------------------------------
+        // เก็บข้อมูล Inspections
+        // ------------------------------------
+
+        inspectionRecords =
+            Array.isArray(data.data)
+                ? data.data
+                : [];
+
+
+        console.log(
+            "โหลด Inspections สำเร็จ:",
+            inspectionRecords
+        );
+
+
+        console.log(
+            "จำนวนรายการตรวจ:",
+            inspectionRecords.length
+        );
+
+
+    } catch (error) {
+
+        console.error(
+            "เกิดข้อผิดพลาดในการโหลด Inspections:",
+            error
+        );
+
+
+        inspectionRecords = [];
+
+    }
+
+}
 
 // ========================================
 // RENDER ZONE
