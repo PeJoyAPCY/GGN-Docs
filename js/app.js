@@ -1989,51 +1989,20 @@ async function loadInspectionSettings() {
 
 
         // ------------------------------------
-        // ZONE
-        // ------------------------------------
-
-        const zoneData =
-            await getInspectionSetting(
-                "zone"
-            );
-
-
-        console.log(
-            "ข้อมูล Zone:",
-            zoneData
-        );
-
-
-        if (
-            zoneData.success &&
-            Array.isArray(
-                zoneData.settings
-            )
-        ) {
-
-            inspectionZones =
-                zoneData.settings;
-
-        } else {
-
-            inspectionZones =
-                [];
-
-        }
-
-
-        // ------------------------------------
         // LOCATION
         // ------------------------------------
+
+        console.log(
+            "กำลังโหลด Location Settings..."
+        );
 
         const locationData =
             await getInspectionSetting(
                 "location"
             );
 
-
         console.log(
-            "ข้อมูล Location:",
+            "Location Settings:",
             locationData
         );
 
@@ -2060,14 +2029,17 @@ async function loadInspectionSettings() {
         // INSPECTOR
         // ------------------------------------
 
+        console.log(
+            "กำลังโหลด Inspector Settings..."
+        );
+
         const inspectorData =
             await getInspectionSetting(
                 "inspector"
             );
 
-
         console.log(
-            "ข้อมูล Inspector:",
+            "Inspector Settings:",
             inspectorData
         );
 
@@ -2094,14 +2066,17 @@ async function loadInspectionSettings() {
         // INSPECTION ITEMS
         // ------------------------------------
 
+        console.log(
+            "กำลังโหลด Inspection Items..."
+        );
+
         const itemData =
             await getInspectionSetting(
                 "inspectionItem"
             );
 
-
         console.log(
-            "ข้อมูลรายการตรวจ:",
+            "Inspection Items:",
             itemData
         );
 
@@ -2128,13 +2103,16 @@ async function loadInspectionSettings() {
         // RENDER
         // ------------------------------------
 
-        renderInspectionZones();
-
         renderInspectionLocations();
 
         renderInspectionInspectors();
 
         renderInspectionItems();
+
+
+        console.log(
+            "โหลด Inspection Settings สำเร็จ"
+        );
 
 
     } catch (error) {
@@ -2145,20 +2123,12 @@ async function loadInspectionSettings() {
         );
 
 
-        inspectionZones =
-            [];
+        inspectionLocations = [];
 
-        inspectionLocations =
-            [];
+        inspectionInspectors = [];
 
-        inspectionInspectors =
-            [];
+        inspectionItems = [];
 
-        inspectionItems =
-            [];
-
-
-        renderInspectionZones();
 
         renderInspectionLocations();
 
