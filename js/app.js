@@ -1981,6 +1981,10 @@ async function getInspectionSetting(
 
 async function loadInspectionSettings() {
 
+    console.log(
+        ">>> ENTER loadInspectionSettings <<<"
+    );
+
     try {
 
         console.log(
@@ -3770,42 +3774,6 @@ function setupInspections() {
 
 
 // ========================================
-// INITIALIZE INSPECTION PAGE
-// ========================================
-
-async function initializeInspectionPage() {
-
-    console.log(
-        "กำลังเตรียมหน้า การตรวจ ISO..."
-    );
-
-
-    setDefaultInspectionDateTime();
-
-
-    if (
-        !inspectionSettingsLoaded
-    ) {
-
-        await loadInspectionSettings();
-
-        inspectionSettingsLoaded =
-            true;
-
-    } else {
-
-        renderInspectionLocations();
-
-        renderInspectionInspectors();
-
-        renderInspectionItems();
-
-    }
-
-}
-
-
-// ========================================
 // DEFAULT DATE / TIME
 // ========================================
 
@@ -3933,136 +3901,6 @@ async function getInspectionSetting(
 
 
     return await response.json();
-
-}
-
-
-// ========================================
-// LOAD INSPECTION SETTINGS
-// ========================================
-
-async function loadInspectionSettings() {
-
-    try {
-
-        console.log(
-            "กำลังโหลดข้อมูล Inspection Settings..."
-        );
-
-
-        // ------------------------------------
-        // LOCATION
-        // ------------------------------------
-
-        const locationData =
-            await getInspectionSetting(
-                "location"
-            );
-
-
-        if (
-            locationData.success &&
-            Array.isArray(
-                locationData.settings
-            )
-        ) {
-
-            inspectionLocations =
-                locationData.settings;
-
-        } else {
-
-            inspectionLocations =
-                [];
-
-        }
-
-
-        // ------------------------------------
-        // INSPECTOR
-        // ------------------------------------
-
-        const inspectorData =
-            await getInspectionSetting(
-                "inspector"
-            );
-
-
-        if (
-            inspectorData.success &&
-            Array.isArray(
-                inspectorData.settings
-            )
-        ) {
-
-            inspectionInspectors =
-                inspectorData.settings;
-
-        } else {
-
-            inspectionInspectors =
-                [];
-
-        }
-
-
-        // ------------------------------------
-        // INSPECTION ITEMS
-        // ------------------------------------
-
-        const itemData =
-            await getInspectionSetting(
-                "inspectionItem"
-            );
-
-
-        if (
-            itemData.success &&
-            Array.isArray(
-                itemData.settings
-            )
-        ) {
-
-            inspectionItems =
-                itemData.settings;
-
-        } else {
-
-            inspectionItems =
-                [];
-
-        }
-
-
-        renderInspectionLocations();
-
-        renderInspectionInspectors();
-
-        renderInspectionItems();
-
-
-    } catch (error) {
-
-        console.error(
-            "โหลด Inspection Settings ไม่สำเร็จ:",
-            error
-        );
-
-
-        inspectionLocations = [];
-
-        inspectionInspectors = [];
-
-        inspectionItems = [];
-
-
-        renderInspectionLocations();
-
-        renderInspectionInspectors();
-
-        renderInspectionItems();
-
-    }
 
 }
 
