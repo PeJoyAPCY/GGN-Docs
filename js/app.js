@@ -3993,6 +3993,87 @@ async function loadInspections() {
 }
 
 // ========================================
+// LOAD INSPECTION ITEMS
+// ========================================
+
+async function loadInspectionItems(recordId) {
+
+    try {
+
+        console.log(
+            "กำลังโหลด Inspection Items:",
+            recordId
+        );
+
+
+        const response =
+            await fetch(
+                API_URL +
+                "?action=getInspectionItems&recordId=" +
+                encodeURIComponent(recordId)
+            );
+
+
+        const data =
+            await response.json();
+
+
+        console.log(
+            "getInspectionItems response:",
+            data
+        );
+
+
+        if (
+            !data.success
+        ) {
+
+            console.error(
+                "ไม่สามารถโหลด Inspection Items:",
+                data.message
+            );
+
+            return [];
+
+        }
+
+
+        const items =
+            Array.isArray(data.items)
+                ? data.items
+                : [];
+
+
+        console.log(
+            "โหลด Inspection Items สำเร็จ:",
+            items
+        );
+
+
+        console.log(
+            "จำนวน Inspection Items:",
+            items.length
+        );
+
+
+        return items;
+
+
+    } catch (error) {
+
+        console.error(
+            "เกิดข้อผิดพลาดในการโหลด Inspection Items:",
+            error
+        );
+
+
+        return [];
+
+    }
+
+}
+
+// ========================================
 // RENDER ZONE
 // ========================================
 
@@ -5434,7 +5515,14 @@ async function searchFMOP11Records() {
         );
 
 
-    if (!dateInput || !dateInput.value) {
+    // ----------------------------------------
+    // VALIDATE DATE
+    // ----------------------------------------
+
+    if (
+        !dateInput ||
+        !dateInput.value
+    ) {
 
         alert(
             "กรุณาเลือกวันที่ตรวจ"
@@ -5444,6 +5532,10 @@ async function searchFMOP11Records() {
 
     }
 
+
+    // ----------------------------------------
+    // VALIDATE INSPECTOR
+    // ----------------------------------------
 
     if (
         !inspectorInput ||
@@ -5458,6 +5550,10 @@ async function searchFMOP11Records() {
 
     }
 
+
+    // ----------------------------------------
+    // SHOW LOADING
+    // ----------------------------------------
 
     if (list) {
 
@@ -5482,39 +5578,29 @@ async function searchFMOP11Records() {
 
     try {
 
+        console.log(
+            "กำลังค้นหา FM-OP-11..."
+        );
+
+        console.log(
+            "วันที่:",
+            dateInput.value
+        );
+
+        console.log(
+            "ผู้ตรวจ:",
+            inspectorInput.value
+        );
+
+
+        // ------------------------------------
+        // LOAD INSPECTIONS FROM API
+        // ------------------------------------
+
         const response =
             await fetch(
-
-                API_URL,
-
-                {
-
-                    method:
-                        "POST",
-
-                    headers: {
-
-                        "Content-Type":
-                            "text/plain;charset=utf-8"
-
-                    },
-
-                    body:
-                        JSON.stringify({
-
-                            action:
-                                "getInspections",
-
-                            inspectionDate:
-                                dateInput.value,
-
-                            inspectorName:
-                                inspectorInput.value
-
-                        })
-
-                }
-
+                API_URL +
+                "?action=getInspections"
             );
 
 
@@ -5523,7 +5609,7 @@ async function searchFMOP11Records() {
 
 
         console.log(
-            "ผลการค้นหา FM-OP-11:",
+            "ข้อมูล Inspections สำหรับ FM-OP-11:",
             data
         );
 
@@ -5537,20 +5623,112 @@ async function searchFMOP11Records() {
 
             fmop11Records = [];
 
-        } else {
+            renderFMOP11Records();
 
-            fmop11Records =
-                data.inspections;
+            updateFMOP11SelectedCount();
+
+            return;
 
         }
 
 
+        // ------------------------------------
+        // CONVERT DATE
+        //
+        // input type="date"
+        // จะได้ YYYY-MM-DD
+        //
+        // API inspectionDate
+        // จะเป็น DD/MM/YYYY
+        // ------------------------------------
+
+        const dateParts =
+            dateInput.value.split("-");
+
+
+        const searchDate =
+            dateParts.length === 3
+                ? dateParts[2] +
+                  "/" +
+                  dateParts[1] +
+                  "/" +
+                  dateParts[0]
+                : dateInput.value;
+
+
+        console.log(
+            "วันที่สำหรับค้นหา:",
+            searchDate
+        );
+
+
+        // ------------------------------------
+        // FILTER RECORDS
+        // ------------------------------------
+
+        fmop11Records =
+            data.inspections.filter(
+                function(record) {
+
+                    const recordDate =
+                        String(
+                            record.inspectionDate || ""
+                        ).trim();
+
+
+                    const recordInspector =
+                        String(
+                            record.inspectorName || ""
+                        ).trim();
+
+
+                    const selectedInspector =
+                        String(
+                            inspectorInput.value || ""
+                        ).trim();
+
+
+                    return (
+                        recordDate ===
+                        searchDate
+                    ) &&
+                    (
+                        recordInspector ===
+                        selectedInspector
+                    );
+
+                }
+            );
+
+
+        console.log(
+            "รายการ FM-OP-11 ที่ค้นพบ:",
+            fmop11Records
+        );
+
+
+        console.log(
+            "จำนวนรายการที่ค้นพบ:",
+            fmop11Records.length
+        );
+
+
+        // ------------------------------------
+        // RESET SELECTION
+        // ------------------------------------
+
         fmop11SelectedRecords = [];
 
 
+        // ------------------------------------
+        // RENDER
+        // ------------------------------------
+
         renderFMOP11Records();
 
+
         updateFMOP11SelectedCount();
+
 
     } catch (error) {
 
@@ -5562,7 +5740,12 @@ async function searchFMOP11Records() {
 
         fmop11Records = [];
 
+        fmop11SelectedRecords = [];
+
+
         renderFMOP11Records();
+
+        updateFMOP11SelectedCount();
 
     }
 
