@@ -52,6 +52,7 @@ let inspectionSettingsLoaded = false;
 // ป้องกันการ bind event ซ้ำ
 let inspectionPageInitialized = false;
 
+let lastSavedInspection = null;
 
 // ========================================
 // APPLICATION START
@@ -2254,6 +2255,8 @@ function setupInspections() {
 
     setupInspectionPageEvents();
 
+    setupInspectionSuccessModal();
+
 }
 
 
@@ -3576,14 +3579,21 @@ async function saveInspection() {
 
         if (data.success) {
 
-            alert(
-                "บันทึกการตรวจสำเร็จ"
-            );
+                console.log(
+                    "บันทึกการตรวจสำเร็จ:",
+                    data
+                );
 
 
-            resetInspectionForm();
+                lastSavedInspection =
+                    inspectionData;
 
-        } else {
+
+                showInspectionSuccessModal(
+                    inspectionData
+                );
+
+            } else {
 
             alert(
 
@@ -4815,7 +4825,311 @@ async function generateFMOP11() {
 
 }
 
+// ========================================
+// SHOW INSPECTION SUCCESS MODAL
+// ========================================
 
+function showInspectionSuccessModal(
+    inspection
+) {
+
+    const modal =
+        document.getElementById(
+            "inspection-success-modal"
+        );
+
+
+    const summary =
+        document.getElementById(
+            "inspection-success-summary"
+        );
+
+
+    if (!modal || !summary) {
+
+        return;
+
+    }
+
+
+    const items =
+        Array.isArray(
+            inspection.items
+        )
+            ? inspection.items
+            : [];
+
+
+    const passCount =
+        items.filter(
+            function(item) {
+
+                return item.result === "ผ่าน";
+
+            }
+        ).length;
+
+
+    const failCount =
+        items.filter(
+            function(item) {
+
+                return item.result === "ไม่ผ่าน";
+
+            }
+        ).length;
+
+
+    summary.innerHTML = `
+
+        <div
+            class="inspection-success-summary-row"
+        >
+
+            <span
+                class="inspection-success-summary-label"
+            >
+                วันที่
+            </span>
+
+            <span
+                class="inspection-success-summary-value"
+            >
+                ${escapeHTML(
+                    inspection.inspectionDate || "-"
+                )}
+            </span>
+
+        </div>
+
+
+        <div
+            class="inspection-success-summary-row"
+        >
+
+            <span
+                class="inspection-success-summary-label"
+            >
+                เวลา
+            </span>
+
+            <span
+                class="inspection-success-summary-value"
+            >
+                ${escapeHTML(
+                    inspection.inspectionTime || "-"
+                )}
+            </span>
+
+        </div>
+
+
+        <div
+            class="inspection-success-summary-row"
+        >
+
+            <span
+                class="inspection-success-summary-label"
+            >
+                เขต
+            </span>
+
+            <span
+                class="inspection-success-summary-value"
+            >
+                ${escapeHTML(
+                    inspection.zone || "-"
+                )}
+            </span>
+
+        </div>
+
+
+        <div
+            class="inspection-success-summary-row"
+        >
+
+            <span
+                class="inspection-success-summary-label"
+            >
+                จุดตรวจ
+            </span>
+
+            <span
+                class="inspection-success-summary-value"
+            >
+                ${escapeHTML(
+                    inspection.locationName || "-"
+                )}
+            </span>
+
+        </div>
+
+
+        <div
+            class="inspection-success-summary-row"
+        >
+
+            <span
+                class="inspection-success-summary-label"
+            >
+                ผู้ตรวจ
+            </span>
+
+            <span
+                class="inspection-success-summary-value"
+            >
+                ${escapeHTML(
+                    inspection.inspectorName || "-"
+                )}
+            </span>
+
+        </div>
+
+
+        <div
+            class="inspection-success-result"
+        >
+
+            <span
+                class="inspection-success-pass"
+            >
+                ✓ ผ่าน ${passCount}
+            </span>
+
+
+            <span
+                class="inspection-success-fail"
+            >
+                ✕ ไม่ผ่าน ${failCount}
+            </span>
+
+        </div>
+
+    `;
+
+
+    modal.style.display =
+        "flex";
+
+}
+
+// ========================================
+// CLOSE INSPECTION SUCCESS MODAL
+// ========================================
+
+function closeInspectionSuccessModal() {
+
+    const modal =
+        document.getElementById(
+            "inspection-success-modal"
+        );
+
+
+    if (modal) {
+
+        modal.style.display =
+            "none";
+
+    }
+
+}
+
+// ========================================
+// SETUP INSPECTION SUCCESS MODAL
+// ========================================
+
+function setupInspectionSuccessModal() {
+
+    const viewButton =
+        document.getElementById(
+            "inspection-success-view-button"
+        );
+
+
+    const nextButton =
+        document.getElementById(
+            "inspection-success-next-button"
+        );
+
+
+    const homeButton =
+        document.getElementById(
+            "inspection-success-home-button"
+        );
+
+
+    if (
+        viewButton &&
+        !viewButton.dataset.bound
+    ) {
+
+        viewButton.addEventListener(
+            "click",
+            function() {
+
+                closeInspectionSuccessModal();
+
+                openInspectionRecordsPage();
+
+            }
+        );
+
+
+        viewButton.dataset.bound =
+            "true";
+
+    }
+
+
+    if (
+        nextButton &&
+        !nextButton.dataset.bound
+    ) {
+
+        nextButton.addEventListener(
+            "click",
+            function() {
+
+                closeInspectionSuccessModal();
+
+                resetInspectionForm();
+
+            }
+        );
+
+
+        nextButton.dataset.bound =
+            "true";
+
+    }
+
+
+    if (
+        homeButton &&
+        !homeButton.dataset.bound
+    ) {
+
+        homeButton.addEventListener(
+            "click",
+            function() {
+
+                closeInspectionSuccessModal();
+
+                showPage(
+                    "dashboard"
+                );
+
+            }
+        );
+
+
+        homeButton.dataset.bound =
+            "true";
+
+    }
+
+}
 // ======================================================
 // SEARCH DOCUMENTS
 // ======================================================
