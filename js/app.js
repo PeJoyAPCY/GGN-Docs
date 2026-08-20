@@ -5665,6 +5665,46 @@ async function searchFMOP11Records() {
             searchDate
         );
 
+            console.log(
+        "========== FILTER DEBUG =========="
+        );
+
+        data.inspections.forEach(function(record, index) {
+
+            console.log(
+                "Record #" + (index + 1),
+                {
+                    recordId:
+                        record.recordId,
+
+                    inspectionDate:
+                        record.inspectionDate,
+
+                    inspectorName:
+                        record.inspectorName,
+
+                    selectedDate:
+                        searchDate,
+
+                    selectedInspector:
+                        inspectorInput.value,
+
+                    dateMatch:
+                        String(record.inspectionDate).trim() ===
+                        String(searchDate).trim(),
+
+                    inspectorMatch:
+                        String(record.inspectorName).trim() ===
+                        String(inspectorInput.value).trim()
+
+                }
+            );
+
+        });
+
+            console.log(
+                "=================================="
+        );
         
 
         // ------------------------------------
