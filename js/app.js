@@ -5613,6 +5613,10 @@ async function searchFMOP11Records() {
             data
         );
 
+        console.log(
+            "INSPECTION RECORDS RAW:",
+            data.inspections
+        );
 
         if (
             !data.success ||
@@ -5661,6 +5665,7 @@ async function searchFMOP11Records() {
             searchDate
         );
 
+        
 
         // ------------------------------------
         // FILTER RECORDS
