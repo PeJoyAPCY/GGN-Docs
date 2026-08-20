@@ -3908,6 +3908,10 @@ async function getInspectionSetting(
 // LOAD INSPECTIONS
 // ========================================
 
+// ========================================
+// LOAD INSPECTIONS
+// ========================================
+
 async function loadInspections() {
 
     try {
@@ -3919,19 +3923,8 @@ async function loadInspections() {
 
         const response =
             await fetch(
-                API_URL,
-                {
-                    method: "POST",
-
-                    headers: {
-                        "Content-Type":
-                            "application/json"
-                    },
-
-                    body: JSON.stringify({
-                        action: "getInspections"
-                    })
-                }
+                API_URL +
+                "?action=getInspections"
             );
 
 
@@ -3966,9 +3959,11 @@ async function loadInspections() {
         // ------------------------------------
 
         inspectionRecords =
-            Array.isArray(data.data)
-                ? data.data
-                : [];
+            Array.isArray(data.inspections)
+                ? data.inspections
+                : Array.isArray(data.data)
+                    ? data.data
+                    : [];
 
 
         console.log(
