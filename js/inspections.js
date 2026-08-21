@@ -350,6 +350,10 @@ async function loadInspections() {
 // RENDER INSPECTION ZONES
 // ======================================================
 
+// ======================================================
+// RENDER INSPECTION ZONES
+// ======================================================
+
 function renderInspectionZones() {
 
     const select =
@@ -369,6 +373,10 @@ function renderInspectionZones() {
     }
 
 
+    // ----------------------------------------
+    // CLEAR
+    // ----------------------------------------
+
     select.innerHTML = `
 
         <option value="">
@@ -378,64 +386,88 @@ function renderInspectionZones() {
     `;
 
 
-    const zones =
-        [];
+    // ----------------------------------------
+    // CHECK DATA
+    // ----------------------------------------
+
+    if (
+        !Array.isArray(
+            inspectionZones
+        )
+    ) {
+
+        console.warn(
+            "inspectionZones ไม่ใช่ Array:",
+            inspectionZones
+        );
+
+        return;
+
+    }
+
+
+    console.log(
+        "ข้อมูล Inspection Zones:",
+        inspectionZones
+    );
 
 
     // ----------------------------------------
-    // GET ZONES FROM LOCATIONS
+    // RENDER
     // ----------------------------------------
 
-    inspectionLocations.forEach(
+    inspectionZones.forEach(
         function (
-            location
+            zone
         ) {
 
-            if (!location) {
+            if (!zone) {
 
                 return;
 
             }
 
 
-            const zone =
-                location.zone ||
-                location.settingZone ||
-                "";
-
+            // --------------------------------
+            // CHECK STATUS
+            // --------------------------------
 
             if (
-                zone &&
-                !zones.includes(
-                    zone
-                )
+                zone.status &&
+                String(
+                    zone.status
+                ).toLowerCase()
+                !==
+                "active"
             ) {
 
-                zones.push(
-                    zone
-                );
+                return;
 
             }
 
-        }
-    );
+
+            // --------------------------------
+            // ZONE NAME
+            // --------------------------------
+
+            const zoneName =
+                zone.name ||
+                zone.settingName ||
+                zone.settingValue ||
+                zone.zone ||
+                "";
 
 
-    // ----------------------------------------
-    // SORT ZONES
-    // ----------------------------------------
+            if (!zoneName) {
 
-    zones.sort();
+                return;
+
+            }
 
 
-    // ----------------------------------------
-    // RENDER OPTIONS
-    // ----------------------------------------
-
-    zones.forEach(
-        function (
-            zone
-        ) {
+            // --------------------------------
+            // CREATE OPTION
+            // --------------------------------
 
             const option =
                 document.createElement(
@@ -444,11 +476,11 @@ function renderInspectionZones() {
 
 
             option.value =
-                zone;
+                zoneName;
 
 
             option.textContent =
-                zone;
+                zoneName;
 
 
             select.appendChild(
@@ -456,6 +488,12 @@ function renderInspectionZones() {
             );
 
         }
+    );
+
+
+    console.log(
+        "สร้าง Dropdown เขตแล้ว จำนวน:",
+        select.options.length - 1
     );
 
 }
