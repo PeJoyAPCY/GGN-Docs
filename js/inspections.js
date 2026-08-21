@@ -241,6 +241,10 @@ function setDefaultInspectionDateTime() {
 // LOAD INSPECTIONS
 // ======================================================
 
+// ======================================================
+// LOAD INSPECTIONS
+// ======================================================
+
 async function loadInspections() {
 
     try {
@@ -313,9 +317,9 @@ async function loadInspections() {
 
         inspectionRecords =
             Array.isArray(
-                data.data
+                data.inspections
             )
-                ? data.data
+                ? data.inspections
                 : [];
 
 
@@ -569,13 +573,6 @@ function renderInspectionLocations() {
 
         }
     );
-
-
-    // ----------------------------------------
-    // RENDER ZONES
-    // ----------------------------------------
-
-    renderInspectionZones();
 
 }
 
