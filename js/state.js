@@ -1,3 +1,11 @@
+// ========================================
+// GLOBAL DATA
+// ========================================
+
+let documents = [];
+
+
+// ========================================
 // INSPECTION DATA
 // ========================================
 
@@ -26,9 +34,3 @@ let inspectionSettingsLoaded = false;
 let inspectionPageInitialized = false;
 
 
-// ========================================
-// FM-OP-11 DATA
-// ========================================
-
-let fmop11Records = [];
-let fmop11SelectedRecords = [];

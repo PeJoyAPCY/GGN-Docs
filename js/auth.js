@@ -26,7 +26,6 @@ function waitForGoogle() {
 
 
 // ========================================
-
 // GOOGLE LOGIN
 // ========================================
 
@@ -112,74 +111,6 @@ async function handleGoogleLogin(
     await loginToGGN(
         credential
     );
-
-}
-
-
-// ========================================
-// LOGIN TO GGN
-// ========================================
-
-async function loginToGGN(
-    credential
-) {
-
-    try {
-
-        showLoginMessage(
-            "กำลังตรวจสอบผู้ใช้งาน..."
-        );
-
-
-        await apiFetch({
-            action: "googleLogin",
-            credential: credential
-        });
-
-
-        const data =
-            await response.json();
-
-
-        console.log(
-            "ผลการตรวจสอบ:",
-            data
-        );
-
-
-        if (
-            data.success &&
-            data.found
-        ) {
-
-            showUserInfo(
-                data.user
-            );
-
-        } else {
-
-            showLoginMessage(
-
-                data.message ||
-                "ไม่พบผู้ใช้งานในระบบ"
-
-            );
-
-        }
-
-    } catch (error) {
-
-        console.error(
-            "Login Error:",
-            error
-        );
-
-
-        showLoginMessage(
-            "เกิดข้อผิดพลาดในการตรวจสอบผู้ใช้งาน"
-        );
-
-    }
 
 }
 
@@ -467,6 +398,7 @@ function getCurrentUser() {
 
 }
 
+
 // ========================================
 // LOGOUT
 // ========================================
@@ -520,3 +452,61 @@ function logout() {
     location.reload();
 
 }
+
+
+// ========================================
+// LOGOUT
+// ========================================
+
+function setupLogout() {
+
+    const logoutButton =
+        document.getElementById(
+            "logout-button"
+        );
+
+
+    if (!logoutButton) {
+
+        return;
+
+    }
+
+
+    logoutButton.addEventListener(
+        "click",
+        logout
+    );
+
+}
+
+
+// ========================================
+// LOGOUT
+// ========================================
+
+function logout() {
+
+    localStorage.removeItem(
+        "ggnDocsUser"
+    );
+
+
+    if (
+        window.google &&
+        google.accounts &&
+        google.accounts.id
+    ) {
+
+        google.accounts.id
+            .disableAutoSelect();
+
+    }
+
+
+    location.reload();
+
+}
+
+
+// ========================================

@@ -1,3 +1,4 @@
+// ========================================
 // GET SETTINGS
 // ========================================
 
@@ -6,7 +7,222 @@ async function getInspectionSetting(
 ) {
 
     const response =
-        await apiFetch(
+        await fetch(
+
+            API_URL,
+
+            {
+
+                method:
+                    "POST",
+
+                headers: {
+
+                    "Content-Type":
+                        "text/plain;charset=utf-8"
+
+                },
+
+                body:
+                    JSON.stringify({
+
+                        action:
+                            "getSettings",
+
+                        settingType:
+                            settingType
+
+                    })
+
+            }
+
+        );
+
+
+    return await response.json();
+
+}
+
+
+// ========================================
+// LOAD INSPECTION SETTINGS
+// ========================================
+
+async function loadInspectionSettings() {
+
+    try {
+
+        console.log(
+            "กำลังโหลดข้อมูล Inspection Settings..."
+        );
+
+
+        // ------------------------------------
+        // LOCATION
+        // ------------------------------------
+
+        console.log(
+            "กำลังโหลด Location Settings..."
+        );
+
+        const locationData =
+            await getInspectionSetting(
+                "location"
+            );
+
+        console.log(
+            "Location Settings:",
+            locationData
+        );
+
+
+        if (
+            locationData.success &&
+            Array.isArray(
+                locationData.settings
+            )
+        ) {
+
+            inspectionLocations =
+                locationData.settings;
+
+        } else {
+
+            inspectionLocations =
+                [];
+
+        }
+
+
+        // ------------------------------------
+        // INSPECTOR
+        // ------------------------------------
+
+        console.log(
+            "กำลังโหลด Inspector Settings..."
+        );
+
+        const inspectorData =
+            await getInspectionSetting(
+                "inspector"
+            );
+
+        console.log(
+            "Inspector Settings:",
+            inspectorData
+        );
+
+
+        if (
+            inspectorData.success &&
+            Array.isArray(
+                inspectorData.settings
+            )
+        ) {
+
+            inspectionInspectors =
+                inspectorData.settings;
+
+        } else {
+
+            inspectionInspectors =
+                [];
+
+        }
+
+
+        // ------------------------------------
+        // INSPECTION ITEMS
+        // ------------------------------------
+
+        console.log(
+            "กำลังโหลด Inspection Items..."
+        );
+
+        const itemData =
+            await getInspectionSetting(
+                "inspectionItem"
+            );
+
+        console.log(
+            "Inspection Items:",
+            itemData
+        );
+
+
+        if (
+            itemData.success &&
+            Array.isArray(
+                itemData.settings
+            )
+        ) {
+
+            inspectionItems =
+                itemData.settings;
+
+        } else {
+
+            inspectionItems =
+                [];
+
+        }
+
+
+        // ------------------------------------
+        // RENDER
+        // ------------------------------------
+
+        renderInspectionLocations();
+
+        renderInspectionInspectors();
+
+        renderInspectionItems();
+
+
+        console.log(
+            "โหลด Inspection Settings สำเร็จ"
+        );
+
+
+    } catch (error) {
+
+        console.error(
+            "โหลด Inspection Settings ไม่สำเร็จ:",
+            error
+        );
+
+
+        inspectionLocations = [];
+
+        inspectionInspectors = [];
+
+        inspectionItems = [];
+
+
+        renderInspectionLocations();
+
+        renderInspectionInspectors();
+
+        renderInspectionItems();
+
+    }
+
+}
+
+
+// ========================================
+// GET SETTINGS
+// ========================================
+
+async function getInspectionSetting(
+    settingType
+) {
+
+    const response =
+        await fetch(
+
+            API_URL,
+
             {
 
                 method:
@@ -168,3 +384,4 @@ async function loadInspectionSettings() {
     }
 
 }
+

@@ -2,6 +2,14 @@
 // ======================================================
 
 
+// รายการตรวจที่ค้นพบ
+let fmop11Records = [];
+
+
+// รายการที่ผู้ใช้เลือก
+let fmop11SelectedRecords = [];
+
+
 // ========================================
 // INITIALIZE FM-OP-11
 // ========================================
@@ -296,7 +304,7 @@ async function searchFMOP11Records() {
     try {
 
         const response =
-            await apiFetch(
+            await fetch(
 
                 API_URL,
 
@@ -784,7 +792,7 @@ async function generateFMOP11() {
     try {
 
         const response =
-            await apiFetch(
+            await fetch(
 
                 API_URL,
 

@@ -60,31 +60,98 @@ async function testAPI() {
 
 
 // ========================================
-// COMMON API REQUEST HELPER
+// LOGIN TO GGN
 // ========================================
 
-// ========================================
-// COMMON API REQUEST HELPER
-// ========================================
+async function loginToGGN(
+    credential
+) {
 
-async function apiFetch(data) {
+    try {
 
-    const response =
-        await fetch(
-            API_URL,
-            {
-                method: "POST",
-
-                headers: {
-                    "Content-Type":
-                        "text/plain;charset=utf-8"
-                },
-
-                body:
-                    JSON.stringify(data)
-            }
+        showLoginMessage(
+            "กำลังตรวจสอบผู้ใช้งาน..."
         );
 
-    return response;
+
+        const response =
+            await fetch(
+
+                API_URL,
+
+                {
+
+                    method:
+                        "POST",
+
+                    headers: {
+
+                        "Content-Type":
+                            "text/plain;charset=utf-8"
+
+                    },
+
+                    body:
+                        JSON.stringify({
+
+                            action:
+                                "googleLogin",
+
+                            credential:
+                                credential
+
+                        })
+
+                }
+
+            );
+
+
+        const data =
+            await response.json();
+
+
+        console.log(
+            "ผลการตรวจสอบ:",
+            data
+        );
+
+
+        if (
+            data.success &&
+            data.found
+        ) {
+
+            showUserInfo(
+                data.user
+            );
+
+        } else {
+
+            showLoginMessage(
+
+                data.message ||
+                "ไม่พบผู้ใช้งานในระบบ"
+
+            );
+
+        }
+
+    } catch (error) {
+
+        console.error(
+            "Login Error:",
+            error
+        );
+
+
+        showLoginMessage(
+            "เกิดข้อผิดพลาดในการตรวจสอบผู้ใช้งาน"
+        );
+
+    }
 
 }
+
+
+// ========================================
