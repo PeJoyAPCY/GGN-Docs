@@ -87,19 +87,31 @@ async function initializeInspectionPage() {
 
 
     // ----------------------------------------
-    // LOAD INSPECTION SETTINGS
+    // LOAD INSPECTION SETTINGS + REAL DATA
+    // LOAD IN PARALLEL
     // ----------------------------------------
 
     if (
         !inspectionSettingsLoaded
     ) {
 
-        await loadInspectionSettings();
+        await Promise.all([
+
+            loadInspectionSettings(),
+
+            loadInspections()
+
+        ]);
+
 
         inspectionSettingsLoaded =
             true;
 
     } else {
+
+        // ------------------------------------
+        // SETTINGS ALREADY LOADED
+        // ------------------------------------
 
         renderInspectionZones();
 
@@ -109,14 +121,14 @@ async function initializeInspectionPage() {
 
         renderInspectionItems();
 
+
+        // ------------------------------------
+        // LOAD REAL INSPECTION DATA
+        // ------------------------------------
+
+        await loadInspections();
+
     }
-
-
-    // ----------------------------------------
-    // LOAD REAL INSPECTION DATA
-    // ----------------------------------------
-
-    await loadInspections();
 
 
     console.log(
