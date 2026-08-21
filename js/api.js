@@ -160,6 +160,242 @@ async function apiRequest(
 
 }
 
+// ========================================
+// GGN Docs
+// API
+// ========================================
+
+
+// ======================================================
+// API REQUEST
+// ======================================================
+
+async function apiRequest(
+    payload
+) {
+
+    const response =
+        await fetch(
+
+            API_URL,
+
+            {
+
+                method:
+                    "POST",
+
+                headers: {
+
+                    "Content-Type":
+                        "text/plain;charset=utf-8"
+
+                },
+
+                body:
+                    JSON.stringify(
+                        payload
+                    )
+
+            }
+
+        );
+
+
+    return await response.json();
+
+}
+
+
+// ======================================================
+// AUTH API
+// ======================================================
+
+
+// ========================================
+// GOOGLE LOGIN
+// ========================================
+
+async function apiGoogleLogin(
+    credential
+) {
+
+    return await apiRequest({
+
+        action:
+            "googleLogin",
+
+        credential:
+            credential
+
+    });
+
+}
+
+
+// ======================================================
+// DOCUMENT API
+// ======================================================
+
+
+// ========================================
+// GET DOCUMENTS
+// ========================================
+
+async function apiGetDocuments() {
+
+    return await apiRequest({
+
+        action:
+            "getDocuments"
+
+    });
+
+}
+
+
+// ========================================
+// ADD DOCUMENT
+// ========================================
+
+async function apiAddDocument(
+    documentData
+) {
+
+    return await apiRequest({
+
+        action:
+            "addDocument",
+
+        document:
+            documentData
+
+    });
+
+}
+
+
+// ======================================================
+// INSPECTION API
+// ======================================================
+
+
+// ========================================
+// GET SETTINGS
+// ========================================
+
+async function apiGetSettings(
+    settingType
+) {
+
+    return await apiRequest({
+
+        action:
+            "getSettings",
+
+        settingType:
+            settingType
+
+    });
+
+}
+
+
+// ========================================
+// GET INSPECTIONS
+// ========================================
+
+async function apiGetInspections(
+    options = {}
+) {
+
+    const payload = {
+
+        action:
+            "getInspections"
+
+    };
+
+
+    if (
+        options.inspectionDate
+    ) {
+
+        payload.inspectionDate =
+            options.inspectionDate;
+
+    }
+
+
+    if (
+        options.inspectorName
+    ) {
+
+        payload.inspectorName =
+            options.inspectorName;
+
+    }
+
+
+    return await apiRequest(
+        payload
+    );
+
+}
+
+
+// ========================================
+// SAVE INSPECTION
+// ========================================
+
+async function apiSaveInspection(
+    inspectionData
+) {
+
+    return await apiRequest({
+
+        action:
+            "saveInspection",
+
+        inspection:
+            inspectionData
+
+    });
+
+}
+
+
+// ======================================================
+// FM-OP-11 API
+// ======================================================
+
+
+// ========================================
+// GENERATE FM-OP-11
+// ========================================
+
+async function apiGenerateFMOP11(
+    records,
+    createdBy,
+    createdByEmail
+) {
+
+    return await apiRequest({
+
+        action:
+            "generateFMOP11",
+
+        records:
+            records,
+
+        createdBy:
+            createdBy,
+
+        createdByEmail:
+            createdByEmail
+
+    });
+
+}
 
 // ======================================================
 // DOCUMENT API
