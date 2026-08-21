@@ -1,10 +1,13 @@
+// ======================================================
+// GGN DOCS
 // INSPECTION SYSTEM
 // ======================================================
 
 
-// ========================================
+
+// ======================================================
 // SETUP INSPECTION
-// ========================================
+// ======================================================
 
 function setupInspections() {
 
@@ -20,6 +23,10 @@ function setupInspections() {
         );
 
 
+    // ----------------------------------------
+    // SAVE BUTTON
+    // ----------------------------------------
+
     if (saveButton) {
 
         saveButton.addEventListener(
@@ -30,6 +37,10 @@ function setupInspections() {
     }
 
 
+    // ----------------------------------------
+    // RESET BUTTON
+    // ----------------------------------------
+
     if (resetButton) {
 
         resetButton.addEventListener(
@@ -39,12 +50,27 @@ function setupInspections() {
 
     }
 
+
+    // ----------------------------------------
+    // OTHER INSPECTION PAGE EVENTS
+    // ----------------------------------------
+
+    if (
+        typeof setupInspectionPageEvents ===
+        "function"
+    ) {
+
+        setupInspectionPageEvents();
+
+    }
+
 }
 
 
-// ========================================
+
+// ======================================================
 // INITIALIZE INSPECTION PAGE
-// ========================================
+// ======================================================
 
 async function initializeInspectionPage() {
 
@@ -53,8 +79,16 @@ async function initializeInspectionPage() {
     );
 
 
+    // ----------------------------------------
+    // DEFAULT DATE / TIME
+    // ----------------------------------------
+
     setDefaultInspectionDateTime();
 
+
+    // ----------------------------------------
+    // LOAD INSPECTION SETTINGS
+    // ----------------------------------------
 
     if (
         !inspectionSettingsLoaded
@@ -67,6 +101,8 @@ async function initializeInspectionPage() {
 
     } else {
 
+        renderInspectionZones();
+
         renderInspectionLocations();
 
         renderInspectionInspectors();
@@ -76,17 +112,24 @@ async function initializeInspectionPage() {
     }
 
 
-    // ------------------------------------
+    // ----------------------------------------
     // LOAD REAL INSPECTION DATA
-    // ------------------------------------
+    // ----------------------------------------
 
     await loadInspections();
 
+
+    console.log(
+        "เตรียมหน้าการตรวจเรียบร้อย"
+    );
+
 }
 
-// ========================================
+
+
+// ======================================================
 // DEFAULT DATE / TIME
-// ========================================
+// ======================================================
 
 function setDefaultInspectionDateTime() {
 
@@ -105,6 +148,10 @@ function setDefaultInspectionDateTime() {
     const now =
         new Date();
 
+
+    // ----------------------------------------
+    // DATE
+    // ----------------------------------------
 
     if (
         dateInput &&
@@ -139,6 +186,10 @@ function setDefaultInspectionDateTime() {
     }
 
 
+    // ----------------------------------------
+    // TIME
+    // ----------------------------------------
+
     if (
         timeInput &&
         !timeInput.value
@@ -170,9 +221,121 @@ function setDefaultInspectionDateTime() {
 }
 
 
-// ========================================
-// RENDER ZONES
-// ========================================
+
+// ======================================================
+// LOAD INSPECTIONS
+// ======================================================
+
+async function loadInspections() {
+
+    try {
+
+        console.log(
+            "กำลังโหลดข้อมูล Inspections..."
+        );
+
+
+        const response =
+            await fetch(
+                API_URL,
+                {
+                    method:
+                        "POST",
+
+                    headers: {
+                        "Content-Type":
+                            "application/json"
+                    },
+
+                    body:
+                        JSON.stringify({
+
+                            action:
+                                "getInspections"
+
+                        })
+
+                }
+            );
+
+
+        const data =
+            await response.json();
+
+
+        console.log(
+            "getInspections response:",
+            data
+        );
+
+
+        // ----------------------------------------
+        // CHECK RESPONSE
+        // ----------------------------------------
+
+        if (
+            !data.success
+        ) {
+
+            console.error(
+                "ไม่สามารถโหลด Inspections:",
+                data.message
+            );
+
+
+            inspectionRecords =
+                [];
+
+
+            return;
+
+        }
+
+
+        // ----------------------------------------
+        // STORE INSPECTION RECORDS
+        // ----------------------------------------
+
+        inspectionRecords =
+            Array.isArray(
+                data.data
+            )
+                ? data.data
+                : [];
+
+
+        console.log(
+            "โหลด Inspections สำเร็จ:",
+            inspectionRecords
+        );
+
+
+        console.log(
+            "จำนวนรายการตรวจ:",
+            inspectionRecords.length
+        );
+
+
+    } catch (error) {
+
+        console.error(
+            "เกิดข้อผิดพลาดในการโหลด Inspections:",
+            error
+        );
+
+
+        inspectionRecords =
+            [];
+
+    }
+
+}
+
+
+
+// ======================================================
+// RENDER INSPECTION ZONES
+// ======================================================
 
 function renderInspectionZones() {
 
@@ -202,50 +365,64 @@ function renderInspectionZones() {
     `;
 
 
-    inspectionZones.forEach(
+    const zones =
+        [];
+
+
+    // ----------------------------------------
+    // GET ZONES FROM LOCATIONS
+    // ----------------------------------------
+
+    inspectionLocations.forEach(
         function (
-            zone
+            location
         ) {
 
-            if (!zone) {
+            if (!location) {
 
                 return;
 
             }
 
 
-            // --------------------------------
-            // ตรวจ Status
-            // --------------------------------
-
-            if (
-                zone.status &&
-                String(
-                    zone.status
-                ).toLowerCase()
-                !==
-                "active"
-            ) {
-
-                return;
-
-            }
-
-
-            const zoneName =
-                zone.settingName ||
-                zone.name ||
-                zone.settingValue ||
-                zone.zoneName ||
+            const zone =
+                location.zone ||
+                location.settingZone ||
                 "";
 
 
-            if (!zoneName) {
+            if (
+                zone &&
+                !zones.includes(
+                    zone
+                )
+            ) {
 
-                return;
+                zones.push(
+                    zone
+                );
 
             }
 
+        }
+    );
+
+
+    // ----------------------------------------
+    // SORT ZONES
+    // ----------------------------------------
+
+    zones.sort();
+
+
+    // ----------------------------------------
+    // RENDER OPTIONS
+    // ----------------------------------------
+
+    zones.forEach(
+        function (
+            zone
+        ) {
 
             const option =
                 document.createElement(
@@ -254,11 +431,11 @@ function renderInspectionZones() {
 
 
             option.value =
-                zoneName;
+                zone;
 
 
             option.textContent =
-                zoneName;
+                zone;
 
 
             select.appendChild(
@@ -271,9 +448,10 @@ function renderInspectionZones() {
 }
 
 
-// ========================================
-// RENDER LOCATIONS
-// ========================================
+
+// ======================================================
+// RENDER INSPECTION LOCATIONS
+// ======================================================
 
 function renderInspectionLocations() {
 
@@ -316,7 +494,7 @@ function renderInspectionLocations() {
 
 
             // --------------------------------
-            // ตรวจ Status
+            // CHECK STATUS
             // --------------------------------
 
             if (
@@ -333,6 +511,10 @@ function renderInspectionLocations() {
             }
 
 
+            // --------------------------------
+            // LOCATION NAME
+            // --------------------------------
+
             const locationName =
                 location.settingName ||
                 location.name ||
@@ -347,6 +529,10 @@ function renderInspectionLocations() {
 
             }
 
+
+            // --------------------------------
+            // CREATE OPTION
+            // --------------------------------
 
             const option =
                 document.createElement(
@@ -369,12 +555,20 @@ function renderInspectionLocations() {
         }
     );
 
+
+    // ----------------------------------------
+    // RENDER ZONES
+    // ----------------------------------------
+
+    renderInspectionZones();
+
 }
 
 
-// ========================================
-// RENDER INSPECTORS
-// ========================================
+
+// ======================================================
+// RENDER INSPECTION INSPECTORS
+// ======================================================
 
 function renderInspectionInspectors() {
 
@@ -417,7 +611,7 @@ function renderInspectionInspectors() {
 
 
             // --------------------------------
-            // ตรวจ Status
+            // CHECK STATUS
             // --------------------------------
 
             if (
@@ -434,6 +628,10 @@ function renderInspectionInspectors() {
             }
 
 
+            // --------------------------------
+            // INSPECTOR NAME
+            // --------------------------------
+
             const inspectorName =
                 inspector.settingName ||
                 inspector.name ||
@@ -448,6 +646,10 @@ function renderInspectionInspectors() {
 
             }
 
+
+            // --------------------------------
+            // CREATE OPTION
+            // --------------------------------
 
             const option =
                 document.createElement(
@@ -473,818 +675,11 @@ function renderInspectionInspectors() {
 }
 
 
-// ========================================
+
+// ======================================================
 // RENDER INSPECTION ITEMS
-// ========================================
-
-function renderInspectionItems() {
-
-    const container =
-        document.getElementById(
-            "inspection-items"
-        );
-
-
-    if (!container) {
-
-        return;
-
-    }
-
-
-    if (
-        !Array.isArray(
-            inspectionItems
-        ) ||
-        inspectionItems.length === 0
-    ) {
-
-        container.innerHTML = `
-
-            <div class="inspection-empty">
-
-                <div>
-                    📋
-                </div>
-
-                <strong>
-                    ยังไม่มีรายการตรวจ
-                </strong>
-
-                <span>
-                    ไม่พบรายการตรวจในระบบ
-                </span>
-
-            </div>
-
-        `;
-
-        return;
-
-    }
-
-
-    // ------------------------------------
-    // Sort รายการตรวจ
-    // ------------------------------------
-
-    const sortedItems =
-        [...inspectionItems]
-            .sort(
-                function (
-                    a,
-                    b
-                ) {
-
-                    const aNo =
-                        Number(
-                            a.sortOrder ||
-                            a.itemNo ||
-                            a.no ||
-                            999
-                        );
-
-
-                    const bNo =
-                        Number(
-                            b.sortOrder ||
-                            b.itemNo ||
-                            b.no ||
-                            999
-                        );
-
-
-                    return aNo - bNo;
-
-                }
-            );
-
-
-    container.innerHTML = "";
-
-
-    sortedItems.forEach(
-        function (
-            item,
-            index
-        ) {
-
-            const itemNumber =
-                item.sortOrder ||
-                item.itemNo ||
-                item.no ||
-                index + 1;
-
-
-            const itemText =
-                item.settingName ||
-                item.name ||
-                item.item ||
-                item.description ||
-                "";
-
-
-            const row =
-                document.createElement(
-                    "div"
-                );
-
-
-            row.className =
-                "inspection-item";
-
-
-            row.dataset.itemNo =
-                itemNumber;
-
-
-            row.innerHTML = `
-
-                <div class="inspection-item-header">
-
-                    <div class="inspection-item-number">
-
-                        ${escapeHTML(
-                            itemNumber
-                        )}
-
-                    </div>
-
-
-                    <div class="inspection-item-text">
-
-                        ${escapeHTML(
-                            itemText
-                        )}
-
-                    </div>
-
-                </div>
-
-
-                <div class="inspection-result-group">
-
-                    <label
-                        class="inspection-result-option"
-                    >
-
-                        <input
-                            type="radio"
-                            name="inspection-result-${escapeHTML(
-                                itemNumber
-                            )}"
-                            value="ผ่าน"
-                        >
-
-                        <span>
-                            ผ่าน
-                        </span>
-
-                    </label>
-
-
-                    <label
-                        class="inspection-result-option"
-                    >
-
-                        <input
-                            type="radio"
-                            name="inspection-result-${escapeHTML(
-                                itemNumber
-                            )}"
-                            value="ไม่ผ่าน"
-                        >
-
-                        <span>
-                            ไม่ผ่าน
-                        </span>
-
-                    </label>
-
-                </div>
-
-            `;
-
-
-            container.appendChild(
-                row
-            );
-
-        }
-    );
-
-
-    // ====================================
-    // REMARK + SOLUTION
-    // ====================================
-
-    const additionalSection =
-        document.createElement(
-            "div"
-        );
-
-
-    additionalSection.className =
-        "inspection-additional";
-
-
-    additionalSection.innerHTML = `
-
-        <div class="inspection-remark-group">
-
-            <label
-                for="inspection-remark"
-            >
-                หมายเหตุ
-            </label>
-
-            <textarea
-                id="inspection-remark"
-                class="inspection-remark"
-                rows="3"
-                placeholder="ระบุหมายเหตุ (ถ้ามี)"
-            ></textarea>
-
-        </div>
-
-
-        <div class="inspection-solution-group">
-
-            <label
-                for="inspection-solution"
-            >
-                แนวทางแก้ไข
-            </label>
-
-            <textarea
-                id="inspection-solution"
-                class="inspection-solution"
-                rows="3"
-                placeholder="ระบุแนวทางแก้ไข (ถ้ามี)"
-            ></textarea>
-
-        </div>
-
-    `;
-
-
-    container.appendChild(
-        additionalSection
-    );
-
-}
 // ======================================================
 
-
-// ========================================
-// SETUP INSPECTION
-// ========================================
-
-function setupInspections() {
-
-    const saveButton =
-        document.getElementById(
-            "save-inspection-button"
-        );
-
-
-    const resetButton =
-        document.getElementById(
-            "reset-inspection-button"
-        );
-
-
-    if (saveButton) {
-
-        saveButton.addEventListener(
-            "click",
-            saveInspection
-        );
-
-    }
-
-
-    if (resetButton) {
-
-        resetButton.addEventListener(
-            "click",
-            resetInspectionForm
-        );
-
-    }
-
-
-    setupInspectionPageEvents();
-
-}
-
-
-// ========================================
-// INITIALIZE INSPECTION PAGE
-// ========================================
-
-async function initializeInspectionPage() {
-
-    console.log(
-        "กำลังเตรียมหน้า การตรวจ ISO..."
-    );
-
-
-    setDefaultInspectionDateTime();
-
-
-    if (
-        !inspectionSettingsLoaded
-    ) {
-
-        await loadInspectionSettings();
-
-        inspectionSettingsLoaded =
-            true;
-
-    } else {
-
-        renderInspectionLocations();
-
-        renderInspectionInspectors();
-
-        renderInspectionItems();
-
-    }
-
-}
-
-
-// ========================================
-// DEFAULT DATE / TIME
-// ========================================
-
-function setDefaultInspectionDateTime() {
-
-    const dateInput =
-        document.getElementById(
-            "inspection-date"
-        );
-
-
-    const timeInput =
-        document.getElementById(
-            "inspection-time"
-        );
-
-
-    const now =
-        new Date();
-
-
-    if (
-        dateInput &&
-        !dateInput.value
-    ) {
-
-        const year =
-            now.getFullYear();
-
-
-        const month =
-            String(
-                now.getMonth() + 1
-            ).padStart(
-                2,
-                "0"
-            );
-
-
-        const day =
-            String(
-                now.getDate()
-            ).padStart(
-                2,
-                "0"
-            );
-
-
-        dateInput.value =
-            `${year}-${month}-${day}`;
-
-    }
-
-
-    if (
-        timeInput &&
-        !timeInput.value
-    ) {
-
-        const hours =
-            String(
-                now.getHours()
-            ).padStart(
-                2,
-                "0"
-            );
-
-
-        const minutes =
-            String(
-                now.getMinutes()
-            ).padStart(
-                2,
-                "0"
-            );
-
-
-        timeInput.value =
-            `${hours}:${minutes}`;
-
-    }
-
-}
-
-
-// ========================================
-// LOAD INSPECTIONS
-// ========================================
-
-async function loadInspections() {
-
-    try {
-
-        console.log(
-            "กำลังโหลดข้อมูล Inspections..."
-        );
-
-
-        const response =
-            await fetch(
-                API_URL,
-                {
-                    method: "POST",
-
-                    headers: {
-                        "Content-Type":
-                            "application/json"
-                    },
-
-                    body: JSON.stringify({
-                        action: "getInspections"
-                    })
-                }
-            );
-
-
-        const data =
-            await response.json();
-
-
-        console.log(
-            "getInspections response:",
-            data
-        );
-
-
-        if (
-            !data.success
-        ) {
-
-            console.error(
-                "ไม่สามารถโหลด Inspections:",
-                data.message
-            );
-
-            inspectionRecords = [];
-
-            return;
-
-        }
-
-
-        // ------------------------------------
-        // เก็บข้อมูล Inspections
-        // ------------------------------------
-
-        inspectionRecords =
-            Array.isArray(data.data)
-                ? data.data
-                : [];
-
-
-        console.log(
-            "โหลด Inspections สำเร็จ:",
-            inspectionRecords
-        );
-
-
-        console.log(
-            "จำนวนรายการตรวจ:",
-            inspectionRecords.length
-        );
-
-
-    } catch (error) {
-
-        console.error(
-            "เกิดข้อผิดพลาดในการโหลด Inspections:",
-            error
-        );
-
-
-        inspectionRecords = [];
-
-    }
-
-}
-
-// ========================================
-// RENDER ZONE
-// ========================================
-
-function renderInspectionZones() {
-
-    const select =
-        document.getElementById(
-            "inspection-zone"
-        );
-
-
-    if (!select) {
-
-        return;
-
-    }
-
-
-    select.innerHTML = `
-
-        <option value="">
-            -- เลือกเขต --
-        </option>
-
-    `;
-
-
-    const zones = [];
-
-
-    inspectionLocations.forEach(
-        function (
-            location
-        ) {
-
-            if (!location) {
-
-                return;
-
-            }
-
-
-            const zone =
-                location.zone ||
-                location.settingZone ||
-                "";
-
-
-            if (
-                zone &&
-                !zones.includes(
-                    zone
-                )
-            ) {
-
-                zones.push(
-                    zone
-                );
-
-            }
-
-        }
-    );
-
-
-    zones.sort();
-
-
-    zones.forEach(
-        function (
-            zone
-        ) {
-
-            const option =
-                document.createElement(
-                    "option"
-                );
-
-
-            option.value =
-                zone;
-
-
-            option.textContent =
-                zone;
-
-
-            select.appendChild(
-                option
-            );
-
-        }
-    );
-
-}
-
-
-// ========================================
-// RENDER LOCATIONS
-// ========================================
-
-function renderInspectionLocations() {
-
-    const select =
-        document.getElementById(
-            "inspection-location"
-        );
-
-
-    if (!select) {
-
-        return;
-
-    }
-
-
-    select.innerHTML = `
-
-        <option value="">
-            -- เลือกจุดตรวจ --
-        </option>
-
-    `;
-
-
-    inspectionLocations.forEach(
-        function (
-            location
-        ) {
-
-            if (!location) {
-
-                return;
-
-            }
-
-
-            if (
-                location.status &&
-                String(
-                    location.status
-                ).toLowerCase()
-                !==
-                "active"
-            ) {
-
-                return;
-
-            }
-
-
-            const locationName =
-                location.settingName ||
-                location.name ||
-                location.settingValue ||
-                location.locationName ||
-                "";
-
-
-            if (!locationName) {
-
-                return;
-
-            }
-
-
-            const option =
-                document.createElement(
-                    "option"
-                );
-
-
-            option.value =
-                locationName;
-
-
-            option.textContent =
-                locationName;
-
-
-            select.appendChild(
-                option
-            );
-
-        }
-    );
-
-
-    renderInspectionZones();
-
-}
-
-
-// ========================================
-// RENDER INSPECTORS
-// ========================================
-
-function renderInspectionInspectors() {
-
-    const select =
-        document.getElementById(
-            "inspection-inspector"
-        );
-
-
-    if (!select) {
-
-        return;
-
-    }
-
-
-    select.innerHTML = `
-
-        <option value="">
-            -- เลือกผู้ตรวจ --
-        </option>
-
-    `;
-
-
-    inspectionInspectors.forEach(
-        function (
-            inspector
-        ) {
-
-            if (!inspector) {
-
-                return;
-
-            }
-
-
-            if (
-                inspector.status &&
-                String(
-                    inspector.status
-                ).toLowerCase()
-                !==
-                "active"
-            ) {
-
-                return;
-
-            }
-
-
-            const inspectorName =
-                inspector.settingName ||
-                inspector.name ||
-                inspector.settingValue ||
-                inspector.inspectorName ||
-                "";
-
-
-            if (!inspectorName) {
-
-                return;
-
-            }
-
-
-            const option =
-                document.createElement(
-                    "option"
-                );
-
-
-            option.value =
-                inspectorName;
-
-
-            option.textContent =
-                inspectorName;
-
-
-            select.appendChild(
-                option
-            );
-
-        }
-    );
-
-}
-
-
-// ========================================
-// RENDER INSPECTION ITEMS
-// ========================================
-
 function renderInspectionItems() {
 
     const container =
@@ -1299,6 +694,10 @@ function renderInspectionItems() {
 
     }
 
+
+    // ----------------------------------------
+    // CHECK ITEMS
+    // ----------------------------------------
 
     if (
         !Array.isArray(
@@ -1327,10 +726,15 @@ function renderInspectionItems() {
 
         `;
 
+
         return;
 
     }
 
+
+    // ----------------------------------------
+    // SORT ITEMS
+    // ----------------------------------------
 
     const sortedItems =
         [...inspectionItems]
@@ -1358,14 +762,26 @@ function renderInspectionItems() {
                         );
 
 
-                    return aNo - bNo;
+                    return (
+                        aNo -
+                        bNo
+                    );
 
                 }
             );
 
 
-    container.innerHTML = "";
+    // ----------------------------------------
+    // CLEAR CONTAINER
+    // ----------------------------------------
 
+    container.innerHTML =
+        "";
+
+
+    // ----------------------------------------
+    // RENDER ITEMS
+    // ----------------------------------------
 
     sortedItems.forEach(
         function (
@@ -1413,6 +829,7 @@ function renderInspectionItems() {
                         )}
 
                     </div>
+
 
                     <div class="inspection-item-text">
 
@@ -1477,6 +894,10 @@ function renderInspectionItems() {
     );
 
 
+    // ----------------------------------------
+    // REMARK + SOLUTION
+    // ----------------------------------------
+
     const additionalSection =
         document.createElement(
             "div"
@@ -1497,6 +918,7 @@ function renderInspectionItems() {
                 หมายเหตุ
             </label>
 
+
             <textarea
                 id="inspection-remark"
                 class="inspection-remark"
@@ -1514,6 +936,7 @@ function renderInspectionItems() {
             >
                 แนวทางแก้ไข
             </label>
+
 
             <textarea
                 id="inspection-solution"
@@ -1534,9 +957,10 @@ function renderInspectionItems() {
 }
 
 
-// ========================================
+
+// ======================================================
 // COLLECT INSPECTION ITEMS
-// ========================================
+// ======================================================
 
 function collectInspectionItems() {
 
@@ -1610,9 +1034,10 @@ function collectInspectionItems() {
 }
 
 
-// ========================================
+
+// ======================================================
 // COLLECT REMARK
-// ========================================
+// ======================================================
 
 function collectInspectionRemark() {
 
@@ -1634,9 +1059,10 @@ function collectInspectionRemark() {
 }
 
 
-// ========================================
+
+// ======================================================
 // COLLECT SOLUTION
-// ========================================
+// ======================================================
 
 function collectInspectionSolution() {
 
@@ -1658,9 +1084,10 @@ function collectInspectionSolution() {
 }
 
 
-// ========================================
+
+// ======================================================
 // VALIDATE INSPECTION FORM
-// ========================================
+// ======================================================
 
 function validateInspectionForm() {
 
@@ -1688,6 +1115,10 @@ function validateInspectionForm() {
         );
 
 
+    // ----------------------------------------
+    // DATE
+    // ----------------------------------------
+
     if (
         !inspectionDate ||
         !inspectionDate.value
@@ -1697,10 +1128,15 @@ function validateInspectionForm() {
             "กรุณาเลือกวันที่ตรวจ"
         );
 
+
         return false;
 
     }
 
+
+    // ----------------------------------------
+    // TIME
+    // ----------------------------------------
 
     if (
         !inspectionTime ||
@@ -1711,10 +1147,15 @@ function validateInspectionForm() {
             "กรุณาเลือกเวลาตรวจ"
         );
 
+
         return false;
 
     }
 
+
+    // ----------------------------------------
+    // LOCATION
+    // ----------------------------------------
 
     if (
         !location ||
@@ -1725,10 +1166,15 @@ function validateInspectionForm() {
             "กรุณาเลือกจุดตรวจ"
         );
 
+
         return false;
 
     }
 
+
+    // ----------------------------------------
+    // INSPECTOR
+    // ----------------------------------------
 
     if (
         !inspector ||
@@ -1739,10 +1185,15 @@ function validateInspectionForm() {
             "กรุณาเลือกผู้ตรวจ"
         );
 
+
         return false;
 
     }
 
+
+    // ----------------------------------------
+    // ITEMS
+    // ----------------------------------------
 
     const items =
         collectInspectionItems();
@@ -1756,10 +1207,15 @@ function validateInspectionForm() {
             "ไม่พบรายการตรวจ"
         );
 
+
         return false;
 
     }
 
+
+    // ----------------------------------------
+    // CHECK INCOMPLETE ITEMS
+    // ----------------------------------------
 
     const incomplete =
         items.find(
@@ -1779,6 +1235,7 @@ function validateInspectionForm() {
             "กรุณาเลือกผลการตรวจให้ครบทุกข้อ"
         );
 
+
         return false;
 
     }
@@ -1789,9 +1246,10 @@ function validateInspectionForm() {
 }
 
 
-// ========================================
+
+// ======================================================
 // GENERATE RECORD ID
-// ========================================
+// ======================================================
 
 function generateRecordId() {
 
@@ -1819,11 +1277,16 @@ function generateRecordId() {
 }
 
 
-// ========================================
+
+// ======================================================
 // SAVE INSPECTION
-// ========================================
+// ======================================================
 
 async function saveInspection() {
+
+    // ----------------------------------------
+    // VALIDATE
+    // ----------------------------------------
 
     if (
         !validateInspectionForm()
@@ -1833,6 +1296,10 @@ async function saveInspection() {
 
     }
 
+
+    // ----------------------------------------
+    // CURRENT USER
+    // ----------------------------------------
 
     const user =
         getCurrentUser();
@@ -1844,10 +1311,15 @@ async function saveInspection() {
             "ไม่พบข้อมูลผู้ใช้งาน กรุณาเข้าสู่ระบบใหม่"
         );
 
+
         return;
 
     }
 
+
+    // ----------------------------------------
+    // FORM INPUTS
+    // ----------------------------------------
 
     const dateInput =
         document.getElementById(
@@ -1885,9 +1357,17 @@ async function saveInspection() {
         );
 
 
+    // ----------------------------------------
+    // GENERATE NEW RECORD ID
+    // ----------------------------------------
+
     const recordId =
         generateRecordId();
 
+
+    // ----------------------------------------
+    // COLLECT DATA
+    // ----------------------------------------
 
     const items =
         collectInspectionItems();
@@ -1900,6 +1380,10 @@ async function saveInspection() {
     const solution =
         collectInspectionSolution();
 
+
+    // ----------------------------------------
+    // INSPECTION DATA
+    // ----------------------------------------
 
     const inspectionData = {
 
@@ -1955,16 +1439,25 @@ async function saveInspection() {
     );
 
 
+    // ----------------------------------------
+    // DISABLE SAVE BUTTON
+    // ----------------------------------------
+
     if (saveButton) {
 
         saveButton.disabled =
             true;
+
 
         saveButton.textContent =
             "กำลังบันทึก...";
 
     }
 
+
+    // ----------------------------------------
+    // SAVE TO DATABASE
+    // ----------------------------------------
 
     try {
 
@@ -2011,7 +1504,13 @@ async function saveInspection() {
         );
 
 
-        if (data.success) {
+        // ----------------------------------------
+        // SAVE SUCCESS
+        // ----------------------------------------
+
+        if (
+            data.success
+        ) {
 
             alert(
                 "บันทึกการตรวจสำเร็จ"
@@ -2019,6 +1518,7 @@ async function saveInspection() {
 
 
             resetInspectionForm();
+
 
         } else {
 
@@ -2030,6 +1530,7 @@ async function saveInspection() {
             );
 
         }
+
 
     } catch (error) {
 
@@ -2043,12 +1544,18 @@ async function saveInspection() {
             "ไม่สามารถเชื่อมต่อฐานข้อมูลได้"
         );
 
+
     } finally {
+
+        // ----------------------------------------
+        // RESTORE SAVE BUTTON
+        // ----------------------------------------
 
         if (saveButton) {
 
             saveButton.disabled =
                 false;
+
 
             saveButton.textContent =
                 "บันทึกการตรวจ";
@@ -2060,9 +1567,10 @@ async function saveInspection() {
 }
 
 
-// ========================================
+
+// ======================================================
 // RESET INSPECTION FORM
-// ========================================
+// ======================================================
 
 function resetInspectionForm() {
 
@@ -2078,6 +1586,12 @@ function resetInspectionForm() {
         );
 
 
+    const zoneInput =
+        document.getElementById(
+            "inspection-zone"
+        );
+
+
     const locationInput =
         document.getElementById(
             "inspection-location"
@@ -2090,6 +1604,22 @@ function resetInspectionForm() {
         );
 
 
+    // ----------------------------------------
+    // RESET ZONE
+    // ----------------------------------------
+
+    if (zoneInput) {
+
+        zoneInput.value =
+            "";
+
+    }
+
+
+    // ----------------------------------------
+    // RESET LOCATION
+    // ----------------------------------------
+
     if (locationInput) {
 
         locationInput.value =
@@ -2098,6 +1628,10 @@ function resetInspectionForm() {
     }
 
 
+    // ----------------------------------------
+    // RESET INSPECTOR
+    // ----------------------------------------
+
     if (inspectorInput) {
 
         inspectorInput.value =
@@ -2105,6 +1639,10 @@ function resetInspectionForm() {
 
     }
 
+
+    // ----------------------------------------
+    // RESET RADIO BUTTONS
+    // ----------------------------------------
 
     const resultInputs =
         document.querySelectorAll(
@@ -2124,6 +1662,10 @@ function resetInspectionForm() {
     );
 
 
+    // ----------------------------------------
+    // RESET REMARK
+    // ----------------------------------------
+
     const remark =
         document.getElementById(
             "inspection-remark"
@@ -2137,6 +1679,10 @@ function resetInspectionForm() {
 
     }
 
+
+    // ----------------------------------------
+    // RESET SOLUTION
+    // ----------------------------------------
 
     const solution =
         document.getElementById(
@@ -2152,6 +1698,10 @@ function resetInspectionForm() {
     }
 
 
+    // ----------------------------------------
+    // RESET DATE
+    // ----------------------------------------
+
     if (dateInput) {
 
         dateInput.value =
@@ -2160,6 +1710,10 @@ function resetInspectionForm() {
     }
 
 
+    // ----------------------------------------
+    // RESET TIME
+    // ----------------------------------------
+
     if (timeInput) {
 
         timeInput.value =
@@ -2167,6 +1721,10 @@ function resetInspectionForm() {
 
     }
 
+
+    // ----------------------------------------
+    // SET DEFAULT DATE / TIME
+    // ----------------------------------------
 
     setDefaultInspectionDateTime();
 
@@ -2178,4 +1736,7 @@ function resetInspectionForm() {
 }
 
 
+
+// ======================================================
+// END INSPECTION SYSTEM
 // ======================================================
