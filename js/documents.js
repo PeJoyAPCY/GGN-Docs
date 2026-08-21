@@ -92,9 +92,6 @@ async function loadDocuments() {
 
         const response =
             await apiFetch(
-
-                API_URL,
-
                 {
 
                     method:

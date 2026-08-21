@@ -7,9 +7,6 @@ async function getInspectionSetting(
 
     const response =
         await apiFetch(
-
-            API_URL,
-
             {
 
                 method:

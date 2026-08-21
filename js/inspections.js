@@ -12,7 +12,6 @@ async function loadInspections() {
 
         const response =
             await apiFetch(
-                API_URL,
                 {
                     method: "POST",
 
@@ -87,6 +86,37 @@ async function loadInspections() {
         inspectionRecords = [];
 
     }
+
+}
+
+// ========================================
+// SETUP INSPECTIONS
+// ========================================
+
+function setupInspections() {
+
+    console.log(
+        "กำลังเริ่มต้นระบบ Inspections..."
+    );
+
+
+    const saveButton =
+        document.getElementById(
+            "save-inspection-button"
+        );
+
+
+    if (saveButton) {
+
+        saveButton.addEventListener(
+            "click",
+            saveInspection
+        );
+
+    }
+
+
+    loadInspections();
 
 }
 
@@ -1066,9 +1096,6 @@ async function saveInspection() {
 
         const response =
             await apiFetch(
-
-                API_URL,
-
                 {
 
                     method:

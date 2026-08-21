@@ -132,11 +132,7 @@ async function loginToGGN(
 
 
         const response =
-            await apiFetch(
-
-                API_URL,
-
-                {
+            await apiFetch({
 
                     method:
                         "POST",
