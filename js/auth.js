@@ -131,33 +131,10 @@ async function loginToGGN(
         );
 
 
-        const response =
-            await apiFetch({
-
-                    method:
-                        "POST",
-
-                    headers: {
-
-                        "Content-Type":
-                            "text/plain;charset=utf-8"
-
-                    },
-
-                    body:
-                        JSON.stringify({
-
-                            action:
-                                "googleLogin",
-
-                            credential:
-                                credential
-
-                        })
-
-                }
-
-            );
+        await apiFetch({
+            action: "googleLogin",
+            credential: credential
+        });
 
 
         const data =

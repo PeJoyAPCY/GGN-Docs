@@ -11,21 +11,12 @@ async function loadInspections() {
 
 
         const response =
-            await apiFetch(
-                {
-                    method: "POST",
+            await apiFetch({
 
-                    headers: {
-                        "Content-Type":
-                            "application/json"
-                    },
+                action:
+                    "getInspections"
 
-                    body: JSON.stringify({
-                        action: "getInspections"
-                    })
-                }
-            );
-
+            });
 
         const data =
             await response.json();
@@ -1095,33 +1086,15 @@ async function saveInspection() {
     try {
 
         const response =
-            await apiFetch(
-                {
+            await apiFetch({
 
-                    method:
-                        "POST",
+                action:
+                    "saveInspection",
 
-                    headers: {
+                inspection:
+                    inspectionData
 
-                        "Content-Type":
-                            "text/plain;charset=utf-8"
-
-                    },
-
-                    body:
-                        JSON.stringify({
-
-                            action:
-                                "saveInspection",
-
-                            inspection:
-                                inspectionData
-
-                        })
-
-                }
-
-            );
+            });
 
 
         const data =

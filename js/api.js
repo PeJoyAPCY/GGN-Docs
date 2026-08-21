@@ -63,19 +63,27 @@ async function testAPI() {
 // COMMON API REQUEST HELPER
 // ========================================
 
-async function apiFetch(data = {}) {
+// ========================================
+// COMMON API REQUEST HELPER
+// ========================================
 
-    const response = await fetch(API_URL, {
+async function apiFetch(data) {
 
-        method: "POST",
+    const response =
+        await fetch(
+            API_URL,
+            {
+                method: "POST",
 
-        headers: {
-            "Content-Type": "application/json"
-        },
+                headers: {
+                    "Content-Type":
+                        "text/plain;charset=utf-8"
+                },
 
-        body: JSON.stringify(data)
-
-    });
+                body:
+                    JSON.stringify(data)
+            }
+        );
 
     return response;
 

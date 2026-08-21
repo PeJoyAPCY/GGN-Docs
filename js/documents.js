@@ -91,30 +91,12 @@ async function loadDocuments() {
 
 
         const response =
-            await apiFetch(
-                {
+                await apiFetch({
 
-                    method:
-                        "POST",
+                    action:
+                        "getDocuments"
 
-                    headers: {
-
-                        "Content-Type":
-                            "text/plain;charset=utf-8"
-
-                    },
-
-                    body:
-                        JSON.stringify({
-
-                            action:
-                                "getDocuments"
-
-                        })
-
-                }
-
-            );
+                });
 
 
         const data =
@@ -344,36 +326,15 @@ async function handleDocumentSubmit(
 
 
         const response =
-            await apiFetch(
+            await apiFetch({
 
-                API_URL,
+                action:
+                    "addDocument",
 
-                {
+                document:
+                    documentData
 
-                    method:
-                        "POST",
-
-                    headers: {
-
-                        "Content-Type":
-                            "text/plain;charset=utf-8"
-
-                    },
-
-                    body:
-                        JSON.stringify({
-
-                            action:
-                                "addDocument",
-
-                            document:
-                                documentData
-
-                        })
-
-                }
-
-            );
+            });
 
 
         const data =
