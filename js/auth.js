@@ -8,6 +8,7 @@
 // - ตรวจสอบผู้ใช้งานกับ Backend
 // - บันทึก / กู้คืน Session
 // - แสดงข้อมูลผู้ใช้งาน
+// - แสดง / ซ่อน Login และ Application
 // - Logout
 // ========================================
 
@@ -318,18 +319,43 @@ async function loginToGGN(
             data.user
         ) {
 
-            saveSession(
-                data.user
-            );
+            // บันทึก Session
+            const sessionSaved =
+                saveSession(
+                    data.user
+                );
 
 
+            if (!sessionSaved) {
+
+                showLoginMessage(
+                    "ไม่สามารถบันทึก Session ได้"
+                );
+
+                return;
+
+            }
+
+
+            // แสดงข้อมูลผู้ใช้
             showUserInfo(
                 data.user
             );
 
 
+            // ------------------------------------
+            // เปิด Application
+            // ------------------------------------
+
+            showApplication();
+
+
+            // ------------------------------------
+            // STATUS
+            // ------------------------------------
+
             showLoginMessage(
-                "เข้าสู่ระบบสำเร็จ"
+                "เชื่อมต่อ Google Apps Script สำเร็จ"
             );
 
 
@@ -376,6 +402,133 @@ async function loginToGGN(
         );
 
     }
+
+}
+
+
+// ========================================
+// SHOW APPLICATION
+// ========================================
+// เปลี่ยนจาก Login Page
+// ไปเป็น Application Page
+// ========================================
+
+function showApplication() {
+
+    const loginPage =
+        document.getElementById(
+            "login-page"
+        );
+
+
+    const appPage =
+        document.getElementById(
+            "app-page"
+        );
+
+
+    // ----------------------------------------
+    // HIDE LOGIN
+    // ----------------------------------------
+
+    if (loginPage) {
+
+        loginPage.style.display =
+            "none";
+
+    }
+
+
+    // ----------------------------------------
+    // SHOW APPLICATION
+    // ----------------------------------------
+
+    if (appPage) {
+
+        appPage.style.display =
+            "block";
+
+    }
+
+
+    // ----------------------------------------
+    // BODY STATE
+    // ----------------------------------------
+
+    if (document.body) {
+
+        document.body.classList.add(
+            "authenticated"
+        );
+
+    }
+
+
+    console.log(
+        "แสดงหน้า Application"
+    );
+
+}
+
+
+// ========================================
+// SHOW LOGIN PAGE
+// ========================================
+
+function showLoginPage() {
+
+    const loginPage =
+        document.getElementById(
+            "login-page"
+        );
+
+
+    const appPage =
+        document.getElementById(
+            "app-page"
+        );
+
+
+    // ----------------------------------------
+    // SHOW LOGIN
+    // ----------------------------------------
+
+    if (loginPage) {
+
+        loginPage.style.display =
+            "block";
+
+    }
+
+
+    // ----------------------------------------
+    // HIDE APPLICATION
+    // ----------------------------------------
+
+    if (appPage) {
+
+        appPage.style.display =
+            "none";
+
+    }
+
+
+    // ----------------------------------------
+    // BODY STATE
+    // ----------------------------------------
+
+    if (document.body) {
+
+        document.body.classList.remove(
+            "authenticated"
+        );
+
+    }
+
+
+    console.log(
+        "แสดงหน้า Login"
+    );
 
 }
 
@@ -455,6 +608,8 @@ function restoreSession() {
 
         if (!savedUser) {
 
+            showLoginPage();
+
             return null;
 
         }
@@ -477,6 +632,8 @@ function restoreSession() {
 
             clearSession();
 
+            showLoginPage();
+
             return null;
 
         }
@@ -493,6 +650,8 @@ function restoreSession() {
 
             clearSession();
 
+            showLoginPage();
+
             return null;
 
         }
@@ -504,9 +663,20 @@ function restoreSession() {
         );
 
 
+        // ----------------------------------------
+        // แสดงข้อมูลผู้ใช้
+        // ----------------------------------------
+
         showUserInfo(
             user
         );
+
+
+        // ----------------------------------------
+        // เปิด Application
+        // ----------------------------------------
+
+        showApplication();
 
 
         return user;
@@ -521,6 +691,8 @@ function restoreSession() {
 
 
         clearSession();
+
+        showLoginPage();
 
 
         return null;
@@ -633,57 +805,89 @@ function showUserInfo(
     );
 
 
+    // ----------------------------------------
+    // HEADER NAME
+    // ----------------------------------------
+
     const userName =
+        document.getElementById(
+            "header-user-name"
+        );
+
+
+    // ----------------------------------------
+    // HEADER ROLE
+    // ----------------------------------------
+
+    const userRole =
+        document.getElementById(
+            "header-user-role"
+        );
+
+
+    if (userName) {
+
+        userName.textContent =
+            user.name ||
+            "-";
+
+    }
+
+
+    if (userRole) {
+
+        userRole.textContent =
+            user.role ||
+            user.department ||
+            "-";
+
+    }
+
+
+    // ----------------------------------------
+    // OPTIONAL OLD ELEMENTS
+    // ----------------------------------------
+    // รองรับกรณี HTML มี element เหล่านี้ในอนาคต
+
+    const oldUserName =
         document.getElementById(
             "user-name"
         );
 
 
-    const userEmail =
+    const oldUserEmail =
         document.getElementById(
             "user-email"
         );
 
 
-    const userDepartment =
+    const oldUserDepartment =
         document.getElementById(
             "user-department"
         );
 
 
-    // ----------------------------------------
-    // NAME
-    // ----------------------------------------
+    if (oldUserName) {
 
-    if (userName) {
-
-        userName.textContent =
+        oldUserName.textContent =
             user.name ||
             "";
 
     }
 
 
-    // ----------------------------------------
-    // EMAIL
-    // ----------------------------------------
+    if (oldUserEmail) {
 
-    if (userEmail) {
-
-        userEmail.textContent =
+        oldUserEmail.textContent =
             user.email ||
             "";
 
     }
 
 
-    // ----------------------------------------
-    // DEPARTMENT
-    // ----------------------------------------
+    if (oldUserDepartment) {
 
-    if (userDepartment) {
-
-        userDepartment.textContent =
+        oldUserDepartment.textContent =
             user.department ||
             "";
 
@@ -700,13 +904,35 @@ function showLoginMessage(
     message
 ) {
 
-    const element =
+    // ----------------------------------------
+    // HTML ปัจจุบันใช้ #api-status
+    // ----------------------------------------
+
+    let element =
         document.getElementById(
-            "login-message"
+            "api-status"
         );
 
 
+    // ----------------------------------------
+    // รองรับ #login-message เดิม
+    // ----------------------------------------
+
     if (!element) {
+
+        element =
+            document.getElementById(
+                "login-message"
+            );
+
+    }
+
+
+    if (!element) {
+
+        console.warn(
+            "ไม่พบ element สำหรับแสดง Login Message"
+        );
 
         return;
 
@@ -820,6 +1046,13 @@ function logout() {
         }
 
     }
+
+
+    // ----------------------------------------
+    // SHOW LOGIN PAGE
+    // ----------------------------------------
+
+    showLoginPage();
 
 
     // ----------------------------------------
