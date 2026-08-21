@@ -244,7 +244,7 @@ async function loadInspections() {
 
                     headers: {
                         "Content-Type":
-                            "application/json"
+                            "text/plain;charset=utf-8"
                     },
 
                     body:
