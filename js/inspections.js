@@ -85,7 +85,7 @@ async function initializeInspectionPage() {
 
 
     // ----------------------------------------
-    // LOAD DATA
+    // LOAD SETTINGS
     // ----------------------------------------
 
     if (
@@ -112,26 +112,22 @@ async function initializeInspectionPage() {
 
     } else {
 
-        // ----------------------------------------
-        // SETTINGS ALREADY LOADED
-        // ----------------------------------------
-
-        renderInspectionZones();
-
-        renderInspectionLocations();
-
-        renderInspectionInspectors();
-
-        renderInspectionItems();
-
-
-        // ----------------------------------------
-        // ONLY LOAD INSPECTIONS
-        // ----------------------------------------
-
         await loadInspections();
 
     }
+
+
+    // ----------------------------------------
+    // RENDER INSPECTION DATA
+    // ----------------------------------------
+
+    renderInspectionZones();
+
+    renderInspectionLocations();
+
+    renderInspectionInspectors();
+
+    renderInspectionItems();
 
 
     console.log(
