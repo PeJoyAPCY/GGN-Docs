@@ -66,8 +66,6 @@ function setupInspections() {
 
 }
 
-
-
 // ======================================================
 // INITIALIZE INSPECTION PAGE
 // ======================================================
@@ -87,13 +85,17 @@ async function initializeInspectionPage() {
 
 
     // ----------------------------------------
-    // LOAD INSPECTION SETTINGS + REAL DATA
-    // LOAD IN PARALLEL
+    // LOAD DATA
     // ----------------------------------------
 
     if (
         !inspectionSettingsLoaded
     ) {
+
+        console.log(
+            "กำลังโหลด Inspection Settings และ Inspections พร้อมกัน..."
+        );
+
 
         await Promise.all([
 
@@ -107,11 +109,12 @@ async function initializeInspectionPage() {
         inspectionSettingsLoaded =
             true;
 
+
     } else {
 
-        // ------------------------------------
+        // ----------------------------------------
         // SETTINGS ALREADY LOADED
-        // ------------------------------------
+        // ----------------------------------------
 
         renderInspectionZones();
 
@@ -122,9 +125,9 @@ async function initializeInspectionPage() {
         renderInspectionItems();
 
 
-        // ------------------------------------
-        // LOAD REAL INSPECTION DATA
-        // ------------------------------------
+        // ----------------------------------------
+        // ONLY LOAD INSPECTIONS
+        // ----------------------------------------
 
         await loadInspections();
 
