@@ -1,45 +1,25 @@
-// ======================================================
-// GGN DOCS
 // FM-OP-11 GENERATOR
 // ======================================================
-// หน้าที่:
-// - ค้นหารายการตรวจสำหรับ FM-OP-11
-// - แสดงรายการตรวจ
-// - เลือกรายการตรวจ
-// - จำกัดสูงสุด 14 จุดต่อเอกสาร
-// - สร้างเอกสาร FM-OP-11
-//
-// หมายเหตุ:
-// State ของ FM-OP-11 อยู่ใน state.js
-// API ของ FM-OP-11 อยู่ใน api.js
-// ======================================================
 
 
-// ======================================================
+// ========================================
 // INITIALIZE FM-OP-11
-// ======================================================
+// ========================================
 
 function initializeFMOP11Page() {
 
-    console.log(
-        "กำลังเตรียมหน้า FM-OP-11..."
-    );
-
-
     setupFMOP11Events();
 
-
     loadFMOP11Inspectors();
-
 
     updateFMOP11SelectedCount();
 
 }
 
 
-// ======================================================
+// ========================================
 // SETUP FM-OP-11 EVENTS
-// ======================================================
+// ========================================
 
 function setupFMOP11Events() {
 
@@ -61,10 +41,6 @@ function setupFMOP11Events() {
         );
 
 
-    // ==============================================
-    // SEARCH
-    // ==============================================
-
     if (
         searchButton &&
         !searchButton.dataset.bound
@@ -82,10 +58,6 @@ function setupFMOP11Events() {
     }
 
 
-    // ==============================================
-    // CLEAR
-    // ==============================================
-
     if (
         clearButton &&
         !clearButton.dataset.bound
@@ -102,10 +74,6 @@ function setupFMOP11Events() {
 
     }
 
-
-    // ==============================================
-    // GENERATE
-    // ==============================================
 
     if (
         generateButton &&
@@ -126,9 +94,9 @@ function setupFMOP11Events() {
 }
 
 
-// ======================================================
+// ========================================
 // LOAD FM-OP-11 INSPECTORS
-// ======================================================
+// ========================================
 
 async function loadFMOP11Inspectors() {
 
@@ -145,10 +113,6 @@ async function loadFMOP11Inspectors() {
     }
 
 
-    // ==============================================
-    // DEFAULT OPTION
-    // ==============================================
-
     select.innerHTML = `
 
         <option value="">
@@ -158,27 +122,19 @@ async function loadFMOP11Inspectors() {
     `;
 
 
-    // ==============================================
-    // LOAD SETTINGS IF NOT AVAILABLE
-    // ==============================================
-
     if (
-        !Array.isArray(
-            inspectionInspectors
-        ) ||
         inspectionInspectors.length === 0
     ) {
 
         try {
 
             const data =
-                await apiGetSettings(
+                await getInspectionSetting(
                     "inspector"
                 );
 
 
             if (
-                data &&
                 data.success &&
                 Array.isArray(
                     data.settings
@@ -197,17 +153,10 @@ async function loadFMOP11Inspectors() {
                 error
             );
 
-
-            return;
-
         }
 
     }
 
-
-    // ==============================================
-    // RENDER INSPECTORS
-    // ==============================================
 
     inspectionInspectors.forEach(
         function (
@@ -221,15 +170,12 @@ async function loadFMOP11Inspectors() {
             }
 
 
-            // ----------------------------------------
-            // STATUS
-            // ----------------------------------------
-
             if (
                 inspector.status &&
                 String(
                     inspector.status
-                ).toLowerCase() !==
+                ).toLowerCase()
+                !==
                 "active"
             ) {
 
@@ -237,10 +183,6 @@ async function loadFMOP11Inspectors() {
 
             }
 
-
-            // ----------------------------------------
-            // NAME
-            // ----------------------------------------
 
             const name =
                 inspector.settingName ||
@@ -256,10 +198,6 @@ async function loadFMOP11Inspectors() {
 
             }
 
-
-            // ----------------------------------------
-            // OPTION
-            // ----------------------------------------
 
             const option =
                 document.createElement(
@@ -285,9 +223,9 @@ async function loadFMOP11Inspectors() {
 }
 
 
-// ======================================================
+// ========================================
 // SEARCH FM-OP-11 RECORDS
-// ======================================================
+// ========================================
 
 async function searchFMOP11Records() {
 
@@ -309,14 +247,7 @@ async function searchFMOP11Records() {
         );
 
 
-    // ==============================================
-    // VALIDATE DATE
-    // ==============================================
-
-    if (
-        !dateInput ||
-        !dateInput.value
-    ) {
+    if (!dateInput || !dateInput.value) {
 
         alert(
             "กรุณาเลือกวันที่ตรวจ"
@@ -326,10 +257,6 @@ async function searchFMOP11Records() {
 
     }
 
-
-    // ==============================================
-    // VALIDATE INSPECTOR
-    // ==============================================
 
     if (
         !inspectorInput ||
@@ -344,10 +271,6 @@ async function searchFMOP11Records() {
 
     }
 
-
-    // ==============================================
-    // LOADING
-    // ==============================================
 
     if (list) {
 
@@ -370,44 +293,46 @@ async function searchFMOP11Records() {
     }
 
 
-    // ==============================================
-    // CLEAR OLD SELECTION
-    // ==============================================
-
-    fmop11SelectedRecords = [];
-
-
-    updateFMOP11SelectedCount();
-
-
     try {
 
-        console.log(
-            "กำลังค้นหา FM-OP-11:",
-            {
-                inspectionDate:
-                    dateInput.value,
+        const response =
+            await apiFetch(
 
-                inspectorName:
-                    inspectorInput.value
-            }
-        );
+                API_URL,
 
+                {
 
-        // ==========================================
-        // API
-        // ==========================================
+                    method:
+                        "POST",
+
+                    headers: {
+
+                        "Content-Type":
+                            "text/plain;charset=utf-8"
+
+                    },
+
+                    body:
+                        JSON.stringify({
+
+                            action:
+                                "getInspections",
+
+                            inspectionDate:
+                                dateInput.value,
+
+                            inspectorName:
+                                inspectorInput.value
+
+                        })
+
+                }
+
+            );
+
 
         const data =
-            await apiGetInspections({
-
-                inspectionDate:
-                    dateInput.value,
-
-                inspectorName:
-                    inspectorInput.value
-
-            });
+            await response.json();
 
 
         console.log(
@@ -416,80 +341,29 @@ async function searchFMOP11Records() {
         );
 
 
-        // ==========================================
-        // CHECK RESPONSE
-        // ==========================================
-
         if (
-            !data ||
-            !data.success
-        ) {
-
-            fmop11Records = [];
-
-
-            renderFMOP11Records();
-
-
-            if (data && data.message) {
-
-                console.warn(
-                    "API:",
-                    data.message
-                );
-
-            }
-
-
-            return;
-
-        }
-
-
-        // ==========================================
-        // SUPPORT MULTIPLE RESPONSE FORMATS
-        // ==========================================
-
-        if (
-            Array.isArray(
+            !data.success ||
+            !Array.isArray(
                 data.inspections
             )
         ) {
 
-            fmop11Records =
-                data.inspections;
-
-        } else if (
-            Array.isArray(
-                data.data
-            )
-        ) {
-
-            fmop11Records =
-                data.data;
+            fmop11Records = [];
 
         } else {
 
-            fmop11Records = [];
+            fmop11Records =
+                data.inspections;
 
         }
 
 
-        console.log(
-            "จำนวนรายการตรวจ:",
-            fmop11Records.length
-        );
+        fmop11SelectedRecords = [];
 
-
-        // ==========================================
-        // RENDER
-        // ==========================================
 
         renderFMOP11Records();
 
-
         updateFMOP11SelectedCount();
-
 
     } catch (error) {
 
@@ -501,20 +375,16 @@ async function searchFMOP11Records() {
 
         fmop11Records = [];
 
-
         renderFMOP11Records();
-
-
-        updateFMOP11SelectedCount();
 
     }
 
 }
 
 
-// ======================================================
+// ========================================
 // RENDER FM-OP-11 RECORD LIST
-// ======================================================
+// ========================================
 
 function renderFMOP11Records() {
 
@@ -531,14 +401,7 @@ function renderFMOP11Records() {
     }
 
 
-    // ==============================================
-    // EMPTY
-    // ==============================================
-
     if (
-        !Array.isArray(
-            fmop11Records
-        ) ||
         fmop11Records.length === 0
     ) {
 
@@ -567,16 +430,8 @@ function renderFMOP11Records() {
     }
 
 
-    // ==============================================
-    // CLEAR
-    // ==============================================
-
     list.innerHTML = "";
 
-
-    // ==============================================
-    // RENDER
-    // ==============================================
 
     fmop11Records.forEach(
         function (
@@ -584,45 +439,21 @@ function renderFMOP11Records() {
             index
         ) {
 
-            if (!record) {
-
-                return;
-
-            }
-
-
-            // ----------------------------------------
-            // RECORD ID
-            // ----------------------------------------
-
             const recordId =
                 record.recordId ||
                 record.id ||
                 "";
 
 
-            // ----------------------------------------
-            // LOCATION
-            // ----------------------------------------
-
             const location =
                 record.locationName ||
-                record.location ||
                 "-";
 
-
-            // ----------------------------------------
-            // TIME
-            // ----------------------------------------
 
             const time =
                 record.inspectionTime ||
                 "-";
 
-
-            // ----------------------------------------
-            // ITEM COUNT
-            // ----------------------------------------
 
             const itemCount =
                 Array.isArray(
@@ -631,10 +462,6 @@ function renderFMOP11Records() {
                     ? record.items.length
                     : 0;
 
-
-            // ----------------------------------------
-            // WRAPPER
-            // ----------------------------------------
 
             const wrapper =
                 document.createElement(
@@ -645,10 +472,6 @@ function renderFMOP11Records() {
             wrapper.className =
                 "fmop11-record-item";
 
-
-            // ----------------------------------------
-            // HTML
-            // ----------------------------------------
 
             wrapper.innerHTML = `
 
@@ -673,8 +496,7 @@ function renderFMOP11Records() {
                         </strong>
 
                         <span>
-                            เวลา
-                            ${escapeHTML(
+                            เวลา ${escapeHTML(
                                 time
                             )}
                         </span>
@@ -692,8 +514,7 @@ function renderFMOP11Records() {
                         </span>
 
                         <span>
-                            ${itemCount}
-                            รายการตรวจ
+                            ${itemCount} รายการตรวจ
                         </span>
 
                     </div>
@@ -702,10 +523,6 @@ function renderFMOP11Records() {
 
             `;
 
-
-            // ----------------------------------------
-            // CHECKBOX EVENT
-            // ----------------------------------------
 
             const checkbox =
                 wrapper.querySelector(
@@ -733,9 +550,9 @@ function renderFMOP11Records() {
 }
 
 
-// ======================================================
+// ========================================
 // HANDLE FM-OP-11 SELECTION
-// ======================================================
+// ========================================
 
 function handleFMOP11RecordSelection(
     event
@@ -743,13 +560,6 @@ function handleFMOP11RecordSelection(
 
     const checkbox =
         event.target;
-
-
-    if (!checkbox) {
-
-        return;
-
-    }
 
 
     const index =
@@ -769,17 +579,7 @@ function handleFMOP11RecordSelection(
     }
 
 
-    // ==============================================
-    // CHECK
-    // ==============================================
-
-    if (
-        checkbox.checked
-    ) {
-
-        // ------------------------------------------
-        // LIMIT 14
-        // ------------------------------------------
+    if (checkbox.checked) {
 
         if (
             fmop11SelectedRecords.length >=
@@ -800,66 +600,11 @@ function handleFMOP11RecordSelection(
         }
 
 
-        // ------------------------------------------
-        // PREVENT DUPLICATE
-        // ------------------------------------------
-
-        const recordId =
-            record.recordId ||
-            record.id ||
-            "";
-
-
-        const alreadySelected =
-            fmop11SelectedRecords.some(
-                function (
-                    item
-                ) {
-
-                    const itemId =
-                        item.recordId ||
-                        item.id ||
-                        "";
-
-
-                    return (
-                        itemId ===
-                        recordId
-                    );
-
-                }
-            );
-
-
-        if (
-            alreadySelected
-        ) {
-
-            return;
-
-        }
-
-
-        // ------------------------------------------
-        // ADD
-        // ------------------------------------------
-
         fmop11SelectedRecords.push(
             record
         );
 
-
     } else {
-
-        // ------------------------------------------
-        // REMOVE
-        // ------------------------------------------
-
-        const recordId =
-            record.recordId ||
-            record.id ||
-            "";
-
 
         fmop11SelectedRecords =
             fmop11SelectedRecords.filter(
@@ -867,15 +612,9 @@ function handleFMOP11RecordSelection(
                     item
                 ) {
 
-                    const itemId =
-                        item.recordId ||
-                        item.id ||
-                        "";
-
-
                     return (
-                        itemId !==
-                        recordId
+                        item.recordId !==
+                        record.recordId
                     );
 
                 }
@@ -889,9 +628,9 @@ function handleFMOP11RecordSelection(
 }
 
 
-// ======================================================
+// ========================================
 // UPDATE SELECTED COUNT
-// ======================================================
+// ========================================
 
 function updateFMOP11SelectedCount() {
 
@@ -908,16 +647,8 @@ function updateFMOP11SelectedCount() {
 
 
     const count =
-        Array.isArray(
-            fmop11SelectedRecords
-        )
-            ? fmop11SelectedRecords.length
-            : 0;
+        fmop11SelectedRecords.length;
 
-
-    // ==============================================
-    // COUNT DISPLAY
-    // ==============================================
 
     if (display) {
 
@@ -926,10 +657,6 @@ function updateFMOP11SelectedCount() {
 
     }
 
-
-    // ==============================================
-    // GENERATE BUTTON
-    // ==============================================
 
     if (generateButton) {
 
@@ -941,9 +668,9 @@ function updateFMOP11SelectedCount() {
 }
 
 
-// ======================================================
+// ========================================
 // CLEAR FM-OP-11 SELECTION
-// ======================================================
+// ========================================
 
 function clearFMOP11Selection() {
 
@@ -973,20 +700,13 @@ function clearFMOP11Selection() {
 }
 
 
-// ======================================================
+// ========================================
 // GENERATE FM-OP-11
-// ======================================================
+// ========================================
 
 async function generateFMOP11() {
 
-    // ==============================================
-    // VALIDATE SELECTION
-    // ==============================================
-
     if (
-        !Array.isArray(
-            fmop11SelectedRecords
-        ) ||
         fmop11SelectedRecords.length === 0
     ) {
 
@@ -998,10 +718,6 @@ async function generateFMOP11() {
 
     }
 
-
-    // ==============================================
-    // LIMIT 14
-    // ==============================================
 
     if (
         fmop11SelectedRecords.length > 14
@@ -1015,10 +731,6 @@ async function generateFMOP11() {
 
     }
 
-
-    // ==============================================
-    // CURRENT USER
-    // ==============================================
 
     const user =
         getCurrentUser();
@@ -1035,10 +747,6 @@ async function generateFMOP11() {
     }
 
 
-    // ==============================================
-    // ELEMENTS
-    // ==============================================
-
     const generateButton =
         document.getElementById(
             "generate-fmop11-button"
@@ -1051,10 +759,6 @@ async function generateFMOP11() {
         );
 
 
-    // ==============================================
-    // DISABLE BUTTON
-    // ==============================================
-
     if (generateButton) {
 
         generateButton.disabled =
@@ -1065,10 +769,6 @@ async function generateFMOP11() {
 
     }
 
-
-    // ==============================================
-    // STATUS
-    // ==============================================
 
     if (status) {
 
@@ -1083,28 +783,49 @@ async function generateFMOP11() {
 
     try {
 
-        console.log(
-            "กำลังสร้าง FM-OP-11:",
-            fmop11SelectedRecords
-        );
+        const response =
+            await apiFetch(
 
+                API_URL,
 
-        // ==========================================
-        // API
-        // ==========================================
+                {
 
-        const data =
-            await apiGenerateFMOP11(
+                    method:
+                        "POST",
 
-                fmop11SelectedRecords,
+                    headers: {
 
-                user.name ||
-                    "",
+                        "Content-Type":
+                            "text/plain;charset=utf-8"
 
-                user.email ||
-                    ""
+                    },
+
+                    body:
+                        JSON.stringify({
+
+                            action:
+                                "generateFMOP11",
+
+                            records:
+                                fmop11SelectedRecords,
+
+                            createdBy:
+                                user.name ||
+                                "",
+
+                            createdByEmail:
+                                user.email ||
+                                ""
+
+                        })
+
+                }
 
             );
+
+
+        const data =
+            await response.json();
 
 
         console.log(
@@ -1113,14 +834,7 @@ async function generateFMOP11() {
         );
 
 
-        // ==========================================
-        // SUCCESS
-        // ==========================================
-
-        if (
-            data &&
-            data.success
-        ) {
+        if (data.success) {
 
             if (status) {
 
@@ -1135,32 +849,17 @@ async function generateFMOP11() {
             );
 
 
-            // ----------------------------------------
-            // OPEN FILE
-            // ----------------------------------------
-
-            const fileUrl =
-                data.fileUrl ||
-                data.url ||
-                "";
-
-
-            if (fileUrl) {
+            if (data.fileUrl) {
 
                 window.open(
-                    fileUrl,
+                    data.fileUrl,
                     "_blank"
                 );
 
             }
 
 
-            // ----------------------------------------
-            // CLEAR SELECTION
-            // ----------------------------------------
-
             clearFMOP11Selection();
-
 
         } else {
 
@@ -1174,16 +873,12 @@ async function generateFMOP11() {
 
             alert(
 
-                (
-                    data &&
-                    data.message
-                ) ||
+                data.message ||
                 "ไม่สามารถสร้างเอกสาร FM-OP-11 ได้"
 
             );
 
         }
-
 
     } catch (error) {
 
@@ -1205,26 +900,12 @@ async function generateFMOP11() {
             "ไม่สามารถเชื่อมต่อฐานข้อมูลได้"
         );
 
-
     } finally {
-
-        // ==========================================
-        // RESTORE BUTTON
-        // ==========================================
 
         if (generateButton) {
 
-            const count =
-                Array.isArray(
-                    fmop11SelectedRecords
-                )
-                    ? fmop11SelectedRecords.length
-                    : 0;
-
-
             generateButton.disabled =
-                count === 0;
-
+                fmop11SelectedRecords.length === 0;
 
             generateButton.textContent =
                 "📄 สร้าง FM-OP-11";
@@ -1236,6 +917,4 @@ async function generateFMOP11() {
 }
 
 
-// ======================================================
-// END FM-OP-11 GENERATOR
 // ======================================================

@@ -1,117 +1,27 @@
-// ======================================================
-// GGN Docs
+// ========================================
 // NAVIGATION
-// ======================================================
+// ========================================
 
-
-// ======================================================
-// INITIALIZE NAVIGATION
-// ======================================================
-
-function initializeNavigation() {
-
-    console.log(
-        "กำลังเตรียมระบบ Navigation..."
-    );
-
-
-    setupNavigationEvents();
-
-
-    // ----------------------------------------------
-    // INITIAL ACTIVE STATE
-    // ----------------------------------------------
-
-    const currentPage =
-        getCurrentPage();
-
-
-    if (currentPage) {
-
-        updateNavigationActiveState(
-            currentPage
-        );
-
-    }
-
-
-    console.log(
-        "Navigation พร้อมใช้งาน"
-    );
-
-}
-
-
-// ======================================================
-// SETUP NAVIGATION EVENTS
-// ======================================================
-
-function setupNavigationEvents() {
-
-    /*
-     * ใช้ [data-page] เป็นตัวกำหนด Navigation
-     *
-     * ไม่แยก .nav-button อีกชุด
-     * เพื่อป้องกัน Event ถูกผูกซ้ำ
-     */
+function setupNavigation() {
 
     const navItems =
         document.querySelectorAll(
-            "[data-page]"
+            ".nav-item"
         );
-
-
-    if (
-        !navItems ||
-        navItems.length === 0
-    ) {
-
-        console.warn(
-            "ไม่พบ Navigation Items"
-        );
-
-        return;
-
-    }
 
 
     navItems.forEach(
-        function (
-            item
-        ) {
-
-            // ------------------------------------------
-            // ป้องกัน Event ซ้ำ
-            // ------------------------------------------
-
-            if (
-                item.dataset.navigationBound ===
-                "true"
-            ) {
-
-                return;
-
-            }
-
+        function (item) {
 
             item.addEventListener(
                 "click",
-                function (
-                    event
-                ) {
+                function () {
 
-                    event.preventDefault();
-
-
-                    const pageId =
+                    const page =
                         item.dataset.page;
 
 
-                    if (!pageId) {
-
-                        console.warn(
-                            "Navigation ไม่มี data-page"
-                        );
+                    if (!page) {
 
                         return;
 
@@ -119,15 +29,11 @@ function setupNavigationEvents() {
 
 
                     showPage(
-                        pageId
+                        page
                     );
 
                 }
             );
-
-
-            item.dataset.navigationBound =
-                "true";
 
         }
     );
@@ -135,79 +41,17 @@ function setupNavigationEvents() {
 }
 
 
-// ======================================================
+// ========================================
 // SHOW PAGE
-// ======================================================
+// ========================================
 
 function showPage(
-    pageId
+    page
 ) {
 
-    if (!pageId) {
-
-        return;
-
-    }
-
-
-    console.log(
-        "กำลังเปลี่ยนหน้า:",
-        pageId
-    );
-
-
-    // ==================================================
-    // CHECK TARGET PAGE
-    // ==================================================
-
-    const targetPage =
-        document.getElementById(
-            pageId
-        );
-
-
-    if (!targetPage) {
-
-        console.warn(
-            "ไม่พบหน้า:",
-            pageId
-        );
-
-        return;
-
-    }
-
-
-    // ==================================================
-    // CURRENT PAGE
-    // ==================================================
-
-    const currentPage =
-        getCurrentPage();
-
-
-    // ==================================================
-    // SAME PAGE
-    // ==================================================
-
-    if (
-        currentPage ===
-        pageId
-    ) {
-
-        updateNavigationActiveState(
-            pageId
-        );
-
-
-        return;
-
-    }
-
-
-    // ==================================================
-    // HIDE ALL PAGES
-    // ==================================================
+    // ------------------------------------
+    // Hide all pages
+    // ------------------------------------
 
     const pages =
         document.querySelectorAll(
@@ -216,11 +60,12 @@ function showPage(
 
 
     pages.forEach(
-        function (
-            page
-        ) {
+        function (item) {
 
-            page.classList.remove(
+            item.style.display =
+                "none";
+
+            item.classList.remove(
                 "active"
             );
 
@@ -228,70 +73,52 @@ function showPage(
     );
 
 
-    // ==================================================
-    // SHOW TARGET PAGE
-    // ==================================================
+    // ------------------------------------
+    // Show selected page
+    // ------------------------------------
 
-    targetPage.classList.add(
-        "active"
-    );
-
-
-    // ==================================================
-    // UPDATE NAVIGATION ACTIVE STATE
-    // ==================================================
-
-    updateNavigationActiveState(
-        pageId
-    );
+    const selectedPage =
+        document.getElementById(
+            "page-" + page
+        );
 
 
-    // ==================================================
-    // INITIALIZE PAGE
-    // ==================================================
+    if (selectedPage) {
 
-    handlePageInitialized(
-        pageId
-    );
+        selectedPage.style.display =
+            "block";
 
-}
+        selectedPage.classList.add(
+            "active"
+        );
+
+    }
 
 
-// ======================================================
-// UPDATE ACTIVE NAVIGATION
-// ======================================================
-
-function updateNavigationActiveState(
-    pageId
-) {
+    // ------------------------------------
+    // Update sidebar active state
+    // ------------------------------------
 
     const navItems =
         document.querySelectorAll(
-            "[data-page]"
+            ".nav-item"
         );
 
 
     navItems.forEach(
-        function (
-            item
-        ) {
+        function (item) {
 
-            const itemPage =
-                item.dataset.page;
+            item.classList.remove(
+                "active"
+            );
 
 
             if (
-                itemPage ===
-                pageId
+                item.dataset.page ===
+                page
             ) {
 
                 item.classList.add(
-                    "active"
-                );
-
-            } else {
-
-                item.classList.remove(
                     "active"
                 );
 
@@ -300,76 +127,210 @@ function updateNavigationActiveState(
         }
     );
 
-}
 
+    // ------------------------------------
+    // Documents
+    // ------------------------------------
 
-// ======================================================
-// GET CURRENT PAGE
-// ======================================================
+    if (
+        page === "documents"
+    ) {
 
-function getCurrentPage() {
-
-    const activePage =
-        document.querySelector(
-            ".page.active"
-        );
-
-
-    if (!activePage) {
-
-        return "";
+        loadDocuments();
 
     }
 
 
-    return (
-        activePage.id ||
-        ""
+    // ------------------------------------
+    // Inspection Record
+    // ------------------------------------
+
+    if (
+        page === "inspection-record"
+    ) {
+
+        initializeInspectionPage();
+
+    }
+
+}
+
+
+// ========================================
+// OPEN INSPECTION RECORD PAGE
+// ========================================
+
+function openInspectionRecordPage() {
+
+    showPage(
+        "inspection-record"
     );
 
 }
 
 
-// ======================================================
-// INITIALIZE PAGE
-// ======================================================
+// ========================================
+// OPEN FM-OP-11 GENERATOR PAGE
+// ========================================
 
-function initializePage(
-    pageId
-) {
+function openFMOP11Page() {
 
-    if (!pageId) {
+    showPage(
+        "fmop11"
+    );
 
-        return;
-
-    }
+}
 
 
-    const targetPage =
+// ========================================
+// SETUP ISO MENU
+// ========================================
+
+function setupISOMenu() {
+
+    console.log(
+        "กำลังเตรียมเมนู ISO..."
+    );
+
+
+    // ====================================
+    // OPEN INSPECTION RECORD
+    // ====================================
+
+    const inspectionButton =
         document.getElementById(
-            pageId
+            "open-inspection-record"
         );
 
 
-    if (!targetPage) {
+    if (inspectionButton) {
+
+        inspectionButton.addEventListener(
+            "click",
+            function () {
+
+                console.log(
+                    "เปิดหน้าบันทึกการตรวจ"
+                );
+
+
+                openInspectionRecordPage();
+
+            }
+        );
+
+    } else {
 
         console.warn(
-            "ไม่พบหน้าสำหรับ Initialize:",
-            pageId
+            "ไม่พบ #open-inspection-record"
         );
-
-        return;
 
     }
 
 
-    handlePageInitialized(
-        pageId
+    // ====================================
+    // OPEN FM-OP-11 GENERATOR
+    // ====================================
+
+    const fmop11Button =
+        document.getElementById(
+            "open-fmop11-generator"
+        );
+
+
+    if (fmop11Button) {
+
+        fmop11Button.addEventListener(
+            "click",
+            function () {
+
+                console.log(
+                    "เปิดหน้าสร้างรายงาน FM-OP-11"
+                );
+
+
+                openFMOP11Page();
+
+            }
+        );
+
+    } else {
+
+        console.warn(
+            "ไม่พบ #open-fmop11-generator"
+        );
+
+    }
+
+
+    // ====================================
+    // BACK FROM INSPECTION RECORD
+    // ====================================
+
+    const backFromRecord =
+        document.getElementById(
+            "back-to-inspections-from-record"
+        );
+
+
+    if (backFromRecord) {
+
+        backFromRecord.addEventListener(
+            "click",
+            function () {
+
+                console.log(
+                    "กลับไปหน้าเมนูการตรวจ ISO"
+                );
+
+
+                showPage(
+                    "inspections"
+                );
+
+            }
+        );
+
+    }
+
+
+    // ====================================
+    // BACK FROM FM-OP-11
+    // ====================================
+
+    const backFromFMOP11 =
+        document.getElementById(
+            "back-to-inspections-from-fmop11"
+        );
+
+
+    if (backFromFMOP11) {
+
+        backFromFMOP11.addEventListener(
+            "click",
+            function () {
+
+                console.log(
+                    "กลับไปหน้าเมนูการตรวจ ISO"
+                );
+
+
+                showPage(
+                    "inspections"
+                );
+
+            }
+        );
+
+    }
+
+
+    // ====================================
+    // COMPLETE
+    // ====================================
+
+    console.log(
+        "เตรียมเมนู ISO สำเร็จ"
     );
 
 }
-
-
-// ======================================================
-// END NAVIGATION
-// ======================================================

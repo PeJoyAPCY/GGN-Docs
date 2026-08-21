@@ -1,15 +1,5 @@
-// ========================================
-// GGN Docs
-// DOCUMENTS.JS
-// ========================================
-// หน้าที่:
-// - ระบบจัดการเอกสาร
-// - โหลดรายการเอกสาร
-// - แสดงรายการเอกสาร
-// - เปิด / ปิดฟอร์ม
-// - เพิ่มเอกสาร
-// - อัปเดตจำนวนเอกสารบน Dashboard
-// ========================================
+// DOCUMENT SYSTEM
+// ======================================================
 
 
 // ========================================
@@ -18,36 +8,11 @@
 
 function setupDocuments() {
 
-    // ====================================
-    // ADD BUTTON
-    // ====================================
-
     const addButton =
         document.getElementById(
             "add-document-button"
         );
 
-
-    if (
-        addButton &&
-        !addButton.dataset.bound
-    ) {
-
-        addButton.addEventListener(
-            "click",
-            openDocumentForm
-        );
-
-
-        addButton.dataset.bound =
-            "true";
-
-    }
-
-
-    // ====================================
-    // CLOSE BUTTON
-    // ====================================
 
     const closeButton =
         document.getElementById(
@@ -55,53 +20,11 @@ function setupDocuments() {
         );
 
 
-    if (
-        closeButton &&
-        !closeButton.dataset.bound
-    ) {
-
-        closeButton.addEventListener(
-            "click",
-            closeDocumentForm
-        );
-
-
-        closeButton.dataset.bound =
-            "true";
-
-    }
-
-
-    // ====================================
-    // CANCEL BUTTON
-    // ====================================
-
     const cancelButton =
         document.getElementById(
             "cancel-document-button"
         );
 
-
-    if (
-        cancelButton &&
-        !cancelButton.dataset.bound
-    ) {
-
-        cancelButton.addEventListener(
-            "click",
-            closeDocumentForm
-        );
-
-
-        cancelButton.dataset.bound =
-            "true";
-
-    }
-
-
-    // ====================================
-    // FORM SUBMIT
-    // ====================================
 
     const documentForm =
         document.getElementById(
@@ -109,26 +32,47 @@ function setupDocuments() {
         );
 
 
-    if (
-        documentForm &&
-        !documentForm.dataset.bound
-    ) {
+    if (addButton) {
+
+        addButton.addEventListener(
+            "click",
+            openDocumentForm
+        );
+
+    }
+
+
+    if (closeButton) {
+
+        closeButton.addEventListener(
+            "click",
+            closeDocumentForm
+        );
+
+    }
+
+
+    if (cancelButton) {
+
+        cancelButton.addEventListener(
+            "click",
+            closeDocumentForm
+        );
+
+    }
+
+
+    if (documentForm) {
 
         documentForm.addEventListener(
             "submit",
             handleDocumentSubmit
         );
 
-
-        documentForm.dataset.bound =
-            "true";
-
     }
 
 
-    console.log(
-        "Documents events พร้อมใช้งาน"
-    );
+    loadDocuments();
 
 }
 
@@ -146,12 +90,38 @@ async function loadDocuments() {
         );
 
 
-        // ====================================
-        // API
-        // ====================================
+        const response =
+            await apiFetch(
+
+                API_URL,
+
+                {
+
+                    method:
+                        "POST",
+
+                    headers: {
+
+                        "Content-Type":
+                            "text/plain;charset=utf-8"
+
+                    },
+
+                    body:
+                        JSON.stringify({
+
+                            action:
+                                "getDocuments"
+
+                        })
+
+                }
+
+            );
+
 
         const data =
-            await apiGetDocuments();
+            await response.json();
 
 
         console.log(
@@ -160,13 +130,11 @@ async function loadDocuments() {
         );
 
 
-        // ====================================
-        // VALIDATE RESPONSE
-        // ====================================
-
         if (
-            !data ||
-            !data.success
+            !data.success ||
+            !Array.isArray(
+                data.documents
+            )
         ) {
 
             console.error(
@@ -174,80 +142,18 @@ async function loadDocuments() {
                 data
             );
 
-
-            documents = [];
-
-
-            renderDocuments();
-
-
-            updateDashboardCounts();
-
-
             return;
 
         }
 
 
-        // ====================================
-        // GET DOCUMENTS
-        // ====================================
+        documents =
+            data.documents;
 
-        if (
-            Array.isArray(
-                data.documents
-            )
-        ) {
-
-            documents =
-                data.documents;
-
-        } else if (
-            Array.isArray(
-                data.data
-            )
-        ) {
-
-            /*
-             * รองรับ Backend
-             * ที่อาจส่งข้อมูลใน data
-             */
-
-            documents =
-                data.data;
-
-        } else {
-
-            documents = [];
-
-        }
-
-
-        console.log(
-            "โหลดเอกสารสำเร็จ:",
-            documents
-        );
-
-
-        console.log(
-            "จำนวนเอกสาร:",
-            documents.length
-        );
-
-
-        // ====================================
-        // RENDER
-        // ====================================
 
         renderDocuments();
 
-
-        // ====================================
-        // DASHBOARD
-        // ====================================
-
         updateDashboardCounts();
-
 
     } catch (error) {
 
@@ -255,15 +161,6 @@ async function loadDocuments() {
             "โหลดเอกสารไม่สำเร็จ:",
             error
         );
-
-
-        documents = [];
-
-
-        renderDocuments();
-
-
-        updateDashboardCounts();
 
     }
 
@@ -283,10 +180,6 @@ function openDocumentForm() {
 
 
     if (!formContainer) {
-
-        console.warn(
-            "ไม่พบ #document-form-container"
-        );
 
         return;
 
@@ -346,7 +239,7 @@ function closeDocumentForm() {
 
 
 // ========================================
-// HANDLE DOCUMENT SUBMIT
+// ADD DOCUMENT
 // ========================================
 
 async function handleDocumentSubmit(
@@ -356,76 +249,29 @@ async function handleDocumentSubmit(
     event.preventDefault();
 
 
-    // ====================================
-    // FORM
-    // ====================================
-
-    const form =
-        event.target;
-
-
-    if (!form) {
-
-        return;
-
-    }
-
-
-    // ====================================
-    // GET FORM VALUES
-    // ====================================
-
-    const documentCodeInput =
+    const documentCode =
         document.getElementById(
             "document-code"
-        );
-
-
-    const documentNameInput =
-        document.getElementById(
-            "document-name"
-        );
-
-
-    const operatorInput =
-        document.getElementById(
-            "document-operator"
-        );
-
-
-    const departmentInput =
-        document.getElementById(
-            "document-department"
-        );
-
-
-    const documentCode =
-        documentCodeInput
-            ? documentCodeInput.value.trim()
-            : "";
+        ).value.trim();
 
 
     const documentName =
-        documentNameInput
-            ? documentNameInput.value.trim()
-            : "";
+        document.getElementById(
+            "document-name"
+        ).value.trim();
 
 
     const operator =
-        operatorInput
-            ? operatorInput.value.trim()
-            : "";
+        document.getElementById(
+            "document-operator"
+        ).value.trim();
 
 
     const department =
-        departmentInput
-            ? departmentInput.value.trim()
-            : "";
+        document.getElementById(
+            "document-department"
+        ).value.trim();
 
-
-    // ====================================
-    // VALIDATE
-    // ====================================
 
     if (
         !documentCode ||
@@ -443,10 +289,6 @@ async function handleDocumentSubmit(
     }
 
 
-    // ====================================
-    // CURRENT USER
-    // ====================================
-
     const user =
         getCurrentUser();
 
@@ -462,12 +304,8 @@ async function handleDocumentSubmit(
     }
 
 
-    // ====================================
-    // SUBMIT BUTTON
-    // ====================================
-
     const submitButton =
-        form.querySelector(
+        event.target.querySelector(
             'button[type="submit"]'
         );
 
@@ -485,10 +323,6 @@ async function handleDocumentSubmit(
 
     try {
 
-        // ==================================
-        // DOCUMENT DATA
-        // ==================================
-
         const documentData = {
 
             documentCode:
@@ -504,88 +338,86 @@ async function handleDocumentSubmit(
                 department,
 
             createdByName:
-                user.name ||
-                "",
+                user.name || "",
 
             createdByEmail:
-                user.email ||
-                ""
+                user.email || ""
 
         };
 
 
-        console.log(
-            "กำลังส่งข้อมูลเอกสาร:",
-            documentData
-        );
+        const response =
+            await apiFetch(
 
+                API_URL,
 
-        // ==================================
-        // API
-        // ==================================
+                {
 
-        const data =
-            await apiAddDocument(
-                documentData
+                    method:
+                        "POST",
+
+                    headers: {
+
+                        "Content-Type":
+                            "text/plain;charset=utf-8"
+
+                    },
+
+                    body:
+                        JSON.stringify({
+
+                            action:
+                                "addDocument",
+
+                            document:
+                                documentData
+
+                        })
+
+                }
+
             );
 
 
-        console.log(
-            "ผลการเพิ่มเอกสาร:",
-            data
-        );
+        const data =
+            await response.json();
 
 
-        // ==================================
-        // SUCCESS
-        // ==================================
-
-        if (
-            data &&
-            data.success
-        ) {
+        if (data.success) {
 
             alert(
                 "เพิ่มเอกสารสำเร็จ"
             );
 
 
-            // ==================================
-            // RESET FORM
-            // ==================================
-
-            form.reset();
-
-
-            // ==================================
-            // CLOSE FORM
-            // ==================================
-
-            closeDocumentForm();
-
-
-            // ==================================
-            // RELOAD DOCUMENTS
-            // ==================================
-
             await loadDocuments();
 
+
+            const form =
+                document.getElementById(
+                    "document-form"
+                );
+
+
+            if (form) {
+
+                form.reset();
+
+            }
+
+
+            closeDocumentForm();
 
         } else {
 
             alert(
 
-                data &&
-                data.message
-
-                    ? data.message
-
-                    : "ไม่สามารถเพิ่มเอกสารได้"
+                data.message ||
+                "ไม่สามารถเพิ่มเอกสารได้"
 
             );
 
         }
-
 
     } catch (error) {
 
@@ -599,12 +431,7 @@ async function handleDocumentSubmit(
             "ไม่สามารถเชื่อมต่อฐานข้อมูลได้"
         );
 
-
     } finally {
-
-        // ==================================
-        // RESTORE BUTTON
-        // ==================================
 
         if (submitButton) {
 
@@ -639,35 +466,12 @@ function renderDocuments() {
         );
 
 
-    // ====================================
-    // STATE SAFETY
-    // ====================================
-
-    if (
-        !Array.isArray(
-            documents
-        )
-    ) {
-
-        documents = [];
-
-    }
-
-
-    // ====================================
-    // TABLE NOT FOUND
-    // ====================================
-
     if (!tableBody) {
 
         return;
 
     }
 
-
-    // ====================================
-    // DOCUMENT COUNT
-    // ====================================
 
     if (documentCount) {
 
@@ -676,10 +480,6 @@ function renderDocuments() {
 
     }
 
-
-    // ====================================
-    // EMPTY STATE
-    // ====================================
 
     if (
         documents.length === 0
@@ -718,45 +518,13 @@ function renderDocuments() {
     }
 
 
-    // ====================================
-    // DOCUMENT LIST
-    // ====================================
-
     tableBody.innerHTML =
 
         documents
-
             .map(
                 function (
                     documentItem
                 ) {
-
-                    if (!documentItem) {
-
-                        return "";
-
-                    }
-
-
-                    const code =
-                        documentItem.documentCode ||
-                        "";
-
-
-                    const name =
-                        documentItem.documentName ||
-                        "";
-
-
-                    const operator =
-                        documentItem.operator ||
-                        "";
-
-
-                    const department =
-                        documentItem.department ||
-                        "";
-
 
                     return `
 
@@ -764,25 +532,25 @@ function renderDocuments() {
 
                             <td>
                                 ${escapeHTML(
-                                    code
+                                    documentItem.documentCode
                                 )}
                             </td>
 
                             <td>
                                 ${escapeHTML(
-                                    name
+                                    documentItem.documentName
                                 )}
                             </td>
 
                             <td>
                                 ${escapeHTML(
-                                    operator
+                                    documentItem.operator
                                 )}
                             </td>
 
                             <td>
                                 ${escapeHTML(
-                                    department
+                                    documentItem.department
                                 )}
                             </td>
 
@@ -804,7 +572,6 @@ function renderDocuments() {
 
                 }
             )
-
             .join("");
 
 }
@@ -816,32 +583,24 @@ function renderDocuments() {
 
 function updateDashboardCounts() {
 
-    // ====================================
-    // STATE SAFETY
-    // ====================================
+    const cards =
+        document.querySelectorAll(
+            ".dashboard-card"
+        );
+
 
     if (
-        !Array.isArray(
-            documents
-        )
+        cards.length < 2
     ) {
 
-        documents = [];
+        return;
 
     }
 
 
-    // ====================================
-    // TOTAL DOCUMENTS
-    // ====================================
-
     const total =
         documents.length;
 
-
-    // ====================================
-    // CURRENT USER
-    // ====================================
 
     const user =
         getCurrentUser();
@@ -851,96 +610,57 @@ function updateDashboardCounts() {
         0;
 
 
-    // ====================================
-    // COUNT MY DOCUMENTS
-    // ====================================
-
     if (user) {
 
-        const currentEmail =
-            String(
-                user.email ||
-                ""
-            )
-            .trim()
-            .toLowerCase();
+        myDocuments =
+            documents.filter(
+                function (
+                    item
+                ) {
 
+                    return (
 
-        if (currentEmail) {
+                        String(
+                            item.createdByEmail ||
+                            ""
+                        ).toLowerCase()
+                        ===
+                        String(
+                            user.email ||
+                            ""
+                        ).toLowerCase()
 
-            myDocuments =
-                documents.filter(
+                    );
 
-                    function (
-                        documentItem
-                    ) {
-
-                        if (
-                            !documentItem
-                        ) {
-
-                            return false;
-
-                        }
-
-
-                        const createdByEmail =
-                            String(
-
-                                documentItem.createdByEmail ||
-                                documentItem.createdBy ||
-                                ""
-
-                            )
-                            .trim()
-                            .toLowerCase();
-
-
-                        return (
-                            createdByEmail ===
-                            currentEmail
-                        );
-
-                    }
-
-                ).length;
-
-        }
+                }
+            ).length;
 
     }
 
 
-    // ====================================
-    // UPDATE TOTAL
-    // ====================================
-
-    const totalElement =
-        document.getElementById(
-            "dashboard-total-documents"
+    const totalStrong =
+        cards[0].querySelector(
+            "strong"
         );
 
 
-    if (totalElement) {
+    const myStrong =
+        cards[1].querySelector(
+            "strong"
+        );
 
-        totalElement.textContent =
+
+    if (totalStrong) {
+
+        totalStrong.textContent =
             total;
 
     }
 
 
-    // ====================================
-    // UPDATE MY DOCUMENTS
-    // ====================================
+    if (myStrong) {
 
-    const myDocumentsElement =
-        document.getElementById(
-            "dashboard-my-documents"
-        );
-
-
-    if (myDocumentsElement) {
-
-        myDocumentsElement.textContent =
+        myStrong.textContent =
             myDocuments;
 
     }
@@ -948,6 +668,4 @@ function updateDashboardCounts() {
 }
 
 
-// ========================================
-// END DOCUMENTS.JS
-// ========================================
+// ======================================================

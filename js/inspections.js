@@ -1,486 +1,35 @@
-// ======================================================
-// GGN DOCS
-// INSPECTIONS
-// ======================================================
-// หน้าที่:
-// - แสดงฟอร์มการตรวจ ISO
-// - โหลด Location / Zone / Inspector / Inspection Items
-// - บันทึกข้อมูลการตรวจ
-// - รองรับ FM-OP-11
-// ======================================================
-
-
-// ======================================================
-// SETUP INSPECTION
-// ======================================================
-
-function setupInspections() {
-
-    console.log(
-        "กำลังเตรียมระบบ Inspections..."
-    );
-
-
-    // ==================================================
-    // SAVE BUTTON
-    // ==================================================
-
-    const saveButton =
-        document.getElementById(
-            "save-inspection-button"
-        );
-
-
-    if (
-        saveButton &&
-        !saveButton.dataset.bound
-    ) {
-
-        saveButton.addEventListener(
-            "click",
-            saveInspection
-        );
-
-
-        saveButton.dataset.bound =
-            "true";
-
-    }
-
-
-    // ==================================================
-    // RESET BUTTON
-    // ==================================================
-
-    const resetButton =
-        document.getElementById(
-            "reset-inspection-button"
-        );
-
-
-    if (
-        resetButton &&
-        !resetButton.dataset.bound
-    ) {
-
-        resetButton.addEventListener(
-            "click",
-            resetInspectionForm
-        );
-
-
-        resetButton.dataset.bound =
-            "true";
-
-    }
-
-
-    // ==================================================
-    // PAGE EVENTS
-    // ==================================================
-
-    if (
-        typeof setupInspectionPageEvents ===
-        "function"
-    ) {
-
-        setupInspectionPageEvents();
-
-    }
-
-
-    console.log(
-        "ระบบ Inspections พร้อมใช้งาน"
-    );
-
-}
-
-
-// ======================================================
-// INITIALIZE INSPECTION PAGE
-// ======================================================
-
-async function initializeInspectionPage() {
-
-    console.log(
-        "กำลังเตรียมหน้า การตรวจ ISO..."
-    );
-
-
-    // ==================================================
-    // DEFAULT DATE / TIME
-    // ==================================================
-
-    setDefaultInspectionDateTime();
-
-
-    // ==================================================
-    // LOAD SETTINGS
-    // ==================================================
-
-    if (
-        typeof inspectionSettingsLoaded ===
-        "undefined"
-    ) {
-
-        console.warn(
-            "ไม่พบตัวแปร inspectionSettingsLoaded"
-        );
-
-    }
-
-
-    if (
-        !inspectionSettingsLoaded
-    ) {
-
-        const loaded =
-            await loadInspectionSettings();
-
-
-        if (loaded) {
-
-            inspectionSettingsLoaded =
-                true;
-
-        }
-
-    } else {
-
-        renderInspectionLocations();
-
-        renderInspectionInspectors();
-
-        renderInspectionItems();
-
-    }
-
-
-    console.log(
-        "หน้า Inspections พร้อมใช้งาน"
-    );
-
-}
-
-
-// ======================================================
-// DEFAULT DATE / TIME
-// ======================================================
-
-function setDefaultInspectionDateTime() {
-
-    const dateInput =
-        document.getElementById(
-            "inspection-date"
-        );
-
-
-    const timeInput =
-        document.getElementById(
-            "inspection-time"
-        );
-
-
-    const now =
-        new Date();
-
-
-    // ==================================================
-    // DATE
-    // ==================================================
-
-    if (
-        dateInput &&
-        !dateInput.value
-    ) {
-
-        const year =
-            now.getFullYear();
-
-
-        const month =
-            String(
-                now.getMonth() + 1
-            ).padStart(
-                2,
-                "0"
-            );
-
-
-        const day =
-            String(
-                now.getDate()
-            ).padStart(
-                2,
-                "0"
-            );
-
-
-        dateInput.value =
-            `${year}-${month}-${day}`;
-
-    }
-
-
-    // ==================================================
-    // TIME
-    // ==================================================
-
-    if (
-        timeInput &&
-        !timeInput.value
-    ) {
-
-        const hours =
-            String(
-                now.getHours()
-            ).padStart(
-                2,
-                "0"
-            );
-
-
-        const minutes =
-            String(
-                now.getMinutes()
-            ).padStart(
-                2,
-                "0"
-            );
-
-
-        timeInput.value =
-            `${hours}:${minutes}`;
-
-    }
-
-}
-
-
-// ======================================================
-// LOAD INSPECTION SETTINGS
-// ======================================================
-
-async function loadInspectionSettings() {
-
-    console.log(
-        "กำลังโหลดข้อมูล Inspection Settings..."
-    );
-
-
-    // ==================================================
-    // CHECK API HELPER
-    // ==================================================
-
-    if (
-        typeof apiGetSettings !==
-        "function"
-    ) {
-
-        console.error(
-            "ไม่พบฟังก์ชัน apiGetSettings()"
-        );
-
-
-        return false;
-
-    }
-
-
-    try {
-
-        // ==================================================
-        // LOCATION
-        // ==================================================
-
-        const locationData =
-            await apiGetSettings(
-                "location"
-            );
-
-
-        console.log(
-            "Location Settings:",
-            locationData
-        );
-
-
-        if (
-            locationData &&
-            locationData.success &&
-            Array.isArray(
-                locationData.settings
-            )
-        ) {
-
-            inspectionLocations =
-                locationData.settings;
-
-        } else {
-
-            inspectionLocations =
-                [];
-
-        }
-
-
-        // ==================================================
-        // INSPECTOR
-        // ==================================================
-
-        const inspectorData =
-            await apiGetSettings(
-                "inspector"
-            );
-
-
-        console.log(
-            "Inspector Settings:",
-            inspectorData
-        );
-
-
-        if (
-            inspectorData &&
-            inspectorData.success &&
-            Array.isArray(
-                inspectorData.settings
-            )
-        ) {
-
-            inspectionInspectors =
-                inspectorData.settings;
-
-        } else {
-
-            inspectionInspectors =
-                [];
-
-        }
-
-
-        // ==================================================
-        // INSPECTION ITEMS
-        // ==================================================
-
-        const itemData =
-            await apiGetSettings(
-                "inspectionItem"
-            );
-
-
-        console.log(
-            "Inspection Item Settings:",
-            itemData
-        );
-
-
-        if (
-            itemData &&
-            itemData.success &&
-            Array.isArray(
-                itemData.settings
-            )
-        ) {
-
-            inspectionItems =
-                itemData.settings;
-
-        } else {
-
-            inspectionItems =
-                [];
-
-        }
-
-
-        // ==================================================
-        // RENDER
-        // ==================================================
-
-        renderInspectionLocations();
-
-        renderInspectionInspectors();
-
-        renderInspectionItems();
-
-
-        console.log(
-            "โหลด Inspection Settings สำเร็จ"
-        );
-
-
-        return true;
-
-
-    } catch (error) {
-
-        console.error(
-            "โหลด Inspection Settings ไม่สำเร็จ:",
-            error
-        );
-
-
-        inspectionLocations =
-            [];
-
-
-        inspectionInspectors =
-            [];
-
-
-        inspectionItems =
-            [];
-
-
-        renderInspectionLocations();
-
-        renderInspectionInspectors();
-
-        renderInspectionItems();
-
-
-        return false;
-
-    }
-
-}
-
-
-// ======================================================
 // LOAD INSPECTIONS
-// ======================================================
+// ========================================
 
 async function loadInspections() {
 
-    console.log(
-        "กำลังโหลดข้อมูล Inspections..."
-    );
+    try {
 
-
-    if (
-        typeof apiGetInspections !==
-        "function"
-    ) {
-
-        console.error(
-            "ไม่พบฟังก์ชัน apiGetInspections()"
+        console.log(
+            "กำลังโหลดข้อมูล Inspections..."
         );
 
 
-        inspectionRecords =
-            [];
+        const response =
+            await apiFetch(
+                API_URL,
+                {
+                    method: "POST",
 
+                    headers: {
+                        "Content-Type":
+                            "application/json"
+                    },
 
-        return [];
+                    body: JSON.stringify({
+                        action: "getInspections"
+                    })
+                }
+            );
 
-    }
-
-
-    try {
 
         const data =
-            await apiGetInspections();
+            await response.json();
 
 
         console.log(
@@ -490,69 +39,29 @@ async function loadInspections() {
 
 
         if (
-            !data ||
             !data.success
         ) {
 
             console.error(
                 "ไม่สามารถโหลด Inspections:",
-                data
-                    ? data.message
-                    : "ไม่มี response"
+                data.message
             );
 
+            inspectionRecords = [];
 
-            inspectionRecords =
-                [];
-
-
-            return [];
+            return;
 
         }
 
 
-        // ==================================================
-        // SUPPORT data
-        // ==================================================
+        // ------------------------------------
+        // เก็บข้อมูล Inspections
+        // ------------------------------------
 
-        if (
-            Array.isArray(
-                data.data
-            )
-        ) {
-
-            inspectionRecords =
-                data.data;
-
-        }
-
-
-        // ==================================================
-        // SUPPORT inspections
-        // ==================================================
-
-        else if (
-            Array.isArray(
-                data.inspections
-            )
-        ) {
-
-            inspectionRecords =
-                data.inspections;
-
-        }
-
-
-        // ==================================================
-        // EMPTY
-        // ==================================================
-
-        else {
-
-            inspectionRecords =
-                [];
-
-        }
+        inspectionRecords =
+            Array.isArray(data.data)
+                ? data.data
+                : [];
 
 
         console.log(
@@ -567,9 +76,6 @@ async function loadInspections() {
         );
 
 
-        return inspectionRecords;
-
-
     } catch (error) {
 
         console.error(
@@ -578,20 +84,15 @@ async function loadInspections() {
         );
 
 
-        inspectionRecords =
-            [];
-
-
-        return [];
+        inspectionRecords = [];
 
     }
 
 }
 
-
-// ======================================================
+// ========================================
 // RENDER ZONE
-// ======================================================
+// ========================================
 
 function renderInspectionZones() {
 
@@ -617,19 +118,7 @@ function renderInspectionZones() {
     `;
 
 
-    if (
-        !Array.isArray(
-            inspectionLocations
-        )
-    ) {
-
-        return;
-
-    }
-
-
-    const zones =
-        [];
+    const zones = [];
 
 
     inspectionLocations.forEach(
@@ -644,41 +133,21 @@ function renderInspectionZones() {
             }
 
 
-            if (
-                location.status &&
-                String(
-                    location.status
-                ).toLowerCase()
-                !==
-                "active"
-            ) {
-
-                return;
-
-            }
-
-
             const zone =
                 location.zone ||
                 location.settingZone ||
                 "";
 
 
-            const zoneValue =
-                String(
-                    zone
-                ).trim();
-
-
             if (
-                zoneValue &&
+                zone &&
                 !zones.includes(
-                    zoneValue
+                    zone
                 )
             ) {
 
                 zones.push(
-                    zoneValue
+                    zone
                 );
 
             }
@@ -687,19 +156,7 @@ function renderInspectionZones() {
     );
 
 
-    zones.sort(
-        function (
-            a,
-            b
-        ) {
-
-            return a.localeCompare(
-                b,
-                "th"
-            );
-
-        }
-    );
+    zones.sort();
 
 
     zones.forEach(
@@ -731,9 +188,9 @@ function renderInspectionZones() {
 }
 
 
-// ======================================================
+// ========================================
 // RENDER LOCATIONS
-// ======================================================
+// ========================================
 
 function renderInspectionLocations() {
 
@@ -759,19 +216,6 @@ function renderInspectionLocations() {
     `;
 
 
-    if (
-        !Array.isArray(
-            inspectionLocations
-        )
-    ) {
-
-        renderInspectionZones();
-
-        return;
-
-    }
-
-
     inspectionLocations.forEach(
         function (
             location
@@ -783,10 +227,6 @@ function renderInspectionLocations() {
 
             }
 
-
-            // ==================================================
-            // STATUS
-            // ==================================================
 
             if (
                 location.status &&
@@ -802,10 +242,6 @@ function renderInspectionLocations() {
             }
 
 
-            // ==================================================
-            // LOCATION NAME
-            // ==================================================
-
             const locationName =
                 location.settingName ||
                 location.name ||
@@ -814,13 +250,7 @@ function renderInspectionLocations() {
                 "";
 
 
-            const name =
-                String(
-                    locationName
-                ).trim();
-
-
-            if (!name) {
+            if (!locationName) {
 
                 return;
 
@@ -834,31 +264,11 @@ function renderInspectionLocations() {
 
 
             option.value =
-                name;
+                locationName;
 
 
             option.textContent =
-                name;
-
-
-            // ==================================================
-            // STORE ZONE
-            // ==================================================
-
-            const zone =
-                location.zone ||
-                location.settingZone ||
-                "";
-
-
-            if (zone) {
-
-                option.dataset.zone =
-                    String(
-                        zone
-                    ).trim();
-
-            }
+                locationName;
 
 
             select.appendChild(
@@ -869,18 +279,14 @@ function renderInspectionLocations() {
     );
 
 
-    // ==================================================
-    // RENDER ZONE
-    // ==================================================
-
     renderInspectionZones();
 
 }
 
 
-// ======================================================
+// ========================================
 // RENDER INSPECTORS
-// ======================================================
+// ========================================
 
 function renderInspectionInspectors() {
 
@@ -906,17 +312,6 @@ function renderInspectionInspectors() {
     `;
 
 
-    if (
-        !Array.isArray(
-            inspectionInspectors
-        )
-    ) {
-
-        return;
-
-    }
-
-
     inspectionInspectors.forEach(
         function (
             inspector
@@ -928,10 +323,6 @@ function renderInspectionInspectors() {
 
             }
 
-
-            // ==================================================
-            // STATUS
-            // ==================================================
 
             if (
                 inspector.status &&
@@ -947,10 +338,6 @@ function renderInspectionInspectors() {
             }
 
 
-            // ==================================================
-            // NAME
-            // ==================================================
-
             const inspectorName =
                 inspector.settingName ||
                 inspector.name ||
@@ -959,13 +346,7 @@ function renderInspectionInspectors() {
                 "";
 
 
-            const name =
-                String(
-                    inspectorName
-                ).trim();
-
-
-            if (!name) {
+            if (!inspectorName) {
 
                 return;
 
@@ -979,11 +360,11 @@ function renderInspectionInspectors() {
 
 
             option.value =
-                name;
+                inspectorName;
 
 
             option.textContent =
-                name;
+                inspectorName;
 
 
             select.appendChild(
@@ -996,9 +377,9 @@ function renderInspectionInspectors() {
 }
 
 
-// ======================================================
+// ========================================
 // RENDER INSPECTION ITEMS
-// ======================================================
+// ========================================
 
 function renderInspectionItems() {
 
@@ -1014,10 +395,6 @@ function renderInspectionItems() {
 
     }
 
-
-    // ==================================================
-    // CHECK DATA
-    // ==================================================
 
     if (
         !Array.isArray(
@@ -1046,15 +423,10 @@ function renderInspectionItems() {
 
         `;
 
-
         return;
 
     }
 
-
-    // ==================================================
-    // SORT ITEMS
-    // ==================================================
 
     const sortedItems =
         [...inspectionItems]
@@ -1066,61 +438,36 @@ function renderInspectionItems() {
 
                     const aNo =
                         Number(
-                            a &&
-                            (
-                                a.sortOrder ||
-                                a.itemNo ||
-                                a.no ||
-                                999
-                            )
+                            a.sortOrder ||
+                            a.itemNo ||
+                            a.no ||
+                            999
                         );
 
 
                     const bNo =
                         Number(
-                            b &&
-                            (
-                                b.sortOrder ||
-                                b.itemNo ||
-                                b.no ||
-                                999
-                            )
+                            b.sortOrder ||
+                            b.itemNo ||
+                            b.no ||
+                            999
                         );
 
 
-                    return (
-                        aNo -
-                        bNo
-                    );
+                    return aNo - bNo;
 
                 }
             );
 
 
-    // ==================================================
-    // CLEAR
-    // ==================================================
+    container.innerHTML = "";
 
-    container.innerHTML =
-        "";
-
-
-    // ==================================================
-    // RENDER ITEMS
-    // ==================================================
 
     sortedItems.forEach(
         function (
             item,
             index
         ) {
-
-            if (!item) {
-
-                return;
-
-            }
-
 
             const itemNumber =
                 item.sortOrder ||
@@ -1137,18 +484,6 @@ function renderInspectionItems() {
                 "";
 
 
-            const safeItemNumber =
-                String(
-                    itemNumber
-                );
-
-
-            const safeItemText =
-                String(
-                    itemText
-                );
-
-
             const row =
                 document.createElement(
                     "div"
@@ -1160,7 +495,7 @@ function renderInspectionItems() {
 
 
             row.dataset.itemNo =
-                safeItemNumber;
+                itemNumber;
 
 
             row.innerHTML = `
@@ -1170,7 +505,7 @@ function renderInspectionItems() {
                     <div class="inspection-item-number">
 
                         ${escapeHTML(
-                            safeItemNumber
+                            itemNumber
                         )}
 
                     </div>
@@ -1178,7 +513,7 @@ function renderInspectionItems() {
                     <div class="inspection-item-text">
 
                         ${escapeHTML(
-                            safeItemText
+                            itemText
                         )}
 
                     </div>
@@ -1195,7 +530,7 @@ function renderInspectionItems() {
                         <input
                             type="radio"
                             name="inspection-result-${escapeHTML(
-                                safeItemNumber
+                                itemNumber
                             )}"
                             value="ผ่าน"
                         >
@@ -1214,7 +549,7 @@ function renderInspectionItems() {
                         <input
                             type="radio"
                             name="inspection-result-${escapeHTML(
-                                safeItemNumber
+                                itemNumber
                             )}"
                             value="ไม่ผ่าน"
                         >
@@ -1237,10 +572,6 @@ function renderInspectionItems() {
         }
     );
 
-
-    // ==================================================
-    // ADDITIONAL SECTION
-    // ==================================================
 
     const additionalSection =
         document.createElement(
@@ -1299,9 +630,9 @@ function renderInspectionItems() {
 }
 
 
-// ======================================================
+// ========================================
 // COLLECT INSPECTION ITEMS
-// ======================================================
+// ========================================
 
 function collectInspectionItems() {
 
@@ -1333,16 +664,8 @@ function collectInspectionItems() {
             row
         ) {
 
-            if (!row) {
-
-                return;
-
-            }
-
-
             const itemNo =
-                row.dataset.itemNo ||
-                "";
+                row.dataset.itemNo;
 
 
             const resultInput =
@@ -1383,9 +706,9 @@ function collectInspectionItems() {
 }
 
 
-// ======================================================
+// ========================================
 // COLLECT REMARK
-// ======================================================
+// ========================================
 
 function collectInspectionRemark() {
 
@@ -1402,16 +725,14 @@ function collectInspectionRemark() {
     }
 
 
-    return String(
-        input.value || ""
-    ).trim();
+    return input.value.trim();
 
 }
 
 
-// ======================================================
+// ========================================
 // COLLECT SOLUTION
-// ======================================================
+// ========================================
 
 function collectInspectionSolution() {
 
@@ -1428,16 +749,14 @@ function collectInspectionSolution() {
     }
 
 
-    return String(
-        input.value || ""
-    ).trim();
+    return input.value.trim();
 
 }
 
 
-// ======================================================
+// ========================================
 // VALIDATE INSPECTION FORM
-// ======================================================
+// ========================================
 
 function validateInspectionForm() {
 
@@ -1453,12 +772,6 @@ function validateInspectionForm() {
         );
 
 
-    const zone =
-        document.getElementById(
-            "inspection-zone"
-        );
-
-
     const location =
         document.getElementById(
             "inspection-location"
@@ -1471,10 +784,6 @@ function validateInspectionForm() {
         );
 
 
-    // ==================================================
-    // DATE
-    // ==================================================
-
     if (
         !inspectionDate ||
         !inspectionDate.value
@@ -1484,15 +793,10 @@ function validateInspectionForm() {
             "กรุณาเลือกวันที่ตรวจ"
         );
 
-
         return false;
 
     }
 
-
-    // ==================================================
-    // TIME
-    // ==================================================
 
     if (
         !inspectionTime ||
@@ -1503,34 +807,10 @@ function validateInspectionForm() {
             "กรุณาเลือกเวลาตรวจ"
         );
 
-
         return false;
 
     }
 
-
-    // ==================================================
-    // ZONE
-    // ==================================================
-
-    if (
-        zone &&
-        !zone.value
-    ) {
-
-        alert(
-            "กรุณาเลือกเขต"
-        );
-
-
-        return false;
-
-    }
-
-
-    // ==================================================
-    // LOCATION
-    // ==================================================
 
     if (
         !location ||
@@ -1541,15 +821,10 @@ function validateInspectionForm() {
             "กรุณาเลือกจุดตรวจ"
         );
 
-
         return false;
 
     }
 
-
-    // ==================================================
-    // INSPECTOR
-    // ==================================================
 
     if (
         !inspector ||
@@ -1560,15 +835,10 @@ function validateInspectionForm() {
             "กรุณาเลือกผู้ตรวจ"
         );
 
-
         return false;
 
     }
 
-
-    // ==================================================
-    // ITEMS
-    // ==================================================
 
     const items =
         collectInspectionItems();
@@ -1582,15 +852,10 @@ function validateInspectionForm() {
             "ไม่พบรายการตรวจ"
         );
 
-
         return false;
 
     }
 
-
-    // ==================================================
-    // INCOMPLETE
-    // ==================================================
 
     const incomplete =
         items.find(
@@ -1598,10 +863,7 @@ function validateInspectionForm() {
                 item
             ) {
 
-                return (
-                    !item ||
-                    !item.result
-                );
+                return !item.result;
 
             }
         );
@@ -1613,7 +875,6 @@ function validateInspectionForm() {
             "กรุณาเลือกผลการตรวจให้ครบทุกข้อ"
         );
 
-
         return false;
 
     }
@@ -1624,30 +885,22 @@ function validateInspectionForm() {
 }
 
 
-// ======================================================
+// ========================================
 // GENERATE RECORD ID
-// ======================================================
+// ========================================
 
 function generateRecordId() {
 
-    // ==================================================
-    // CRYPTO UUID
-    // ==================================================
-
     if (
         window.crypto &&
-        typeof window.crypto.randomUUID ===
+        typeof crypto.randomUUID ===
         "function"
     ) {
 
-        return window.crypto.randomUUID();
+        return crypto.randomUUID();
 
     }
 
-
-    // ==================================================
-    // FALLBACK
-    // ==================================================
 
     return (
 
@@ -1662,15 +915,11 @@ function generateRecordId() {
 }
 
 
-// ======================================================
+// ========================================
 // SAVE INSPECTION
-// ======================================================
+// ========================================
 
 async function saveInspection() {
-
-    // ==================================================
-    // VALIDATE
-    // ==================================================
 
     if (
         !validateInspectionForm()
@@ -1681,39 +930,8 @@ async function saveInspection() {
     }
 
 
-    // ==================================================
-    // CHECK API
-    // ==================================================
-
-    if (
-        typeof apiSaveInspection !==
-        "function"
-    ) {
-
-        console.error(
-            "ไม่พบฟังก์ชัน apiSaveInspection()"
-        );
-
-
-        alert(
-            "ระบบ API ยังไม่พร้อมใช้งาน"
-        );
-
-
-        return;
-
-    }
-
-
-    // ==================================================
-    // CURRENT USER
-    // ==================================================
-
     const user =
-        typeof getCurrentUser ===
-        "function"
-            ? getCurrentUser()
-            : null;
+        getCurrentUser();
 
 
     if (!user) {
@@ -1722,15 +940,10 @@ async function saveInspection() {
             "ไม่พบข้อมูลผู้ใช้งาน กรุณาเข้าสู่ระบบใหม่"
         );
 
-
         return;
 
     }
 
-
-    // ==================================================
-    // ELEMENTS
-    // ==================================================
 
     const dateInput =
         document.getElementById(
@@ -1768,17 +981,9 @@ async function saveInspection() {
         );
 
 
-    // ==================================================
-    // GENERATE ID
-    // ==================================================
-
     const recordId =
         generateRecordId();
 
-
-    // ==================================================
-    // COLLECT DATA
-    // ==================================================
 
     const items =
         collectInspectionItems();
@@ -1792,24 +997,16 @@ async function saveInspection() {
         collectInspectionSolution();
 
 
-    // ==================================================
-    // INSPECTION DATA
-    // ==================================================
-
     const inspectionData = {
 
         recordId:
             recordId,
 
         inspectionDate:
-            dateInput
-                ? dateInput.value
-                : "",
+            dateInput.value,
 
         inspectionTime:
-            timeInput
-                ? timeInput.value
-                : "",
+            timeInput.value,
 
         zone:
             zoneInput
@@ -1817,14 +1014,10 @@ async function saveInspection() {
                 : "",
 
         locationName:
-            locationInput
-                ? locationInput.value
-                : "",
+            locationInput.value,
 
         inspectorName:
-            inspectorInput
-                ? inspectorInput.value
-                : "",
+            inspectorInput.value,
 
         remark:
             remark,
@@ -1858,15 +1051,10 @@ async function saveInspection() {
     );
 
 
-    // ==================================================
-    // DISABLE SAVE BUTTON
-    // ==================================================
-
     if (saveButton) {
 
         saveButton.disabled =
             true;
-
 
         saveButton.textContent =
             "กำลังบันทึก...";
@@ -1876,14 +1064,41 @@ async function saveInspection() {
 
     try {
 
-        // ==================================================
-        // API
-        // ==================================================
+        const response =
+            await apiFetch(
+
+                API_URL,
+
+                {
+
+                    method:
+                        "POST",
+
+                    headers: {
+
+                        "Content-Type":
+                            "text/plain;charset=utf-8"
+
+                    },
+
+                    body:
+                        JSON.stringify({
+
+                            action:
+                                "saveInspection",
+
+                            inspection:
+                                inspectionData
+
+                        })
+
+                }
+
+            );
+
 
         const data =
-            await apiSaveInspection(
-                inspectionData
-            );
+            await response.json();
 
 
         console.log(
@@ -1892,42 +1107,25 @@ async function saveInspection() {
         );
 
 
-        // ==================================================
-        // SUCCESS
-        // ==================================================
-
-        if (
-            data &&
-            data.success
-        ) {
+        if (data.success) {
 
             alert(
                 "บันทึกการตรวจสำเร็จ"
             );
 
 
-            // ----------------------------------------------
-            // RESET FORM
-            // ----------------------------------------------
-
             resetInspectionForm();
-
 
         } else {
 
             alert(
 
-                data &&
-                data.message
-
-                    ? data.message
-
-                    : "ไม่สามารถบันทึกการตรวจได้"
+                data.message ||
+                "ไม่สามารถบันทึกการตรวจได้"
 
             );
 
         }
-
 
     } catch (error) {
 
@@ -1941,18 +1139,12 @@ async function saveInspection() {
             "ไม่สามารถเชื่อมต่อฐานข้อมูลได้"
         );
 
-
     } finally {
-
-        // ==================================================
-        // RESTORE BUTTON
-        // ==================================================
 
         if (saveButton) {
 
             saveButton.disabled =
                 false;
-
 
             saveButton.textContent =
                 "บันทึกการตรวจ";
@@ -1964,15 +1156,11 @@ async function saveInspection() {
 }
 
 
-// ======================================================
+// ========================================
 // RESET INSPECTION FORM
-// ======================================================
+// ========================================
 
 function resetInspectionForm() {
-
-    // ==================================================
-    // ELEMENTS
-    // ==================================================
 
     const dateInput =
         document.getElementById(
@@ -1983,12 +1171,6 @@ function resetInspectionForm() {
     const timeInput =
         document.getElementById(
             "inspection-time"
-        );
-
-
-    const zoneInput =
-        document.getElementById(
-            "inspection-zone"
         );
 
 
@@ -2004,22 +1186,6 @@ function resetInspectionForm() {
         );
 
 
-    // ==================================================
-    // RESET ZONE
-    // ==================================================
-
-    if (zoneInput) {
-
-        zoneInput.value =
-            "";
-
-    }
-
-
-    // ==================================================
-    // RESET LOCATION
-    // ==================================================
-
     if (locationInput) {
 
         locationInput.value =
@@ -2028,10 +1194,6 @@ function resetInspectionForm() {
     }
 
 
-    // ==================================================
-    // RESET INSPECTOR
-    // ==================================================
-
     if (inspectorInput) {
 
         inspectorInput.value =
@@ -2039,10 +1201,6 @@ function resetInspectionForm() {
 
     }
 
-
-    // ==================================================
-    // RESET RADIO
-    // ==================================================
 
     const resultInputs =
         document.querySelectorAll(
@@ -2062,10 +1220,6 @@ function resetInspectionForm() {
     );
 
 
-    // ==================================================
-    // RESET REMARK
-    // ==================================================
-
     const remark =
         document.getElementById(
             "inspection-remark"
@@ -2079,10 +1233,6 @@ function resetInspectionForm() {
 
     }
 
-
-    // ==================================================
-    // RESET SOLUTION
-    // ==================================================
 
     const solution =
         document.getElementById(
@@ -2098,10 +1248,6 @@ function resetInspectionForm() {
     }
 
 
-    // ==================================================
-    // RESET DATE
-    // ==================================================
-
     if (dateInput) {
 
         dateInput.value =
@@ -2110,10 +1256,6 @@ function resetInspectionForm() {
     }
 
 
-    // ==================================================
-    // RESET TIME
-    // ==================================================
-
     if (timeInput) {
 
         timeInput.value =
@@ -2121,10 +1263,6 @@ function resetInspectionForm() {
 
     }
 
-
-    // ==================================================
-    // SET DEFAULT DATE / TIME
-    // ==================================================
 
     setDefaultInspectionDateTime();
 
@@ -2136,6 +1274,4 @@ function resetInspectionForm() {
 }
 
 
-// ======================================================
-// END INSPECTIONS.JS
 // ======================================================
