@@ -53,21 +53,38 @@ async function loadInspectionSettings() {
     try {
 
         console.log(
-            "กำลังโหลดข้อมูล Inspection Settings..."
+            "กำลังโหลดข้อมูล Inspection Settings พร้อมกัน..."
         );
 
 
-        // ------------------------------------
+        // ========================================
+        // LOAD ALL SETTINGS IN PARALLEL
+        // ========================================
+
+        const [
+            zoneData,
+            locationData,
+            inspectorData,
+            itemData
+        ] = await Promise.all([
+
+            getInspectionSetting("zone"),
+
+            getInspectionSetting("location"),
+
+            getInspectionSetting("inspector"),
+
+            getInspectionSetting("inspectionItem")
+
+        ]);
+
+
+        // ========================================
         // ZONE
-        // ------------------------------------
-
-        const zoneData =
-            await getInspectionSetting(
-                "zone"
-            );
-
+        // ========================================
 
         if (
+            zoneData &&
             zoneData.success &&
             Array.isArray(
                 zoneData.settings
@@ -85,17 +102,12 @@ async function loadInspectionSettings() {
         }
 
 
-        // ------------------------------------
+        // ========================================
         // LOCATION
-        // ------------------------------------
-
-        const locationData =
-            await getInspectionSetting(
-                "location"
-            );
-
+        // ========================================
 
         if (
+            locationData &&
             locationData.success &&
             Array.isArray(
                 locationData.settings
@@ -113,17 +125,12 @@ async function loadInspectionSettings() {
         }
 
 
-        // ------------------------------------
+        // ========================================
         // INSPECTOR
-        // ------------------------------------
-
-        const inspectorData =
-            await getInspectionSetting(
-                "inspector"
-            );
-
+        // ========================================
 
         if (
+            inspectorData &&
             inspectorData.success &&
             Array.isArray(
                 inspectorData.settings
@@ -141,17 +148,12 @@ async function loadInspectionSettings() {
         }
 
 
-        // ------------------------------------
+        // ========================================
         // INSPECTION ITEMS
-        // ------------------------------------
-
-        const itemData =
-            await getInspectionSetting(
-                "inspectionItem"
-            );
-
+        // ========================================
 
         if (
+            itemData &&
             itemData.success &&
             Array.isArray(
                 itemData.settings
@@ -169,9 +171,9 @@ async function loadInspectionSettings() {
         }
 
 
-        // ------------------------------------
+        // ========================================
         // RENDER
-        // ------------------------------------
+        // ========================================
 
         renderInspectionZones();
 
@@ -182,28 +184,32 @@ async function loadInspectionSettings() {
         renderInspectionItems();
 
 
-        // ------------------------------------
+        // ========================================
         // DEBUG
-        // ------------------------------------
+        // ========================================
 
         console.log(
-            "Inspection Zones:",
-            inspectionZones
+            "Inspection Settings โหลดสำเร็จ"
         );
 
         console.log(
-            "Inspection Locations:",
-            inspectionLocations
+            "Zones:",
+            inspectionZones.length
         );
 
         console.log(
-            "Inspection Inspectors:",
-            inspectionInspectors
+            "Locations:",
+            inspectionLocations.length
         );
 
         console.log(
-            "Inspection Items:",
-            inspectionItems
+            "Inspectors:",
+            inspectionInspectors.length
+        );
+
+        console.log(
+            "Items:",
+            inspectionItems.length
         );
 
 
@@ -235,4 +241,3 @@ async function loadInspectionSettings() {
     }
 
 }
-
