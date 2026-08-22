@@ -3428,3 +3428,232 @@ textarea:focus-visible {
     }
 
 }
+
+/* ======================================================
+   GLOBAL POPUP
+   ====================================================== */
+
+.global-popup {
+    position: fixed;
+
+    inset: 0;
+
+    z-index: 9999;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    padding: 20px;
+
+    background: rgba(
+        0,
+        0,
+        0,
+        0.45
+    );
+
+    opacity: 0;
+
+    visibility: hidden;
+
+    pointer-events: none;
+
+    transition:
+        opacity 0.2s ease,
+        visibility 0.2s ease;
+}
+
+
+/* ======================================================
+   SHOW
+   ====================================================== */
+
+.global-popup.show {
+
+    opacity: 1;
+
+    visibility: visible;
+
+    pointer-events: auto;
+
+}
+
+
+/* ======================================================
+   POPUP CONTENT
+   ====================================================== */
+
+.popup-content {
+
+    width: 100%;
+
+    max-height: 90vh;
+
+    display: flex;
+
+    flex-direction: column;
+
+    background: #ffffff;
+
+    border-radius: 16px;
+
+    box-shadow:
+        0 20px 60px
+        rgba(
+            0,
+            0,
+            0,
+            0.2
+        );
+
+    overflow: hidden;
+
+    transform:
+        translateY(10px)
+        scale(0.98);
+
+    transition:
+        transform 0.2s ease;
+}
+
+
+.global-popup.show
+.popup-content {
+
+    transform:
+        translateY(0)
+        scale(1);
+
+}
+
+
+/* ======================================================
+   POPUP SIZE
+   ====================================================== */
+
+.popup-small {
+
+    max-width: 420px;
+
+}
+
+
+.popup-medium {
+
+    max-width: 650px;
+
+}
+
+
+.popup-large {
+
+    max-width: 900px;
+
+}
+
+
+.popup-full {
+
+    max-width: 1200px;
+
+}
+
+
+/* ======================================================
+   POPUP HEADER
+   ====================================================== */
+
+.popup-header {
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    padding: 18px 22px;
+
+    border-bottom:
+        1px solid #e5e7eb;
+
+}
+
+
+.popup-header h2 {
+
+    margin: 0;
+
+    font-size: 20px;
+
+    font-weight: 600;
+
+}
+
+
+/* ======================================================
+   CLOSE BUTTON
+   ====================================================== */
+
+.popup-close {
+
+    width: 36px;
+
+    height: 36px;
+
+    border: none;
+
+    border-radius: 50%;
+
+    background: transparent;
+
+    font-size: 28px;
+
+    line-height: 1;
+
+    cursor: pointer;
+
+    color: #64748b;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+}
+
+
+.popup-close:hover {
+
+    background: #f1f5f9;
+
+    color: #111827;
+
+}
+
+
+/* ======================================================
+   POPUP BODY
+   ====================================================== */
+
+.popup-body {
+
+    padding: 22px;
+
+    overflow-y: auto;
+
+}
+
+
+/* ======================================================
+   BODY SCROLL LOCK
+   ====================================================== */
+
+body.popup-open {
+
+    overflow: hidden;
+
+}

@@ -19,6 +19,8 @@ window.addEventListener(
         setupDocuments();
 
         setupInspections();
+        
+        setupPopup();
 
         setupISOMenu();
 
