@@ -340,12 +340,6 @@ async function loadInspections() {
 
 }
 
-
-
-// ======================================================
-// RENDER INSPECTION ZONES
-// ======================================================
-
 // ======================================================
 // RENDER INSPECTION ZONES
 // ======================================================
@@ -369,10 +363,6 @@ function renderInspectionZones() {
     }
 
 
-    // ----------------------------------------
-    // CLEAR
-    // ----------------------------------------
-
     select.innerHTML = `
 
         <option value="">
@@ -383,7 +373,7 @@ function renderInspectionZones() {
 
 
     // ----------------------------------------
-    // CHECK DATA
+    // GET ZONES DIRECTLY FROM SETTINGS
     // ----------------------------------------
 
     if (
@@ -401,16 +391,6 @@ function renderInspectionZones() {
 
     }
 
-
-    console.log(
-        "ข้อมูล Inspection Zones:",
-        inspectionZones
-    );
-
-
-    // ----------------------------------------
-    // RENDER
-    // ----------------------------------------
 
     inspectionZones.forEach(
         function (
@@ -447,8 +427,8 @@ function renderInspectionZones() {
             // --------------------------------
 
             const zoneName =
-                zone.name ||
                 zone.settingName ||
+                zone.name ||
                 zone.settingValue ||
                 zone.zone ||
                 "";
@@ -488,8 +468,8 @@ function renderInspectionZones() {
 
 
     console.log(
-        "สร้าง Dropdown เขตแล้ว จำนวน:",
-        select.options.length - 1
+        "โหลดเขตตรวจสำเร็จ:",
+        inspectionZones
     );
 
 }

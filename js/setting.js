@@ -58,6 +58,34 @@ async function loadInspectionSettings() {
 
 
         // ------------------------------------
+        // ZONE
+        // ------------------------------------
+
+        const zoneData =
+            await getInspectionSetting(
+                "zone"
+            );
+
+
+        if (
+            zoneData.success &&
+            Array.isArray(
+                zoneData.settings
+            )
+        ) {
+
+            inspectionZones =
+                zoneData.settings;
+
+        } else {
+
+            inspectionZones =
+                [];
+
+        }
+
+
+        // ------------------------------------
         // LOCATION
         // ------------------------------------
 
@@ -141,11 +169,42 @@ async function loadInspectionSettings() {
         }
 
 
+        // ------------------------------------
+        // RENDER
+        // ------------------------------------
+
+        renderInspectionZones();
+
         renderInspectionLocations();
 
         renderInspectionInspectors();
 
         renderInspectionItems();
+
+
+        // ------------------------------------
+        // DEBUG
+        // ------------------------------------
+
+        console.log(
+            "Inspection Zones:",
+            inspectionZones
+        );
+
+        console.log(
+            "Inspection Locations:",
+            inspectionLocations
+        );
+
+        console.log(
+            "Inspection Inspectors:",
+            inspectionInspectors
+        );
+
+        console.log(
+            "Inspection Items:",
+            inspectionItems
+        );
 
 
     } catch (error) {
@@ -156,12 +215,16 @@ async function loadInspectionSettings() {
         );
 
 
+        inspectionZones = [];
+
         inspectionLocations = [];
 
         inspectionInspectors = [];
 
         inspectionItems = [];
 
+
+        renderInspectionZones();
 
         renderInspectionLocations();
 
