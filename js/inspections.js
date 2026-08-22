@@ -93,17 +93,11 @@ async function initializeInspectionPage() {
     ) {
 
         console.log(
-            "กำลังโหลด Inspection Settings และ Inspections พร้อมกัน..."
+            "กำลังโหลด Inspection Settings..."
         );
 
 
-        await Promise.all([
-
-            loadInspectionSettings(),
-
-            loadInspections()
-
-        ]);
+        await loadInspectionSettings();
 
 
         inspectionSettingsLoaded =
@@ -112,22 +106,19 @@ async function initializeInspectionPage() {
 
     } else {
 
-        await loadInspections();
+        // ----------------------------------------
+        // SETTINGS ALREADY LOADED
+        // ----------------------------------------
+
+        renderInspectionZones();
+
+        renderInspectionLocations();
+
+        renderInspectionInspectors();
+
+        renderInspectionItems();
 
     }
-
-
-    // ----------------------------------------
-    // RENDER INSPECTION DATA
-    // ----------------------------------------
-
-    renderInspectionZones();
-
-    renderInspectionLocations();
-
-    renderInspectionInspectors();
-
-    renderInspectionItems();
 
 
     console.log(
