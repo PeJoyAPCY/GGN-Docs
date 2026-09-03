@@ -1668,7 +1668,7 @@ function openInspectionListFromPopup() {
 
 
     showPage(
-        "inspection-list"
+        "inspection-records"
     );
 
 }
