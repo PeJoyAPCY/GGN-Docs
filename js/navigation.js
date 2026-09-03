@@ -1,5 +1,12 @@
-// NAVIGATION
-// ========================================
+// ======================================================
+// GGN DOCS
+// NAVIGATION SYSTEM
+// ======================================================
+
+
+// ======================================================
+// SETUP NAVIGATION
+// ======================================================
 
 function setupNavigation() {
 
@@ -40,17 +47,17 @@ function setupNavigation() {
 }
 
 
-// ========================================
+// ======================================================
 // SHOW PAGE
-// ========================================
+// ======================================================
 
 function showPage(
     page
 ) {
 
-    // ------------------------------------
-    // Hide all pages
-    // ------------------------------------
+    // ----------------------------------------
+    // HIDE ALL PAGES
+    // ----------------------------------------
 
     const pages =
         document.querySelectorAll(
@@ -72,9 +79,9 @@ function showPage(
     );
 
 
-    // ------------------------------------
-    // Show selected page
-    // ------------------------------------
+    // ----------------------------------------
+    // SHOW SELECTED PAGE
+    // ----------------------------------------
 
     const selectedPage =
         document.getElementById(
@@ -91,12 +98,19 @@ function showPage(
             "active"
         );
 
+    } else {
+
+        console.warn(
+            "ไม่พบหน้า:",
+            "page-" + page
+        );
+
     }
 
 
-    // ------------------------------------
-    // Update sidebar active state
-    // ------------------------------------
+    // ----------------------------------------
+    // UPDATE SIDEBAR ACTIVE STATE
+    // ----------------------------------------
 
     const navItems =
         document.querySelectorAll(
@@ -127,9 +141,9 @@ function showPage(
     );
 
 
-    // ------------------------------------
-    // Documents
-    // ------------------------------------
+    // ----------------------------------------
+    // DOCUMENTS
+    // ----------------------------------------
 
     if (
         page === "documents"
@@ -140,9 +154,9 @@ function showPage(
     }
 
 
-    // ------------------------------------
-    // Inspection Record
-    // ------------------------------------
+    // ----------------------------------------
+    // INSPECTION RECORD
+    // ----------------------------------------
 
     if (
         page === "inspection-record"
@@ -152,14 +166,32 @@ function showPage(
 
     }
 
+
+    // ----------------------------------------
+    // FM-OP-11
+    // ----------------------------------------
+
+    if (
+        page === "fmop11"
+    ) {
+
+        initializeFMOP11Page();
+
+    }
+
 }
 
 
-// ========================================
+// ======================================================
 // OPEN INSPECTION RECORD PAGE
-// ========================================
+// ======================================================
 
 function openInspectionRecordPage() {
+
+    console.log(
+        "เปิดหน้าบันทึกการตรวจ"
+    );
+
 
     showPage(
         "inspection-record"
@@ -168,11 +200,16 @@ function openInspectionRecordPage() {
 }
 
 
-// ========================================
+// ======================================================
 // OPEN FM-OP-11 GENERATOR PAGE
-// ========================================
+// ======================================================
 
 function openFMOP11Page() {
+
+    console.log(
+        "เปิดหน้าสร้างรายงาน FM-OP-11"
+    );
+
 
     showPage(
         "fmop11"
@@ -181,9 +218,9 @@ function openFMOP11Page() {
 }
 
 
-// ========================================
+// ======================================================
 // SETUP ISO MENU
-// ========================================
+// ======================================================
 
 function setupISOMenu() {
 
@@ -192,9 +229,9 @@ function setupISOMenu() {
     );
 
 
-    // ====================================
+    // ========================================
     // OPEN INSPECTION RECORD
-    // ====================================
+    // ========================================
 
     const inspectionButton =
         document.getElementById(
@@ -208,201 +245,14 @@ function setupISOMenu() {
             "click",
             function () {
 
-                console.log(
-                    "เปิดหน้าบันทึกการตรวจ"
-                );
-
-
                 openInspectionRecordPage();
 
             }
         );
 
-    } else {
 
-        console.warn(
-            "ไม่พบ #open-inspection-record"
-        );
-
-    }
-
-
-    // ====================================
-    // OPEN FM-OP-11 GENERATOR
-    // ====================================
-
-    const fmop11Button =
-        document.getElementById(
-            "open-fmop11-generator"
-        );
-
-
-    if (fmop11Button) {
-
-        fmop11Button.addEventListener(
-            "click",
-            function () {
-
-                console.log(
-                    "เปิดหน้าสร้างรายงาน FM-OP-11"
-                );
-
-
-                openFMOP11Page();
-
-            }
-        );
-
-    } else {
-
-        console.warn(
-            "ไม่พบ #open-fmop11-generator"
-        );
-
-    }
-
-
-    // ====================================
-    // BACK FROM INSPECTION RECORD
-    // ====================================
-
-    const backFromRecord =
-        document.getElementById(
-            "back-to-inspections-from-record"
-        );
-
-
-    if (backFromRecord) {
-
-        backFromRecord.addEventListener(
-            "click",
-            function () {
-
-                console.log(
-                    "กลับไปหน้าเมนูการตรวจ ISO"
-                );
-
-
-                showPage(
-                    "inspections"
-                );
-
-            }
-        );
-
-    }
-
-
-    // ====================================
-    // BACK FROM FM-OP-11
-    // ====================================
-
-    const backFromFMOP11 =
-        document.getElementById(
-            "back-to-inspections-from-fmop11"
-        );
-
-
-    if (backFromFMOP11) {
-
-        backFromFMOP11.addEventListener(
-            "click",
-            function () {
-
-                console.log(
-                    "กลับไปหน้าเมนูการตรวจ ISO"
-                );
-
-
-                showPage(
-                    "inspections"
-                );
-
-            }
-        );
-
-    }
-
-
-    // ====================================
-    // COMPLETE
-    // ====================================
-
-    console.log(
-        "เตรียมเมนู ISO สำเร็จ"
-    );
-
-}
-
-
-// ========================================
-// ========================================
-// OPEN INSPECTION RECORD PAGE
-// ========================================
-
-function openInspectionRecordPage() {
-
-    showPage(
-        "inspection-record"
-    );
-
-}
-
-
-// ========================================
-// OPEN FM-OP-11 GENERATOR PAGE
-// ========================================
-
-function openFMOP11Page() {
-
-    showPage(
-        "fmop11"
-    );
-
-    initializeFMOP11Page();
-
-}
-
-
-// ========================================
-// SETUP ISO MENU
-// ========================================
-
-// ========================================
-// SETUP ISO MENU
-// ========================================
-
-function setupISOMenu() {
-
-    console.log(
-        "กำลังเตรียมเมนู ISO..."
-    );
-
-
-    // ====================================
-    // OPEN INSPECTION RECORD
-    // ====================================
-
-    const inspectionButton =
-        document.getElementById(
-            "open-inspection-record"
-        );
-
-
-    if (inspectionButton) {
-
-        inspectionButton.addEventListener(
-            "click",
-            function () {
-
-                console.log(
-                    "เปิดหน้าบันทึกการตรวจ"
-                );
-
-
-                openInspectionRecordPage();
-
-            }
+        console.log(
+            "ผูกปุ่มบันทึกการตรวจสำเร็จ"
         );
 
     } else {
@@ -414,9 +264,9 @@ function setupISOMenu() {
     }
 
 
-    // ====================================
-    // OPEN FM-OP-11 GENERATOR
-    // ====================================
+    // ========================================
+    // OPEN FM-OP-11
+    // ========================================
 
     const fmop11Button =
         document.getElementById(
@@ -430,14 +280,14 @@ function setupISOMenu() {
             "click",
             function () {
 
-                console.log(
-                    "เปิดหน้าสร้างรายงาน FM-OP-11"
-                );
-
-
                 openFMOP11Page();
 
             }
+        );
+
+
+        console.log(
+            "ผูกปุ่มสร้างรายงาน FM-OP-11 สำเร็จ"
         );
 
     } else {
@@ -449,9 +299,9 @@ function setupISOMenu() {
     }
 
 
-    // ====================================
+    // ========================================
     // BACK FROM INSPECTION RECORD
-    // ====================================
+    // ========================================
 
     const backFromRecord =
         document.getElementById(
@@ -480,9 +330,9 @@ function setupISOMenu() {
     }
 
 
-    // ====================================
+    // ========================================
     // BACK FROM FM-OP-11
-    // ====================================
+    // ========================================
 
     const backFromFMOP11 =
         document.getElementById(
@@ -511,9 +361,9 @@ function setupISOMenu() {
     }
 
 
-    // ====================================
+    // ========================================
     // COMPLETE
-    // ====================================
+    // ========================================
 
     console.log(
         "เตรียมเมนู ISO สำเร็จ"
@@ -522,20 +372,11 @@ function setupISOMenu() {
 }
 
 
-// ========================================
+// ======================================================
 // SETUP INSPECTION PAGE EVENTS
-// ========================================
+// ======================================================
 
 function setupInspectionPageEvents() {
-
-    if (
-        inspectionPageInitialized
-    ) {
-
-        return;
-
-    }
-
 
     const backButton =
         document.getElementById(
@@ -548,6 +389,10 @@ function setupInspectionPageEvents() {
             "back-to-inspections-from-fmop11"
         );
 
+
+    // ----------------------------------------
+    // BACK FROM RECORD
+    // ----------------------------------------
 
     if (backButton) {
 
@@ -565,6 +410,10 @@ function setupInspectionPageEvents() {
     }
 
 
+    // ----------------------------------------
+    // BACK FROM FM-OP-11
+    // ----------------------------------------
+
     if (backFMOP11Button) {
 
         backFMOP11Button.addEventListener(
@@ -580,11 +429,9 @@ function setupInspectionPageEvents() {
 
     }
 
-
-    inspectionPageInitialized =
-        true;
-
 }
 
 
-// ========================================
+// ======================================================
+// END NAVIGATION SYSTEM
+// ======================================================
