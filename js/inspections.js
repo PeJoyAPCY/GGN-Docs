@@ -1,3 +1,4 @@
+
 // ======================================================
 // GGN DOCS
 // INSPECTION SYSTEM
@@ -65,6 +66,8 @@ function setupInspections() {
     }
 
 }
+
+
 
 // ======================================================
 // INITIALIZE INSPECTION PAGE
@@ -222,6 +225,8 @@ function setDefaultInspectionDateTime() {
 
 }
 
+
+
 // ======================================================
 // LOAD INSPECTIONS
 // ======================================================
@@ -330,6 +335,8 @@ async function loadInspections() {
     }
 
 }
+
+
 
 // ======================================================
 // RENDER INSPECTION ZONES
@@ -1523,12 +1530,18 @@ async function saveInspection() {
             data.success
         ) {
 
-            alert(
-                "บันทึกการตรวจสำเร็จ"
-            );
-
+            // ----------------------------------------
+            // RESET FORM
+            // ----------------------------------------
 
             resetInspectionForm();
+
+
+            // ----------------------------------------
+            // SHOW SUCCESS POPUP
+            // ----------------------------------------
+
+            showInspectionSuccessPopup();
 
 
         } else {
@@ -1574,6 +1587,118 @@ async function saveInspection() {
         }
 
     }
+
+}
+
+
+
+// ======================================================
+// INSPECTION SUCCESS POPUP
+// ======================================================
+
+function showInspectionSuccessPopup() {
+
+    const content = `
+
+        <div class="inspection-success-popup">
+
+            <div class="inspection-success-icon">
+                ✓
+            </div>
+
+            <div class="inspection-success-title">
+                บันทึกสำเร็จ
+            </div>
+
+            <div class="inspection-success-message">
+                บันทึกข้อมูลการตรวจเรียบร้อยแล้ว
+            </div>
+
+
+            <div class="inspection-success-actions">
+
+                <button
+                    type="button"
+                    class="popup-button popup-button-secondary"
+                    onclick="openInspectionListFromPopup()"
+                >
+                    ดูรายการตรวจ
+                </button>
+
+
+                <button
+                    type="button"
+                    class="popup-button popup-button-primary"
+                    onclick="continueInspectionFromPopup()"
+                >
+                    ตรวจต่อ
+                </button>
+
+            </div>
+
+        </div>
+
+    `;
+
+
+    openPopup(
+        content,
+        {
+            title: "บันทึกการตรวจ",
+            size: "small"
+        }
+    );
+
+}
+
+
+
+// ======================================================
+// SUCCESS POPUP → INSPECTION LIST
+// ======================================================
+
+function openInspectionListFromPopup() {
+
+    closePopup();
+
+
+    console.log(
+        "เปิดหน้ารายการตรวจ"
+    );
+
+
+    showPage(
+        "inspection-list"
+    );
+
+}
+
+
+
+// ======================================================
+// SUCCESS POPUP → CONTINUE INSPECTION
+// ======================================================
+
+function continueInspectionFromPopup() {
+
+    closePopup();
+
+
+    console.log(
+        "ตรวจรายการถัดไป"
+    );
+
+
+    showPage(
+        "inspection-record"
+    );
+
+
+    // ----------------------------------------
+    // PREPARE NEW INSPECTION FORM
+    // ----------------------------------------
+
+    resetInspectionForm();
 
 }
 
