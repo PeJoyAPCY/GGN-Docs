@@ -1,4 +1,3 @@
-
 // ======================================================
 // GGN DOCS
 // INSPECTION LIST SYSTEM
@@ -18,22 +17,17 @@ let inspectionListRecords = [];
 
 function setupInspectionList() {
 
-    console.log(
-        "เตรียมระบบรายการตรวจ..."
-    );
-
+    console.log("เตรียมระบบรายการตรวจ...");
 
     const searchButton =
         document.getElementById(
             "search-inspection-records-button"
         );
 
-
     const clearButton =
         document.getElementById(
             "clear-inspection-records-filter-button"
         );
-
 
     const backButton =
         document.getElementById(
@@ -55,9 +49,7 @@ function setupInspectionList() {
             filterInspectionRecords
         );
 
-
-        searchButton.dataset.bound =
-            "true";
+        searchButton.dataset.bound = "true";
 
     }
 
@@ -76,9 +68,7 @@ function setupInspectionList() {
             clearInspectionRecordsFilter
         );
 
-
-        clearButton.dataset.bound =
-            "true";
+        clearButton.dataset.bound = "true";
 
     }
 
@@ -96,16 +86,12 @@ function setupInspectionList() {
             "click",
             function () {
 
-                showPage(
-                    "inspections"
-                );
+                showPage("inspections");
 
             }
         );
 
-
-        backButton.dataset.bound =
-            "true";
+        backButton.dataset.bound = "true";
 
     }
 
@@ -135,27 +121,11 @@ async function initializeInspectionListPage() {
         "กำลังเตรียมหน้ารายการตรวจ..."
     );
 
-
-    // ----------------------------------------
-    // SETUP EVENTS
-    // ----------------------------------------
-
     setupInspectionList();
-
-
-    // ----------------------------------------
-    // LOAD FILTER OPTIONS
-    // ----------------------------------------
 
     await loadInspectionListFilters();
 
-
-    // ----------------------------------------
-    // LOAD RECORDS
-    // ----------------------------------------
-
     await loadInspectionListRecords();
-
 
     console.log(
         "เตรียมหน้ารายการตรวจเรียบร้อย"
@@ -188,17 +158,11 @@ async function loadInspectionListRecords() {
     }
 
 
-    // ----------------------------------------
-    // LOADING
-    // ----------------------------------------
-
     list.innerHTML = `
 
         <div class="inspection-empty">
 
-            <div>
-                ⏳
-            </div>
+            <div>⏳</div>
 
             <strong>
                 กำลังโหลดรายการตรวจ...
@@ -230,10 +194,6 @@ async function loadInspectionListRecords() {
         );
 
 
-        // ----------------------------------------
-        // CHECK RESPONSE
-        // ----------------------------------------
-
         if (
             !data ||
             !data.success
@@ -246,27 +206,17 @@ async function loadInspectionListRecords() {
                     : "ไม่พบข้อมูลตอบกลับจาก API"
             );
 
-
-            inspectionListRecords =
-                [];
-
+            inspectionListRecords = [];
 
             renderInspectionList();
-
 
             return;
 
         }
 
 
-        // ----------------------------------------
-        // STORE DATA
-        // ----------------------------------------
-
         inspectionListRecords =
-            Array.isArray(
-                data.inspections
-            )
+            Array.isArray(data.inspections)
                 ? data.inspections
                 : [];
 
@@ -283,10 +233,6 @@ async function loadInspectionListRecords() {
         );
 
 
-        // ----------------------------------------
-        // RENDER
-        // ----------------------------------------
-
         renderInspectionList();
 
 
@@ -298,17 +244,14 @@ async function loadInspectionListRecords() {
         );
 
 
-        inspectionListRecords =
-            [];
+        inspectionListRecords = [];
 
 
         list.innerHTML = `
 
             <div class="inspection-empty">
 
-                <div>
-                    ⚠️
-                </div>
+                <div>⚠️</div>
 
                 <strong>
                     ไม่สามารถโหลดรายการตรวจได้
@@ -330,18 +273,17 @@ async function loadInspectionListRecords() {
 
 // ======================================================
 // RENDER INSPECTION LIST
+// TABLE VERSION
 // ======================================================
 
 function renderInspectionList(
-    records =
-        inspectionListRecords
+    records = inspectionListRecords
 ) {
 
     const list =
         document.getElementById(
             "inspection-records-list"
         );
-
 
     const count =
         document.getElementById(
@@ -360,19 +302,11 @@ function renderInspectionList(
     }
 
 
-    // ----------------------------------------
-    // NORMALIZE
-    // ----------------------------------------
-
     const items =
         Array.isArray(records)
             ? records
             : [];
 
-
-    // ----------------------------------------
-    // COUNT
-    // ----------------------------------------
 
     if (count) {
 
@@ -386,17 +320,13 @@ function renderInspectionList(
     // EMPTY
     // ----------------------------------------
 
-    if (
-        items.length === 0
-    ) {
+    if (items.length === 0) {
 
         list.innerHTML = `
 
             <div class="inspection-empty">
 
-                <div>
-                    📋
-                </div>
+                <div>📋</div>
 
                 <strong>
                     ไม่พบรายการตรวจ
@@ -410,7 +340,6 @@ function renderInspectionList(
 
         `;
 
-
         return;
 
     }
@@ -422,29 +351,20 @@ function renderInspectionList(
 
     const sortedRecords =
         [...items].sort(
-            function (
-                a,
-                b
-            ) {
+            function (a, b) {
 
                 const aDate =
                     String(
-                        a.inspectionDate ||
-                        ""
+                        a.inspectionDate || ""
                     );
-
 
                 const bDate =
                     String(
-                        b.inspectionDate ||
-                        ""
+                        b.inspectionDate || ""
                     );
 
 
-                if (
-                    aDate !==
-                    bDate
-                ) {
+                if (aDate !== bDate) {
 
                     return bDate.localeCompare(
                         aDate
@@ -455,15 +375,12 @@ function renderInspectionList(
 
                 const aTime =
                     String(
-                        a.inspectionTime ||
-                        ""
+                        a.inspectionTime || ""
                     );
-
 
                 const bTime =
                     String(
-                        b.inspectionTime ||
-                        ""
+                        b.inspectionTime || ""
                     );
 
 
@@ -476,215 +393,203 @@ function renderInspectionList(
 
 
     // ----------------------------------------
-    // CLEAR
+    // TABLE
     // ----------------------------------------
 
-    list.innerHTML =
-        "";
+    const rows =
+        sortedRecords.map(
+            function (record, index) {
+
+                const recordId =
+                    record.recordId || "";
+
+                const date =
+                    record.inspectionDate || "-";
+
+                const time =
+                    record.inspectionTime || "-";
+
+                const zone =
+                    record.zone || "-";
+
+                const location =
+                    record.locationName || "-";
+
+                const inspector =
+                    record.inspectorName || "-";
+
+                const documentStatus =
+                    record.fileUrl
+                        ? "สร้างเอกสารแล้ว"
+                        : "ยังไม่มีเอกสาร";
 
 
-    // ----------------------------------------
-    // RENDER
-    // ----------------------------------------
+                return `
 
-    sortedRecords.forEach(
-        function (
-            record
-        ) {
+                    <tr>
 
-            const card =
-                document.createElement(
-                    "div"
-                );
+                        <td class="inspection-table-number">
+                            ${index + 1}
+                        </td>
 
+                        <td>
+                            <strong>
+                                ${escapeHTML(date)}
+                            </strong>
 
-            card.className =
-                "fmop11-record-card";
+                            <div class="inspection-table-time">
+                                ${escapeHTML(time)}
+                            </div>
+                        </td>
 
+                        <td>
+                            ${escapeHTML(zone)}
+                        </td>
 
-            const recordId =
-                record.recordId ||
-                "";
+                        <td>
+                            <strong>
+                                ${escapeHTML(location)}
+                            </strong>
+                        </td>
 
+                        <td>
+                            ${escapeHTML(inspector)}
+                        </td>
 
-            const inspectionDate =
-                record.inspectionDate ||
-                "-";
+                        <td>
 
+                            <span
+                                class="
+                                    inspection-document-status
+                                    ${
+                                        record.fileUrl
+                                            ? "is-complete"
+                                            : "is-pending"
+                                    }
+                                "
+                            >
+                                ${
+                                    record.fileUrl
+                                        ? "✓ "
+                                        : ""
+                                }
 
-            const inspectionTime =
-                record.inspectionTime ||
-                "-";
+                                ${escapeHTML(
+                                    documentStatus
+                                )}
+                            </span>
 
+                        </td>
 
-            const zone =
-                record.zone ||
-                "-";
+                        <td>
 
+                            <div class="inspection-table-actions">
 
-            const locationName =
-                record.locationName ||
-                "-";
-
-
-            const inspectorName =
-                record.inspectorName ||
-                "-";
-
-
-            const remark =
-                record.remark ||
-                "";
-
-
-            card.innerHTML = `
-
-                <div class="fmop11-record-header">
-
-                    <div>
-
-                        <div class="fmop11-record-date">
-                            ${escapeHTML(
-                                inspectionDate
-                            )}
-                        </div>
-
-                        <div class="fmop11-record-time">
-                            เวลา
-                            ${escapeHTML(
-                                inspectionTime
-                            )}
-                        </div>
-
-                    </div>
-
-                </div>
+                                <button
+                                    type="button"
+                                    class="inspection-action-button view"
+                                    data-action="view"
+                                    data-record-id="${escapeHTML(
+                                        recordId
+                                    )}"
+                                    title="ดูรายละเอียด"
+                                >
+                                    👁
+                                </button>
 
 
-                <div class="fmop11-record-body">
+                                <button
+                                    type="button"
+                                    class="inspection-action-button edit"
+                                    data-action="edit"
+                                    data-record-id="${escapeHTML(
+                                        recordId
+                                    )}"
+                                    title="แก้ไข"
+                                >
+                                    ✏️
+                                </button>
 
-                    <div class="fmop11-record-info">
 
-                        <strong>
+                                <button
+                                    type="button"
+                                    class="inspection-action-button delete"
+                                    data-action="delete"
+                                    data-record-id="${escapeHTML(
+                                        recordId
+                                    )}"
+                                    title="ลบ"
+                                >
+                                    🗑
+                                </button>
+
+                            </div>
+
+                        </td>
+
+                    </tr>
+
+                `;
+
+            }
+        ).join("");
+
+
+    list.innerHTML = `
+
+        <div class="inspection-table-wrapper">
+
+            <table class="inspection-records-table">
+
+                <thead>
+
+                    <tr>
+
+                        <th>
+                            #
+                        </th>
+
+                        <th>
+                            วันที่ / เวลา
+                        </th>
+
+                        <th>
                             เขต
-                        </strong>
+                        </th>
 
-                        <span>
-                            ${escapeHTML(
-                                zone
-                            )}
-                        </span>
-
-                    </div>
-
-
-                    <div class="fmop11-record-info">
-
-                        <strong>
+                        <th>
                             จุดตรวจ
-                        </strong>
+                        </th>
 
-                        <span>
-                            ${escapeHTML(
-                                locationName
-                            )}
-                        </span>
-
-                    </div>
-
-
-                    <div class="fmop11-record-info">
-
-                        <strong>
+                        <th>
                             ผู้ตรวจ
-                        </strong>
+                        </th>
 
-                        <span>
-                            ${escapeHTML(
-                                inspectorName
-                            )}
-                        </span>
+                        <th>
+                            เอกสาร ISO
+                        </th>
 
-                    </div>
+                        <th>
+                            จัดการ
+                        </th>
 
-                    ${
-                        remark
-                            ? `
+                    </tr>
 
-                                <div class="fmop11-record-info">
-
-                                    <strong>
-                                        หมายเหตุ
-                                    </strong>
-
-                                    <span>
-                                        ${escapeHTML(
-                                            remark
-                                        )}
-                                    </span>
-
-                                </div>
-
-                            `
-                            : ""
-                    }
-
-                </div>
+                </thead>
 
 
-                <div class="fmop11-record-actions">
+                <tbody>
 
-                    <button
-                        type="button"
-                        class="secondary-button"
-                        data-action="view"
-                        data-record-id="${escapeHTML(
-                            recordId
-                        )}"
-                    >
-                        👁 ดูรายละเอียด
-                    </button>
+                    ${rows}
 
+                </tbody>
 
-                    <button
-                        type="button"
-                        class="secondary-button"
-                        data-action="edit"
-                        data-record-id="${escapeHTML(
-                            recordId
-                        )}"
-                    >
-                        ✏️ แก้ไข
-                    </button>
+            </table>
 
+        </div>
 
-                    <button
-                        type="button"
-                        class="secondary-button"
-                        data-action="delete"
-                        data-record-id="${escapeHTML(
-                            recordId
-                        )}"
-                    >
-                        🗑 ลบ
-                    </button>
+    `;
 
-                </div>
-
-            `;
-
-
-            list.appendChild(
-                card
-            );
-
-        }
-    );
-
-
-    // ----------------------------------------
-    // ACTION EVENTS
-    // ----------------------------------------
 
     setupInspectionListActions();
 
@@ -711,9 +616,7 @@ function setupInspectionListActions() {
     }
 
 
-    if (
-        list.dataset.actionsBound
-    ) {
+    if (list.dataset.actionsBound) {
 
         return;
 
@@ -722,9 +625,7 @@ function setupInspectionListActions() {
 
     list.addEventListener(
         "click",
-        function (
-            event
-        ) {
+        function (event) {
 
             const button =
                 event.target.closest(
@@ -742,7 +643,6 @@ function setupInspectionListActions() {
             const action =
                 button.dataset.action;
 
-
             const recordId =
                 button.dataset.recordId;
 
@@ -754,13 +654,8 @@ function setupInspectionListActions() {
             );
 
 
-            // --------------------------------
-            // VIEW
-            // --------------------------------
-
             if (
-                action ===
-                "view"
+                action === "view"
             ) {
 
                 viewInspectionRecord(
@@ -772,13 +667,8 @@ function setupInspectionListActions() {
             }
 
 
-            // --------------------------------
-            // EDIT
-            // --------------------------------
-
             if (
-                action ===
-                "edit"
+                action === "edit"
             ) {
 
                 editInspectionRecord(
@@ -790,13 +680,8 @@ function setupInspectionListActions() {
             }
 
 
-            // --------------------------------
-            // DELETE
-            // --------------------------------
-
             if (
-                action ===
-                "delete"
+                action === "delete"
             ) {
 
                 deleteInspectionRecord(
@@ -827,7 +712,6 @@ async function loadInspectionListFilters() {
             "inspection-records-inspector"
         );
 
-
     const zoneSelect =
         document.getElementById(
             "inspection-records-zone"
@@ -838,9 +722,7 @@ async function loadInspectionListFilters() {
     // INSPECTORS
     // ----------------------------------------
 
-    if (
-        inspectorSelect
-    ) {
+    if (inspectorSelect) {
 
         inspectorSelect.innerHTML = `
 
@@ -858,9 +740,7 @@ async function loadInspectionListFilters() {
         ) {
 
             inspectionInspectors.forEach(
-                function (
-                    inspector
-                ) {
+                function (inspector) {
 
                     if (!inspector) {
 
@@ -873,8 +753,7 @@ async function loadInspectionListFilters() {
                         inspector.status &&
                         String(
                             inspector.status
-                        ).toLowerCase()
-                        !==
+                        ).toLowerCase() !==
                         "active"
                     ) {
 
@@ -904,12 +783,9 @@ async function loadInspectionListFilters() {
                         );
 
 
-                    option.value =
-                        name;
+                    option.value = name;
 
-
-                    option.textContent =
-                        name;
+                    option.textContent = name;
 
 
                     inspectorSelect.appendChild(
@@ -928,9 +804,7 @@ async function loadInspectionListFilters() {
     // ZONES
     // ----------------------------------------
 
-    if (
-        zoneSelect
-    ) {
+    if (zoneSelect) {
 
         zoneSelect.innerHTML = `
 
@@ -948,9 +822,7 @@ async function loadInspectionListFilters() {
         ) {
 
             inspectionZones.forEach(
-                function (
-                    zone
-                ) {
+                function (zone) {
 
                     if (!zone) {
 
@@ -963,8 +835,7 @@ async function loadInspectionListFilters() {
                         zone.status &&
                         String(
                             zone.status
-                        ).toLowerCase()
-                        !==
+                        ).toLowerCase() !==
                         "active"
                     ) {
 
@@ -994,12 +865,9 @@ async function loadInspectionListFilters() {
                         );
 
 
-                    option.value =
-                        name;
+                    option.value = name;
 
-
-                    option.textContent =
-                        name;
+                    option.textContent = name;
 
 
                     zoneSelect.appendChild(
@@ -1028,12 +896,10 @@ function filterInspectionRecords() {
             "inspection-records-date"
         );
 
-
     const inspectorInput =
         document.getElementById(
             "inspection-records-inspector"
         );
-
 
     const zoneInput =
         document.getElementById(
@@ -1046,12 +912,10 @@ function filterInspectionRecords() {
             ? dateInput.value
             : "";
 
-
     const inspector =
         inspectorInput
             ? inspectorInput.value
             : "";
-
 
     const zone =
         zoneInput
@@ -1071,14 +935,11 @@ function filterInspectionRecords() {
 
     const filtered =
         inspectionListRecords.filter(
-            function (
-                record
-            ) {
+            function (record) {
 
                 if (
                     date &&
-                    record.inspectionDate !==
-                    date
+                    record.inspectionDate !== date
                 ) {
 
                     return false;
@@ -1088,8 +949,7 @@ function filterInspectionRecords() {
 
                 if (
                     inspector &&
-                    record.inspectorName !==
-                    inspector
+                    record.inspectorName !== inspector
                 ) {
 
                     return false;
@@ -1099,8 +959,7 @@ function filterInspectionRecords() {
 
                 if (
                     zone &&
-                    record.zone !==
-                    zone
+                    record.zone !== zone
                 ) {
 
                     return false;
@@ -1133,12 +992,10 @@ function clearInspectionRecordsFilter() {
             "inspection-records-date"
         );
 
-
     const inspectorInput =
         document.getElementById(
             "inspection-records-inspector"
         );
-
 
     const zoneInput =
         document.getElementById(
@@ -1148,24 +1005,21 @@ function clearInspectionRecordsFilter() {
 
     if (dateInput) {
 
-        dateInput.value =
-            "";
+        dateInput.value = "";
 
     }
 
 
     if (inspectorInput) {
 
-        inspectorInput.value =
-            "";
+        inspectorInput.value = "";
 
     }
 
 
     if (zoneInput) {
 
-        zoneInput.value =
-            "";
+        zoneInput.value = "";
 
     }
 
@@ -1201,19 +1055,13 @@ async function viewInspectionRecord(
     }
 
 
-    // ----------------------------------------
-    // OPEN LOADING POPUP
-    // ----------------------------------------
-
     openPopup(
 
         `
 
             <div class="inspection-empty">
 
-                <div>
-                    ⏳
-                </div>
+                <div>⏳</div>
 
                 <strong>
                     กำลังโหลดรายละเอียด...
@@ -1228,13 +1076,11 @@ async function viewInspectionRecord(
         `,
 
         {
-
             title:
                 "รายละเอียดรายการตรวจ",
 
             size:
                 "large"
-
         }
 
     );
@@ -1266,9 +1112,7 @@ async function viewInspectionRecord(
 
                     <div class="inspection-empty">
 
-                        <div>
-                            ⚠️
-                        </div>
+                        <div>⚠️</div>
 
                         <strong>
                             ไม่สามารถโหลดรายละเอียดได้
@@ -1290,17 +1134,14 @@ async function viewInspectionRecord(
                 `,
 
                 {
-
                     title:
                         "รายละเอียดรายการตรวจ",
 
                     size:
                         "large"
-
                 }
 
             );
-
 
             return;
 
@@ -1326,9 +1167,7 @@ async function viewInspectionRecord(
 
                 <div class="inspection-empty">
 
-                    <div>
-                        ⚠️
-                    </div>
+                    <div>⚠️</div>
 
                     <strong>
                         เกิดข้อผิดพลาด
@@ -1343,13 +1182,11 @@ async function viewInspectionRecord(
             `,
 
             {
-
                 title:
                     "รายละเอียดรายการตรวจ",
 
                 size:
                     "large"
-
             }
 
         );
@@ -1377,31 +1214,22 @@ function renderInspectionDetailPopup(
 
 
     const resultClass =
-        function (
-            result
-        ) {
+        function (result) {
 
             const value =
                 String(
-                    result ||
-                    ""
+                    result || ""
                 ).trim();
 
 
-            if (
-                value ===
-                "ผ่าน"
-            ) {
+            if (value === "ผ่าน") {
 
                 return "ผ่าน";
 
             }
 
 
-            if (
-                value ===
-                "ไม่ผ่าน"
-            ) {
+            if (value === "ไม่ผ่าน") {
 
                 return "ไม่ผ่าน";
 
@@ -1414,31 +1242,22 @@ function renderInspectionDetailPopup(
 
 
     const resultLabel =
-        function (
-            result
-        ) {
+        function (result) {
 
             const value =
                 String(
-                    result ||
-                    ""
+                    result || ""
                 ).trim();
 
 
-            if (
-                value ===
-                "ผ่าน"
-            ) {
+            if (value === "ผ่าน") {
 
                 return "✓ ผ่าน";
 
             }
 
 
-            if (
-                value ===
-                "ไม่ผ่าน"
-            ) {
+            if (value === "ไม่ผ่าน") {
 
                 return "✕ ไม่ผ่าน";
 
@@ -1450,21 +1269,16 @@ function renderInspectionDetailPopup(
         };
 
 
-    let itemsHTML =
-        "";
+    let itemsHTML = "";
 
 
-    if (
-        items.length === 0
-    ) {
+    if (items.length === 0) {
 
         itemsHTML = `
 
             <div class="inspection-empty">
 
-                <div>
-                    📋
-                </div>
+                <div>📋</div>
 
                 <strong>
                     ไม่พบรายการตรวจย่อย
@@ -1479,10 +1293,7 @@ function renderInspectionDetailPopup(
         itemsHTML =
             items
                 .map(
-                    function (
-                        item,
-                        index
-                    ) {
+                    function (item, index) {
 
                         const itemNo =
                             item.itemNo ||
@@ -1515,9 +1326,12 @@ function renderInspectionDetailPopup(
 
 
                                 <div
-                                    class="inspection-detail-item-result ${resultClass(
-                                        item.result
-                                    )}"
+                                    class="
+                                        inspection-detail-item-result
+                                        ${resultClass(
+                                            item.result
+                                        )}
+                                    "
                                 >
                                     ${escapeHTML(
                                         resultLabel(
@@ -1532,9 +1346,7 @@ function renderInspectionDetailPopup(
 
                     }
                 )
-                .join(
-                    ""
-                );
+                .join("");
 
     }
 
@@ -1754,13 +1566,11 @@ function renderInspectionDetailPopup(
         `,
 
         {
-
             title:
                 "รายละเอียดรายการตรวจ",
 
             size:
                 "large"
-
         }
 
     );
@@ -1773,19 +1583,143 @@ function renderInspectionDetailPopup(
 // EDIT RECORD
 // ======================================================
 
-function editInspectionRecord(
+async function editInspectionRecord(
     recordId
 ) {
 
     console.log(
-        "แก้ไขรายการตรวจ:",
+        "เริ่มแก้ไขรายการตรวจ:",
         recordId
     );
 
 
-    alert(
-        "ฟังก์ชันแก้ไขจะทำในขั้นตอนถัดไป"
-    );
+    if (!recordId) {
+
+        alert(
+            "ไม่พบรหัสรายการตรวจ"
+        );
+
+        return;
+
+    }
+
+
+    try {
+
+        // ----------------------------------------
+        // LOAD RECORD
+        // ----------------------------------------
+
+        console.log(
+            "กำลังโหลดข้อมูลสำหรับแก้ไข:",
+            recordId
+        );
+
+
+        const data =
+            await apiGetInspection(
+                recordId
+            );
+
+
+        console.log(
+            "ข้อมูลสำหรับแก้ไข:",
+            data
+        );
+
+
+        if (
+            !data ||
+            !data.success ||
+            !data.inspection
+        ) {
+
+            alert(
+                data &&
+                data.message
+                    ? data.message
+                    : "ไม่สามารถโหลดข้อมูลรายการตรวจได้"
+            );
+
+            return;
+
+        }
+
+
+        const inspection =
+            data.inspection;
+
+
+        // ----------------------------------------
+        // SET EDIT STATE
+        // ----------------------------------------
+
+        editingInspectionRecordId =
+            inspection.recordId;
+
+        editingInspectionData =
+            inspection;
+
+        inspectionMode =
+            "edit";
+
+
+        console.log(
+            "ตั้งค่า Edit Mode:",
+            {
+                recordId:
+                    editingInspectionRecordId,
+
+                inspectionMode:
+                    inspectionMode
+            }
+        );
+
+
+        // ----------------------------------------
+        // OPEN INSPECTION FORM
+        // ----------------------------------------
+
+        showPage(
+            "inspection-record"
+        );
+
+
+        // ----------------------------------------
+        // INITIALIZE FORM
+        // ----------------------------------------
+
+        await initializeInspectionPage();
+
+
+        // ----------------------------------------
+        // POPULATE DATA
+        // ----------------------------------------
+
+        populateInspectionForm(
+            inspection
+        );
+
+
+        console.log(
+            "เปิดข้อมูลสำหรับแก้ไขเรียบร้อย:",
+            inspection.recordId
+        );
+
+
+    } catch (error) {
+
+        console.error(
+            "เกิดข้อผิดพลาดในการเปิดแก้ไขรายการตรวจ:",
+            error
+        );
+
+
+        alert(
+            "ไม่สามารถเปิดรายการสำหรับแก้ไขได้"
+        );
+
+    }
 
 }
 
@@ -1795,7 +1729,7 @@ function editInspectionRecord(
 // DELETE RECORD
 // ======================================================
 
-function deleteInspectionRecord(
+async function deleteInspectionRecord(
     recordId
 ) {
 
@@ -1805,9 +1739,143 @@ function deleteInspectionRecord(
     );
 
 
-    alert(
-        "ฟังก์ชันลบจะทำในขั้นตอนถัดไป"
-    );
+    if (!recordId) {
+
+        alert(
+            "ไม่พบรหัสรายการตรวจ"
+        );
+
+        return;
+
+    }
+
+
+    // ----------------------------------------
+    // CONFIRM
+    // ----------------------------------------
+
+    const confirmed =
+        confirm(
+            "ต้องการลบรายการตรวจนี้หรือไม่?\n\n" +
+            "การลบข้อมูลจะไม่สามารถย้อนกลับได้"
+        );
+
+
+    if (!confirmed) {
+
+        console.log(
+            "ยกเลิกการลบรายการตรวจ"
+        );
+
+        return;
+
+    }
+
+
+    try {
+
+        // ----------------------------------------
+        // CURRENT USER
+        // ----------------------------------------
+
+        const user =
+            typeof getCurrentUser === "function"
+                ? getCurrentUser()
+                : null;
+
+
+        const deletedBy =
+            user &&
+            user.email
+                ? user.email
+                : "";
+
+
+        console.log(
+            "กำลังส่งคำขอลบรายการตรวจ:",
+            {
+                recordId,
+                deletedBy
+            }
+        );
+
+
+        // ----------------------------------------
+        // DELETE API
+        // ----------------------------------------
+
+        const data =
+            await apiDeleteInspection(
+                recordId,
+                deletedBy
+            );
+
+
+        console.log(
+            "ผลการลบรายการตรวจ:",
+            data
+        );
+
+
+        if (
+            !data ||
+            !data.success
+        ) {
+
+            alert(
+                data &&
+                data.message
+                    ? data.message
+                    : "ไม่สามารถลบรายการตรวจได้"
+            );
+
+            return;
+
+        }
+
+
+        // ----------------------------------------
+        // REMOVE FROM LOCAL STATE
+        // ----------------------------------------
+
+        inspectionListRecords =
+            inspectionListRecords.filter(
+                function (record) {
+
+                    return (
+                        record.recordId !==
+                        recordId
+                    );
+
+                }
+            );
+
+
+        // ----------------------------------------
+        // RENDER
+        // ----------------------------------------
+
+        renderInspectionList();
+
+
+        alert(
+            "ลบรายการตรวจเรียบร้อยแล้ว"
+        );
+
+
+    } catch (error) {
+
+        console.error(
+            "เกิดข้อผิดพลาดในการลบรายการตรวจ:",
+            error
+        );
+
+
+        alert(
+            "เกิดข้อผิดพลาดในการลบรายการตรวจ"
+        );
+
+    }
 
 }
 
