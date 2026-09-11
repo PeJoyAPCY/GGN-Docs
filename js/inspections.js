@@ -109,10 +109,6 @@ async function initializeInspectionPage() {
 
     } else {
 
-        // ----------------------------------------
-        // SETTINGS ALREADY LOADED
-        // ----------------------------------------
-
         renderInspectionZones();
 
         renderInspectionLocations();
@@ -235,6 +231,89 @@ function setDefaultInspectionDateTime() {
 
 
 // ======================================================
+// NORMALIZE DATE FOR HTML DATE INPUT
+// ======================================================
+
+function normalizeDateForInput(
+    value
+) {
+
+    if (!value) {
+
+        return "";
+
+    }
+
+
+    const str =
+        String(
+            value
+        ).trim();
+
+
+    // ----------------------------------------
+    // ALREADY YYYY-MM-DD
+    // ----------------------------------------
+
+    if (
+        /^\d{4}-\d{2}-\d{2}$/.test(
+            str
+        )
+    ) {
+
+        return str;
+
+    }
+
+
+    // ----------------------------------------
+    // DD/MM/YYYY
+    // ----------------------------------------
+
+    const match =
+        str.match(
+            /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/
+        );
+
+
+    if (match) {
+
+        const day =
+            String(
+                match[1]
+            ).padStart(
+                2,
+                "0"
+            );
+
+
+        const month =
+            String(
+                match[2]
+            ).padStart(
+                2,
+                "0"
+            );
+
+
+        const year =
+            match[3];
+
+
+        return (
+            `${year}-${month}-${day}`
+        );
+
+    }
+
+
+    return "";
+
+}
+
+
+
+// ======================================================
 // LOAD INSPECTIONS
 // ======================================================
 
@@ -281,10 +360,6 @@ async function loadInspections() {
         );
 
 
-        // ----------------------------------------
-        // CHECK RESPONSE
-        // ----------------------------------------
-
         if (
             !data.success
         ) {
@@ -303,10 +378,6 @@ async function loadInspections() {
 
         }
 
-
-        // ----------------------------------------
-        // STORE INSPECTION RECORDS
-        // ----------------------------------------
 
         inspectionRecords =
             Array.isArray(
@@ -1224,6 +1295,86 @@ function generateRecordId() {
 
 
 // ======================================================
+// UPDATE EDIT LOCK STATE
+// ======================================================
+
+function updateInspectionEditLockState() {
+
+    const dateInput =
+        document.getElementById(
+            "inspection-date"
+        );
+
+
+    const timeInput =
+        document.getElementById(
+            "inspection-time"
+        );
+
+
+    const zoneInput =
+        document.getElementById(
+            "inspection-zone"
+        );
+
+
+    const locationInput =
+        document.getElementById(
+            "inspection-location"
+        );
+
+
+    const inspectorInput =
+        document.getElementById(
+            "inspection-inspector"
+        );
+
+
+    const isEdit =
+        inspectionMode ===
+        "edit";
+
+
+    // ----------------------------------------
+    // IMMUTABLE FIELDS
+    // ----------------------------------------
+
+    [
+        dateInput,
+        timeInput,
+        zoneInput,
+        locationInput,
+        inspectorInput
+
+    ].forEach(
+        function (
+            input
+        ) {
+
+            if (!input) {
+
+                return;
+
+            }
+
+
+            input.disabled =
+                isEdit;
+
+        }
+    );
+
+
+    console.log(
+        "สถานะ Edit Lock:",
+        isEdit
+    );
+
+}
+
+
+
+// ======================================================
 // UPDATE FORM MODE
 // ======================================================
 
@@ -1256,6 +1407,9 @@ function updateInspectionFormMode() {
             "บันทึกการตรวจ";
 
     }
+
+
+    updateInspectionEditLockState();
 
 }
 
@@ -1353,13 +1507,11 @@ async function saveInspection() {
         editingInspectionRecordId
     ) {
 
-        // ใช้ ID เดิม
         recordId =
             editingInspectionRecordId;
 
     } else {
 
-        // สร้าง ID ใหม่เฉพาะตอนสร้างรายการใหม่
         recordId =
             generateRecordId();
 
@@ -1391,6 +1543,61 @@ async function saveInspection() {
 
 
     // ----------------------------------------
+    // USE ORIGINAL IMMUTABLE DATA IN EDIT
+    // ----------------------------------------
+
+    const inspectionDate =
+        inspectionMode === "edit"
+            ? (
+                normalizeDateForInput(
+                    original.inspectionDate
+                ) ||
+                dateInput.value
+            )
+            : dateInput.value;
+
+
+    const inspectionTime =
+        inspectionMode === "edit"
+            ? (
+                original.inspectionTime ||
+                timeInput.value
+            )
+            : timeInput.value;
+
+
+    const zone =
+        inspectionMode === "edit"
+            ? (
+                original.zone ||
+                ""
+            )
+            : (
+                zoneInput
+                    ? zoneInput.value
+                    : ""
+            );
+
+
+    const locationName =
+        inspectionMode === "edit"
+            ? (
+                original.locationName ||
+                ""
+            )
+            : locationInput.value;
+
+
+    const inspectorName =
+        inspectionMode === "edit"
+            ? (
+                original.inspectorName ||
+                ""
+            )
+            : inspectorInput.value;
+
+
+    // ----------------------------------------
     // INSPECTION DATA
     // ----------------------------------------
 
@@ -1400,21 +1607,19 @@ async function saveInspection() {
             recordId,
 
         inspectionDate:
-            dateInput.value,
+            inspectionDate,
 
         inspectionTime:
-            timeInput.value,
+            inspectionTime,
 
         zone:
-            zoneInput
-                ? zoneInput.value
-                : "",
+            zone,
 
         locationName:
-            locationInput.value,
+            locationName,
 
         inspectorName:
-            inspectorInput.value,
+            inspectorName,
 
         remark:
             remark,
@@ -1438,7 +1643,7 @@ async function saveInspection() {
             items,
 
         // ----------------------------------------
-        // CREATE MODE
+        // CREATE DATA
         // ----------------------------------------
 
         createdBy:
@@ -1452,7 +1657,7 @@ async function saveInspection() {
             "",
 
         // ----------------------------------------
-        // UPDATE MODE
+        // UPDATE DATA
         // ----------------------------------------
 
         updatedBy:
@@ -1596,25 +1801,18 @@ async function saveInspection() {
                 "edit"
             ) {
 
-                alert(
-                    "แก้ไขรายการตรวจเรียบร้อยแล้ว"
+                console.log(
+                    "แก้ไขรายการตรวจสำเร็จ"
                 );
 
 
-                // ----------------------------------------
-                // CLEAR EDIT STATE
-                // ----------------------------------------
+                showInspectionSuccessModal(
+                    inspectionData,
+                    "edit"
+                );
+
 
                 resetInspectionForm();
-
-
-                // ----------------------------------------
-                // OPEN LIST
-                // ----------------------------------------
-
-                showPage(
-                    "inspection-records"
-                );
 
             }
 
@@ -1625,9 +1823,18 @@ async function saveInspection() {
 
             else {
 
-                resetInspectionForm();
+                console.log(
+                    "บันทึกการตรวจสำเร็จ"
+                );
 
-                showInspectionSuccessPopup();
+
+                showInspectionSuccessModal(
+                    inspectionData,
+                    "create"
+                );
+
+
+                resetInspectionForm();
 
             }
 
@@ -1832,8 +2039,9 @@ function populateInspectionForm(
     if (dateInput) {
 
         dateInput.value =
-            inspection.inspectionDate ||
-            "";
+            normalizeDateForInput(
+                inspection.inspectionDate
+            );
 
     }
 
@@ -2028,7 +2236,7 @@ function populateInspectionForm(
 
 
     // ----------------------------------------
-    // UPDATE BUTTON
+    // UPDATE MODE
     // ----------------------------------------
 
     updateInspectionFormMode();
@@ -2043,82 +2251,402 @@ function populateInspectionForm(
 
 
 // ======================================================
-// INSPECTION SUCCESS POPUP
+// INSPECTION SUCCESS MODAL
 // ======================================================
 
-function showInspectionSuccessPopup() {
+function showInspectionSuccessModal(
+    inspection,
+    mode = "create"
+) {
 
-    const content = `
-
-        <div class="inspection-success-popup">
-
-            <div class="inspection-success-icon">
-                ✓
-            </div>
-
-            <div class="inspection-success-title">
-                บันทึกสำเร็จ
-            </div>
-
-            <div class="inspection-success-message">
-                บันทึกข้อมูลการตรวจเรียบร้อยแล้ว
-            </div>
+    const modal =
+        document.getElementById(
+            "inspection-success-modal"
+        );
 
 
-            <div class="inspection-success-actions">
-
-                <button
-                    type="button"
-                    class="popup-button popup-button-secondary"
-                    onclick="openInspectionListFromPopup()"
-                >
-                    ดูรายการตรวจ
-                </button>
+    const title =
+        document.getElementById(
+            "inspection-success-title"
+        );
 
 
-                <button
-                    type="button"
-                    class="popup-button popup-button-primary"
-                    onclick="continueInspectionFromPopup()"
-                >
-                    ตรวจต่อ
-                </button>
-
-            </div>
-
-        </div>
-
-    `;
+    const message =
+        document.getElementById(
+            "inspection-success-message"
+        );
 
 
-    openPopup(
-        content,
-        {
-            title: "บันทึกการตรวจ",
-            size: "small"
+    const summary =
+        document.getElementById(
+            "inspection-success-summary"
+        );
+
+
+    const viewButton =
+        document.getElementById(
+            "inspection-success-view-button"
+        );
+
+
+    const nextButton =
+        document.getElementById(
+            "inspection-success-next-button"
+        );
+
+
+    const homeButton =
+        document.getElementById(
+            "inspection-success-home-button"
+        );
+
+
+    if (!modal) {
+
+        console.warn(
+            "ไม่พบ #inspection-success-modal"
+        );
+
+        return;
+
+    }
+
+
+    // ----------------------------------------
+    // TITLE / MESSAGE
+    // ----------------------------------------
+
+    if (mode === "edit") {
+
+        if (title) {
+
+            title.textContent =
+                "แก้ไขรายการตรวจสำเร็จ";
+
         }
+
+
+        if (message) {
+
+            message.textContent =
+                "ระบบบันทึกการแก้ไขรายการตรวจเรียบร้อยแล้ว";
+
+        }
+
+    } else {
+
+        if (title) {
+
+            title.textContent =
+                "บันทึกการตรวจสำเร็จ";
+
+        }
+
+
+        if (message) {
+
+            message.textContent =
+                "ระบบบันทึกข้อมูลการตรวจเรียบร้อยแล้ว";
+
+        }
+
+    }
+
+
+    // ----------------------------------------
+    // SUMMARY
+    // ----------------------------------------
+
+    if (summary) {
+
+        const items =
+            inspection &&
+            Array.isArray(
+                inspection.items
+            )
+                ? inspection.items
+                : [];
+
+
+        const passCount =
+            items.filter(
+                function (
+                    item
+                ) {
+
+                    return (
+                        item.result ===
+                        "ผ่าน"
+                    );
+
+                }
+            ).length;
+
+
+        const failCount =
+            items.filter(
+                function (
+                    item
+                ) {
+
+                    return (
+                        item.result ===
+                        "ไม่ผ่าน"
+                    );
+
+                }
+            ).length;
+
+
+        summary.innerHTML = `
+
+            <div class="inspection-success-summary-row">
+
+                <span class="inspection-success-summary-label">
+                    วันที่
+                </span>
+
+                <span class="inspection-success-summary-value">
+                    ${escapeHTML(
+                        inspection &&
+                        inspection.inspectionDate
+                            ? inspection.inspectionDate
+                            : "-"
+                    )}
+                </span>
+
+            </div>
+
+
+            <div class="inspection-success-summary-row">
+
+                <span class="inspection-success-summary-label">
+                    เวลา
+                </span>
+
+                <span class="inspection-success-summary-value">
+                    ${escapeHTML(
+                        inspection &&
+                        inspection.inspectionTime
+                            ? inspection.inspectionTime
+                            : "-"
+                    )}
+                </span>
+
+            </div>
+
+
+            <div class="inspection-success-summary-row">
+
+                <span class="inspection-success-summary-label">
+                    เขต
+                </span>
+
+                <span class="inspection-success-summary-value">
+                    ${escapeHTML(
+                        inspection &&
+                        inspection.zone
+                            ? inspection.zone
+                            : "-"
+                    )}
+                </span>
+
+            </div>
+
+
+            <div class="inspection-success-summary-row">
+
+                <span class="inspection-success-summary-label">
+                    จุดตรวจ
+                </span>
+
+                <span class="inspection-success-summary-value">
+                    ${escapeHTML(
+                        inspection &&
+                        inspection.locationName
+                            ? inspection.locationName
+                            : "-"
+                    )}
+                </span>
+
+            </div>
+
+
+            <div class="inspection-success-summary-row">
+
+                <span class="inspection-success-summary-label">
+                    ผู้ตรวจ
+                </span>
+
+                <span class="inspection-success-summary-value">
+                    ${escapeHTML(
+                        inspection &&
+                        inspection.inspectorName
+                            ? inspection.inspectorName
+                            : "-"
+                    )}
+                </span>
+
+            </div>
+
+
+            <div class="inspection-success-result">
+
+                <span class="inspection-success-pass">
+                    ✓ ผ่าน ${passCount}
+                </span>
+
+                <span class="inspection-success-fail">
+                    ✕ ไม่ผ่าน ${failCount}
+                </span>
+
+            </div>
+
+        `;
+
+    }
+
+
+    // ----------------------------------------
+    // BUTTON VISIBILITY
+    // ----------------------------------------
+
+    if (mode === "edit") {
+
+        if (viewButton) {
+
+            viewButton.textContent =
+                "📋 กลับรายการตรวจ";
+
+            viewButton.style.display =
+                "block";
+
+        }
+
+
+        if (nextButton) {
+
+            nextButton.style.display =
+                "none";
+
+        }
+
+
+        if (homeButton) {
+
+            homeButton.style.display =
+                "block";
+
+        }
+
+    } else {
+
+        if (viewButton) {
+
+            viewButton.textContent =
+                "📋 ดูรายการตรวจ";
+
+            viewButton.style.display =
+                "block";
+
+        }
+
+
+        if (nextButton) {
+
+            nextButton.textContent =
+                "➕ ตรวจรายการถัดไป";
+
+            nextButton.style.display =
+                "block";
+
+        }
+
+
+        if (homeButton) {
+
+            homeButton.style.display =
+                "block";
+
+        }
+
+    }
+
+
+    // ----------------------------------------
+    // BUTTON EVENTS
+    // ----------------------------------------
+
+    if (viewButton) {
+
+        viewButton.onclick =
+            function () {
+
+                closeInspectionSuccessModal();
+
+
+                showPage(
+                    "inspection-records"
+                );
+
+            };
+
+    }
+
+
+    if (nextButton) {
+
+        nextButton.onclick =
+            function () {
+
+                closeInspectionSuccessModal();
+
+
+                showPage(
+                    "inspection-record"
+                );
+
+
+                resetInspectionForm();
+
+            };
+
+    }
+
+
+    if (homeButton) {
+
+        homeButton.onclick =
+            function () {
+
+                closeInspectionSuccessModal();
+
+
+                showPage(
+                    "dashboard"
+                );
+
+            };
+
+    }
+
+
+    // ----------------------------------------
+    // SHOW MODAL
+    // ----------------------------------------
+
+    modal.style.display =
+        "flex";
+
+
+    document.body.classList.add(
+        "popup-open"
     );
-
-}
-
-
-
-// ======================================================
-// SUCCESS POPUP → INSPECTION LIST
-// ======================================================
-
-function openInspectionListFromPopup() {
-
-    closePopup();
 
 
     console.log(
-        "เปิดหน้ารายการตรวจ"
-    );
-
-
-    showPage(
-        "inspection-records"
+        "เปิด Inspection Success Modal:",
+        mode
     );
 
 }
@@ -2126,27 +2654,71 @@ function openInspectionListFromPopup() {
 
 
 // ======================================================
-// SUCCESS POPUP → CONTINUE INSPECTION
+// CLOSE INSPECTION SUCCESS MODAL
 // ======================================================
 
-function continueInspectionFromPopup() {
+function closeInspectionSuccessModal() {
 
-    closePopup();
+    const modal =
+        document.getElementById(
+            "inspection-success-modal"
+        );
 
 
-    console.log(
-        "ตรวจรายการถัดไป"
+    if (!modal) {
+
+        return;
+
+    }
+
+
+    modal.style.display =
+        "none";
+
+
+    document.body.classList.remove(
+        "popup-open"
     );
-
-
-    showPage(
-        "inspection-record"
-    );
-
-
-    resetInspectionForm();
 
 }
+
+
+
+// ======================================================
+// ESC CLOSE SUCCESS MODAL
+// ======================================================
+
+document.addEventListener(
+    "keydown",
+    function (
+        event
+    ) {
+
+        if (
+            event.key ===
+            "Escape"
+        ) {
+
+            const modal =
+                document.getElementById(
+                    "inspection-success-modal"
+                );
+
+
+            if (
+                modal &&
+                modal.style.display ===
+                "flex"
+            ) {
+
+                closeInspectionSuccessModal();
+
+            }
+
+        }
+
+    }
+);
 
 
 
@@ -2198,6 +2770,33 @@ function resetInspectionForm() {
 
     inspectionMode =
         "create";
+
+
+    // ----------------------------------------
+    // ENABLE FORM FIELDS
+    // ----------------------------------------
+
+    [
+        dateInput,
+        timeInput,
+        zoneInput,
+        locationInput,
+        inspectorInput
+
+    ].forEach(
+        function (
+            input
+        ) {
+
+            if (input) {
+
+                input.disabled =
+                    false;
+
+            }
+
+        }
+    );
 
 
     // ----------------------------------------
