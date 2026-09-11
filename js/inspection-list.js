@@ -1,3 +1,4 @@
+
 // ======================================================
 // GGN DOCS
 // INSPECTION LIST SYSTEM
@@ -109,6 +110,13 @@ function setupInspectionList() {
     }
 
 
+    // ----------------------------------------
+    // RECORD ACTIONS
+    // ----------------------------------------
+
+    setupInspectionListActions();
+
+
     console.log(
         "เตรียมระบบรายการตรวจเรียบร้อย"
     );
@@ -126,6 +134,13 @@ async function initializeInspectionListPage() {
     console.log(
         "กำลังเตรียมหน้ารายการตรวจ..."
     );
+
+
+    // ----------------------------------------
+    // SETUP EVENTS
+    // ----------------------------------------
+
+    setupInspectionList();
 
 
     // ----------------------------------------
@@ -205,38 +220,8 @@ async function loadInspectionListRecords() {
         );
 
 
-        const response =
-            await fetch(
-
-                API_URL,
-
-                {
-
-                    method:
-                        "POST",
-
-                    headers: {
-
-                        "Content-Type":
-                            "text/plain;charset=utf-8"
-
-                    },
-
-                    body:
-                        JSON.stringify({
-
-                            action:
-                                "getInspections"
-
-                        })
-
-                }
-
-            );
-
-
         const data =
-            await response.json();
+            await apiGetInspections();
 
 
         console.log(
@@ -250,12 +235,15 @@ async function loadInspectionListRecords() {
         // ----------------------------------------
 
         if (
+            !data ||
             !data.success
         ) {
 
             console.error(
                 "ไม่สามารถโหลดรายการตรวจ:",
-                data.message
+                data
+                    ? data.message
+                    : "ไม่พบข้อมูลตอบกลับจาก API"
             );
 
 
@@ -622,6 +610,7 @@ function renderInspectionList(
                     ${
                         remark
                             ? `
+
                                 <div class="fmop11-record-info">
 
                                     <strong>
@@ -635,6 +624,7 @@ function renderInspectionList(
                                     </span>
 
                                 </div>
+
                             `
                             : ""
                     }
@@ -1190,7 +1180,7 @@ function clearInspectionRecordsFilter() {
 // VIEW RECORD
 // ======================================================
 
-function viewInspectionRecord(
+async function viewInspectionRecord(
     recordId
 ) {
 
@@ -1200,8 +1190,579 @@ function viewInspectionRecord(
     );
 
 
-    alert(
-        "ฟังก์ชันดูรายละเอียดจะทำในขั้นตอนถัดไป"
+    if (!recordId) {
+
+        alert(
+            "ไม่พบรหัสรายการตรวจ"
+        );
+
+        return;
+
+    }
+
+
+    // ----------------------------------------
+    // OPEN LOADING POPUP
+    // ----------------------------------------
+
+    openPopup(
+
+        `
+
+            <div class="inspection-empty">
+
+                <div>
+                    ⏳
+                </div>
+
+                <strong>
+                    กำลังโหลดรายละเอียด...
+                </strong>
+
+                <span>
+                    กรุณารอสักครู่
+                </span>
+
+            </div>
+
+        `,
+
+        {
+
+            title:
+                "รายละเอียดรายการตรวจ",
+
+            size:
+                "large"
+
+        }
+
+    );
+
+
+    try {
+
+        const data =
+            await apiGetInspection(
+                recordId
+            );
+
+
+        console.log(
+            "รายละเอียด Inspection:",
+            data
+        );
+
+
+        if (
+            !data ||
+            !data.success ||
+            !data.inspection
+        ) {
+
+            openPopup(
+
+                `
+
+                    <div class="inspection-empty">
+
+                        <div>
+                            ⚠️
+                        </div>
+
+                        <strong>
+                            ไม่สามารถโหลดรายละเอียดได้
+                        </strong>
+
+                        <span>
+                            ${
+                                escapeHTML(
+                                    data &&
+                                    data.message
+                                        ? data.message
+                                        : "ไม่พบข้อมูลรายการตรวจ"
+                                )
+                            }
+                        </span>
+
+                    </div>
+
+                `,
+
+                {
+
+                    title:
+                        "รายละเอียดรายการตรวจ",
+
+                    size:
+                        "large"
+
+                }
+
+            );
+
+
+            return;
+
+        }
+
+
+        renderInspectionDetailPopup(
+            data.inspection
+        );
+
+
+    } catch (error) {
+
+        console.error(
+            "เกิดข้อผิดพลาดในการดูรายละเอียด:",
+            error
+        );
+
+
+        openPopup(
+
+            `
+
+                <div class="inspection-empty">
+
+                    <div>
+                        ⚠️
+                    </div>
+
+                    <strong>
+                        เกิดข้อผิดพลาด
+                    </strong>
+
+                    <span>
+                        ไม่สามารถโหลดรายละเอียดรายการตรวจได้
+                    </span>
+
+                </div>
+
+            `,
+
+            {
+
+                title:
+                    "รายละเอียดรายการตรวจ",
+
+                size:
+                    "large"
+
+            }
+
+        );
+
+    }
+
+}
+
+
+
+// ======================================================
+// RENDER INSPECTION DETAIL POPUP
+// ======================================================
+
+function renderInspectionDetailPopup(
+    inspection
+) {
+
+    const items =
+        Array.isArray(
+            inspection.items
+        )
+            ? inspection.items
+            : [];
+
+
+    const resultClass =
+        function (
+            result
+        ) {
+
+            const value =
+                String(
+                    result ||
+                    ""
+                ).trim();
+
+
+            if (
+                value ===
+                "ผ่าน"
+            ) {
+
+                return "ผ่าน";
+
+            }
+
+
+            if (
+                value ===
+                "ไม่ผ่าน"
+            ) {
+
+                return "ไม่ผ่าน";
+
+            }
+
+
+            return "";
+
+        };
+
+
+    const resultLabel =
+        function (
+            result
+        ) {
+
+            const value =
+                String(
+                    result ||
+                    ""
+                ).trim();
+
+
+            if (
+                value ===
+                "ผ่าน"
+            ) {
+
+                return "✓ ผ่าน";
+
+            }
+
+
+            if (
+                value ===
+                "ไม่ผ่าน"
+            ) {
+
+                return "✕ ไม่ผ่าน";
+
+            }
+
+
+            return "-";
+
+        };
+
+
+    let itemsHTML =
+        "";
+
+
+    if (
+        items.length === 0
+    ) {
+
+        itemsHTML = `
+
+            <div class="inspection-empty">
+
+                <div>
+                    📋
+                </div>
+
+                <strong>
+                    ไม่พบรายการตรวจย่อย
+                </strong>
+
+            </div>
+
+        `;
+
+    } else {
+
+        itemsHTML =
+            items
+                .map(
+                    function (
+                        item,
+                        index
+                    ) {
+
+                        const itemNo =
+                            item.itemNo ||
+                            index + 1;
+
+
+                        return `
+
+                            <div
+                                class="inspection-detail-item"
+                            >
+
+                                <div
+                                    class="inspection-detail-item-no"
+                                >
+                                    ${escapeHTML(
+                                        itemNo
+                                    )}
+                                </div>
+
+
+                                <div
+                                    class="inspection-detail-item-name"
+                                >
+                                    ${escapeHTML(
+                                        item.item ||
+                                        "-"
+                                    )}
+                                </div>
+
+
+                                <div
+                                    class="inspection-detail-item-result ${resultClass(
+                                        item.result
+                                    )}"
+                                >
+                                    ${escapeHTML(
+                                        resultLabel(
+                                            item.result
+                                        )
+                                    )}
+                                </div>
+
+                            </div>
+
+                        `;
+
+                    }
+                )
+                .join(
+                    ""
+                );
+
+    }
+
+
+    const documentInfo =
+        inspection.documentNo
+            ? `
+
+                <div class="inspection-detail-row">
+
+                    <strong>
+                        เลขที่เอกสาร
+                    </strong>
+
+                    <span>
+                        ${escapeHTML(
+                            inspection.documentNo
+                        )}
+                    </span>
+
+                </div>
+
+            `
+            : "";
+
+
+    const fileInfo =
+        inspection.fileUrl
+            ? `
+
+                <div class="inspection-detail-row">
+
+                    <strong>
+                        เอกสาร ISO
+                    </strong>
+
+                    <span>
+
+                        <a
+                            href="${escapeHTML(
+                                inspection.fileUrl
+                            )}"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                        >
+                            เปิดเอกสาร ISO
+                        </a>
+
+                    </span>
+
+                </div>
+
+            `
+            : "";
+
+
+    openPopup(
+
+        `
+
+            <div class="inspection-detail">
+
+                <div class="inspection-detail-section">
+
+                    <div class="inspection-detail-grid">
+
+                        <div class="inspection-detail-row">
+
+                            <strong>
+                                วันที่ตรวจ
+                            </strong>
+
+                            <span>
+                                ${escapeHTML(
+                                    inspection.inspectionDate ||
+                                    "-"
+                                )}
+                            </span>
+
+                        </div>
+
+
+                        <div class="inspection-detail-row">
+
+                            <strong>
+                                เวลา
+                            </strong>
+
+                            <span>
+                                ${escapeHTML(
+                                    inspection.inspectionTime ||
+                                    "-"
+                                )}
+                            </span>
+
+                        </div>
+
+
+                        <div class="inspection-detail-row">
+
+                            <strong>
+                                เขต
+                            </strong>
+
+                            <span>
+                                ${escapeHTML(
+                                    inspection.zone ||
+                                    "-"
+                                )}
+                            </span>
+
+                        </div>
+
+
+                        <div class="inspection-detail-row">
+
+                            <strong>
+                                จุดตรวจ
+                            </strong>
+
+                            <span>
+                                ${escapeHTML(
+                                    inspection.locationName ||
+                                    "-"
+                                )}
+                            </span>
+
+                        </div>
+
+
+                        <div class="inspection-detail-row">
+
+                            <strong>
+                                ผู้ตรวจ
+                            </strong>
+
+                            <span>
+                                ${escapeHTML(
+                                    inspection.inspectorName ||
+                                    "-"
+                                )}
+                            </span>
+
+                        </div>
+
+
+                        ${documentInfo}
+
+                        ${fileInfo}
+
+                    </div>
+
+                </div>
+
+
+                <div class="inspection-detail-section">
+
+                    <div class="inspection-detail-title">
+                        ผลการตรวจ
+                    </div>
+
+
+                    <div class="inspection-detail-items">
+
+                        ${itemsHTML}
+
+                    </div>
+
+                </div>
+
+
+                <div class="inspection-detail-section">
+
+                    <div class="inspection-detail-title">
+                        หมายเหตุ
+                    </div>
+
+
+                    <div class="inspection-detail-text">
+
+                        ${
+                            inspection.remark
+                                ? escapeHTML(
+                                    inspection.remark
+                                )
+                                : "-"
+                        }
+
+                    </div>
+
+                </div>
+
+
+                <div class="inspection-detail-section">
+
+                    <div class="inspection-detail-title">
+                        แนวทางแก้ไข
+                    </div>
+
+
+                    <div class="inspection-detail-text">
+
+                        ${
+                            inspection.solution
+                                ? escapeHTML(
+                                    inspection.solution
+                                )
+                                : "-"
+                        }
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        `,
+
+        {
+
+            title:
+                "รายละเอียดรายการตรวจ",
+
+            size:
+                "large"
+
+        }
+
     );
 
 }
