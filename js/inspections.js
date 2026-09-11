@@ -124,6 +124,13 @@ async function initializeInspectionPage() {
     }
 
 
+    // ----------------------------------------
+    // UPDATE FORM MODE
+    // ----------------------------------------
+
+    updateInspectionFormMode();
+
+
     console.log(
         "เตรียมหน้าการตรวจเรียบร้อย"
     );
@@ -370,10 +377,6 @@ function renderInspectionZones() {
     `;
 
 
-    // ----------------------------------------
-    // GET ZONES DIRECTLY FROM SETTINGS
-    // ----------------------------------------
-
     if (
         !Array.isArray(
             inspectionZones
@@ -402,10 +405,6 @@ function renderInspectionZones() {
             }
 
 
-            // --------------------------------
-            // CHECK STATUS
-            // --------------------------------
-
             if (
                 zone.status &&
                 String(
@@ -419,10 +418,6 @@ function renderInspectionZones() {
 
             }
 
-
-            // --------------------------------
-            // ZONE NAME
-            // --------------------------------
 
             const zoneName =
                 zone.settingName ||
@@ -438,10 +433,6 @@ function renderInspectionZones() {
 
             }
 
-
-            // --------------------------------
-            // CREATE OPTION
-            // --------------------------------
 
             const option =
                 document.createElement(
@@ -518,10 +509,6 @@ function renderInspectionLocations() {
             }
 
 
-            // --------------------------------
-            // CHECK STATUS
-            // --------------------------------
-
             if (
                 location.status &&
                 String(
@@ -535,10 +522,6 @@ function renderInspectionLocations() {
 
             }
 
-
-            // --------------------------------
-            // LOCATION NAME
-            // --------------------------------
 
             const locationName =
                 location.settingName ||
@@ -554,10 +537,6 @@ function renderInspectionLocations() {
 
             }
 
-
-            // --------------------------------
-            // CREATE OPTION
-            // --------------------------------
 
             const option =
                 document.createElement(
@@ -628,10 +607,6 @@ function renderInspectionInspectors() {
             }
 
 
-            // --------------------------------
-            // CHECK STATUS
-            // --------------------------------
-
             if (
                 inspector.status &&
                 String(
@@ -645,10 +620,6 @@ function renderInspectionInspectors() {
 
             }
 
-
-            // --------------------------------
-            // INSPECTOR NAME
-            // --------------------------------
 
             const inspectorName =
                 inspector.settingName ||
@@ -664,10 +635,6 @@ function renderInspectionInspectors() {
 
             }
 
-
-            // --------------------------------
-            // CREATE OPTION
-            // --------------------------------
 
             const option =
                 document.createElement(
@@ -713,10 +680,6 @@ function renderInspectionItems() {
     }
 
 
-    // ----------------------------------------
-    // CHECK ITEMS
-    // ----------------------------------------
-
     if (
         !Array.isArray(
             inspectionItems
@@ -749,10 +712,6 @@ function renderInspectionItems() {
 
     }
 
-
-    // ----------------------------------------
-    // SORT ITEMS
-    // ----------------------------------------
 
     const sortedItems =
         [...inspectionItems]
@@ -789,17 +748,9 @@ function renderInspectionItems() {
             );
 
 
-    // ----------------------------------------
-    // CLEAR CONTAINER
-    // ----------------------------------------
-
     container.innerHTML =
         "";
 
-
-    // ----------------------------------------
-    // RENDER ITEMS
-    // ----------------------------------------
 
     sortedItems.forEach(
         function (
@@ -1133,10 +1084,6 @@ function validateInspectionForm() {
         );
 
 
-    // ----------------------------------------
-    // DATE
-    // ----------------------------------------
-
     if (
         !inspectionDate ||
         !inspectionDate.value
@@ -1151,10 +1098,6 @@ function validateInspectionForm() {
 
     }
 
-
-    // ----------------------------------------
-    // TIME
-    // ----------------------------------------
 
     if (
         !inspectionTime ||
@@ -1171,10 +1114,6 @@ function validateInspectionForm() {
     }
 
 
-    // ----------------------------------------
-    // LOCATION
-    // ----------------------------------------
-
     if (
         !location ||
         !location.value
@@ -1190,10 +1129,6 @@ function validateInspectionForm() {
     }
 
 
-    // ----------------------------------------
-    // INSPECTOR
-    // ----------------------------------------
-
     if (
         !inspector ||
         !inspector.value
@@ -1208,10 +1143,6 @@ function validateInspectionForm() {
 
     }
 
-
-    // ----------------------------------------
-    // ITEMS
-    // ----------------------------------------
 
     const items =
         collectInspectionItems();
@@ -1230,10 +1161,6 @@ function validateInspectionForm() {
 
     }
 
-
-    // ----------------------------------------
-    // CHECK INCOMPLETE ITEMS
-    // ----------------------------------------
 
     const incomplete =
         items.find(
@@ -1297,7 +1224,45 @@ function generateRecordId() {
 
 
 // ======================================================
-// SAVE INSPECTION
+// UPDATE FORM MODE
+// ======================================================
+
+function updateInspectionFormMode() {
+
+    const saveButton =
+        document.getElementById(
+            "save-inspection-button"
+        );
+
+
+    if (!saveButton) {
+
+        return;
+
+    }
+
+
+    if (
+        inspectionMode ===
+        "edit"
+    ) {
+
+        saveButton.textContent =
+            "บันทึกการแก้ไข";
+
+    } else {
+
+        saveButton.textContent =
+            "บันทึกการตรวจ";
+
+    }
+
+}
+
+
+
+// ======================================================
+// SAVE / UPDATE INSPECTION
 // ======================================================
 
 async function saveInspection() {
@@ -1376,11 +1341,29 @@ async function saveInspection() {
 
 
     // ----------------------------------------
-    // GENERATE NEW RECORD ID
+    // RECORD ID
     // ----------------------------------------
 
-    const recordId =
-        generateRecordId();
+    let recordId;
+
+
+    if (
+        inspectionMode ===
+        "edit" &&
+        editingInspectionRecordId
+    ) {
+
+        // ใช้ ID เดิม
+        recordId =
+            editingInspectionRecordId;
+
+    } else {
+
+        // สร้าง ID ใหม่เฉพาะตอนสร้างรายการใหม่
+        recordId =
+            generateRecordId();
+
+    }
 
 
     // ----------------------------------------
@@ -1397,6 +1380,14 @@ async function saveInspection() {
 
     const solution =
         collectInspectionSolution();
+
+
+    // ----------------------------------------
+    // PRESERVE ORIGINAL DATA
+    // ----------------------------------------
+
+    const original =
+        editingInspectionData || {};
 
 
     // ----------------------------------------
@@ -1432,19 +1423,43 @@ async function saveInspection() {
             solution,
 
         documentCode:
+            original.documentCode ||
             "FM-OP-11",
 
         documentName:
+            original.documentName ||
             "รายงานการตรวจจุดพนักงานรักษาความปลอดภัย",
+
+        documentNo:
+            original.documentNo ||
+            "",
 
         items:
             items,
 
+        // ----------------------------------------
+        // CREATE MODE
+        // ----------------------------------------
+
         createdBy:
+            original.createdBy ||
             user.name ||
             "",
 
         createdByEmail:
+            original.createdByEmail ||
+            user.email ||
+            "",
+
+        // ----------------------------------------
+        // UPDATE MODE
+        // ----------------------------------------
+
+        updatedBy:
+            user.name ||
+            "",
+
+        updatedByEmail:
             user.email ||
             ""
 
@@ -1468,7 +1483,9 @@ async function saveInspection() {
 
 
         saveButton.textContent =
-            "กำลังบันทึก...";
+            inspectionMode === "edit"
+                ? "กำลังบันทึกการแก้ไข..."
+                : "กำลังบันทึก...";
 
     }
 
@@ -1479,41 +1496,81 @@ async function saveInspection() {
 
     try {
 
-        const response =
-            await fetch(
+        let data;
 
-                API_URL,
 
-                {
+        // ========================================
+        // EDIT
+        // ========================================
 
-                    method:
-                        "POST",
+        if (
+            inspectionMode ===
+            "edit"
+        ) {
 
-                    headers: {
-
-                        "Content-Type":
-                            "text/plain;charset=utf-8"
-
-                    },
-
-                    body:
-                        JSON.stringify({
-
-                            action:
-                                "saveInspection",
-
-                            inspection:
-                                inspectionData
-
-                        })
-
-                }
-
+            console.log(
+                "กำลังอัปเดตรายการตรวจ:",
+                recordId
             );
 
 
-        const data =
-            await response.json();
+            data =
+                await apiUpdateInspection(
+                    inspectionData
+                );
+
+        }
+
+
+        // ========================================
+        // CREATE
+        // ========================================
+
+        else {
+
+            console.log(
+                "กำลังสร้างรายการตรวจใหม่:",
+                recordId
+            );
+
+
+            const response =
+                await fetch(
+
+                    API_URL,
+
+                    {
+
+                        method:
+                            "POST",
+
+                        headers: {
+
+                            "Content-Type":
+                                "text/plain;charset=utf-8"
+
+                        },
+
+                        body:
+                            JSON.stringify({
+
+                                action:
+                                    "saveInspection",
+
+                                inspection:
+                                    inspectionData
+
+                            })
+
+                    }
+
+                );
+
+
+            data =
+                await response.json();
+
+        }
 
 
         console.log(
@@ -1531,17 +1588,48 @@ async function saveInspection() {
         ) {
 
             // ----------------------------------------
-            // RESET FORM
+            // EDIT SUCCESS
             // ----------------------------------------
 
-            resetInspectionForm();
+            if (
+                inspectionMode ===
+                "edit"
+            ) {
+
+                alert(
+                    "แก้ไขรายการตรวจเรียบร้อยแล้ว"
+                );
+
+
+                // ----------------------------------------
+                // CLEAR EDIT STATE
+                // ----------------------------------------
+
+                resetInspectionForm();
+
+
+                // ----------------------------------------
+                // OPEN LIST
+                // ----------------------------------------
+
+                showPage(
+                    "inspection-records"
+                );
+
+            }
 
 
             // ----------------------------------------
-            // SHOW SUCCESS POPUP
+            // CREATE SUCCESS
             // ----------------------------------------
 
-            showInspectionSuccessPopup();
+            else {
+
+                resetInspectionForm();
+
+                showInspectionSuccessPopup();
+
+            }
 
 
         } else {
@@ -1580,13 +1668,375 @@ async function saveInspection() {
             saveButton.disabled =
                 false;
 
-
-            saveButton.textContent =
-                "บันทึกการตรวจ";
+            updateInspectionFormMode();
 
         }
 
     }
+
+}
+
+
+
+// ======================================================
+// LOAD INSPECTION FOR EDIT
+// ======================================================
+
+async function loadInspectionForEdit(
+    recordId
+) {
+
+    if (!recordId) {
+
+        alert(
+            "ไม่พบรหัสรายการตรวจ"
+        );
+
+        return false;
+
+    }
+
+
+    try {
+
+        console.log(
+            "กำลังโหลดรายการตรวจเพื่อแก้ไข:",
+            recordId
+        );
+
+
+        const data =
+            await apiGetInspection(
+                recordId
+            );
+
+
+        if (
+            !data ||
+            !data.success ||
+            !data.inspection
+        ) {
+
+            alert(
+
+                data &&
+                data.message
+                    ? data.message
+                    : "ไม่พบข้อมูลรายการตรวจ"
+
+            );
+
+
+            return false;
+
+        }
+
+
+        const inspection =
+            data.inspection;
+
+
+        // ----------------------------------------
+        // STORE EDIT STATE
+        // ----------------------------------------
+
+        editingInspectionRecordId =
+            inspection.recordId;
+
+        editingInspectionData =
+            inspection;
+
+        inspectionMode =
+            "edit";
+
+
+        console.log(
+            "ข้อมูลรายการตรวจสำหรับแก้ไข:",
+            inspection
+        );
+
+
+        // ----------------------------------------
+        // OPEN INSPECTION PAGE
+        // ----------------------------------------
+
+        showPage(
+            "inspection-record"
+        );
+
+
+        // ----------------------------------------
+        // INITIALIZE FORM
+        // ----------------------------------------
+
+        await initializeInspectionPage();
+
+
+        // ----------------------------------------
+        // FILL FORM
+        // ----------------------------------------
+
+        populateInspectionForm(
+            inspection
+        );
+
+
+        return true;
+
+    } catch (error) {
+
+        console.error(
+            "โหลดรายการตรวจเพื่อแก้ไขไม่สำเร็จ:",
+            error
+        );
+
+
+        alert(
+            "ไม่สามารถโหลดข้อมูลรายการตรวจได้"
+        );
+
+
+        return false;
+
+    }
+
+}
+
+
+
+// ======================================================
+// POPULATE INSPECTION FORM
+// ======================================================
+
+function populateInspectionForm(
+    inspection
+) {
+
+    if (!inspection) {
+
+        return;
+
+    }
+
+
+    // ----------------------------------------
+    // DATE
+    // ----------------------------------------
+
+    const dateInput =
+        document.getElementById(
+            "inspection-date"
+        );
+
+
+    if (dateInput) {
+
+        dateInput.value =
+            inspection.inspectionDate ||
+            "";
+
+    }
+
+
+    // ----------------------------------------
+    // TIME
+    // ----------------------------------------
+
+    const timeInput =
+        document.getElementById(
+            "inspection-time"
+        );
+
+
+    if (timeInput) {
+
+        timeInput.value =
+            inspection.inspectionTime ||
+            "";
+
+    }
+
+
+    // ----------------------------------------
+    // ZONE
+    // ----------------------------------------
+
+    const zoneInput =
+        document.getElementById(
+            "inspection-zone"
+        );
+
+
+    if (zoneInput) {
+
+        zoneInput.value =
+            inspection.zone ||
+            "";
+
+    }
+
+
+    // ----------------------------------------
+    // LOCATION
+    // ----------------------------------------
+
+    const locationInput =
+        document.getElementById(
+            "inspection-location"
+        );
+
+
+    if (locationInput) {
+
+        locationInput.value =
+            inspection.locationName ||
+            "";
+
+    }
+
+
+    // ----------------------------------------
+    // INSPECTOR
+    // ----------------------------------------
+
+    const inspectorInput =
+        document.getElementById(
+            "inspection-inspector"
+        );
+
+
+    if (inspectorInput) {
+
+        inspectorInput.value =
+            inspection.inspectorName ||
+            "";
+
+    }
+
+
+    // ----------------------------------------
+    // ITEMS
+    // ----------------------------------------
+
+    const savedItems =
+        Array.isArray(
+            inspection.items
+        )
+            ? inspection.items
+            : [];
+
+
+    const rows =
+        document.querySelectorAll(
+            "#inspection-items .inspection-item"
+        );
+
+
+    rows.forEach(
+        function (
+            row
+        ) {
+
+            const itemNo =
+                String(
+                    row.dataset.itemNo
+                );
+
+
+            const savedItem =
+                savedItems.find(
+                    function (
+                        item
+                    ) {
+
+                        return (
+                            String(
+                                item.itemNo
+                            ) ===
+                            itemNo
+                        );
+
+                    }
+                );
+
+
+            if (!savedItem) {
+
+                return;
+
+            }
+
+
+            const radios =
+                row.querySelectorAll(
+                    'input[type="radio"]'
+                );
+
+
+            radios.forEach(
+                function (
+                    radio
+                ) {
+
+                    radio.checked =
+                        radio.value ===
+                        savedItem.result;
+
+                }
+            );
+
+        }
+    );
+
+
+    // ----------------------------------------
+    // REMARK
+    // ----------------------------------------
+
+    const remark =
+        document.getElementById(
+            "inspection-remark"
+        );
+
+
+    if (remark) {
+
+        remark.value =
+            inspection.remark ||
+            "";
+
+    }
+
+
+    // ----------------------------------------
+    // SOLUTION
+    // ----------------------------------------
+
+    const solution =
+        document.getElementById(
+            "inspection-solution"
+        );
+
+
+    if (solution) {
+
+        solution.value =
+            inspection.solution ||
+            "";
+
+    }
+
+
+    // ----------------------------------------
+    // UPDATE BUTTON
+    // ----------------------------------------
+
+    updateInspectionFormMode();
+
+
+    console.log(
+        "เติมข้อมูลรายการตรวจลงในฟอร์มเรียบร้อย"
+    );
 
 }
 
@@ -1694,10 +2144,6 @@ function continueInspectionFromPopup() {
     );
 
 
-    // ----------------------------------------
-    // PREPARE NEW INSPECTION FORM
-    // ----------------------------------------
-
     resetInspectionForm();
 
 }
@@ -1738,6 +2184,20 @@ function resetInspectionForm() {
         document.getElementById(
             "inspection-inspector"
         );
+
+
+    // ----------------------------------------
+    // CLEAR EDIT STATE
+    // ----------------------------------------
+
+    editingInspectionRecordId =
+        null;
+
+    editingInspectionData =
+        null;
+
+    inspectionMode =
+        "create";
 
 
     // ----------------------------------------
@@ -1863,6 +2323,13 @@ function resetInspectionForm() {
     // ----------------------------------------
 
     setDefaultInspectionDateTime();
+
+
+    // ----------------------------------------
+    // UPDATE FORM MODE
+    // ----------------------------------------
+
+    updateInspectionFormMode();
 
 
     console.log(
