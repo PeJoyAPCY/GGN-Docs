@@ -1,3 +1,10 @@
+
+// ========================================
+// GGN Docs - API
+// ========================================
+
+
+// ========================================
 // TEST GOOGLE APPS SCRIPT API
 // ========================================
 
@@ -155,3 +162,540 @@ async function loginToGGN(
 
 
 // ========================================
+// GET INSPECTIONS
+// ========================================
+
+async function apiGetInspections(
+    filters = {}
+) {
+
+    try {
+
+        const response =
+            await fetch(
+
+                API_URL,
+
+                {
+
+                    method:
+                        "POST",
+
+                    headers: {
+
+                        "Content-Type":
+                            "text/plain;charset=utf-8"
+
+                    },
+
+                    body:
+                        JSON.stringify({
+
+                            action:
+                                "getInspections",
+
+                            ...filters
+
+                        })
+
+                }
+
+            );
+
+
+        const data =
+            await response.json();
+
+
+        console.log(
+            "ผลการดึงรายการ Inspection:",
+            data
+        );
+
+
+        return data;
+
+    } catch (error) {
+
+        console.error(
+            "apiGetInspections Error:",
+            error
+        );
+
+
+        return {
+
+            success: false,
+
+            message:
+                "ไม่สามารถดึงรายการตรวจได้"
+
+        };
+
+    }
+
+}
+
+
+// ========================================
+// GET ONE INSPECTION
+// ========================================
+
+async function apiGetInspection(
+    recordId
+) {
+
+    try {
+
+        if (!recordId) {
+
+            return {
+
+                success: false,
+
+                message:
+                    "ไม่พบ Record ID"
+
+            };
+
+        }
+
+
+        const response =
+            await fetch(
+
+                API_URL,
+
+                {
+
+                    method:
+                        "POST",
+
+                    headers: {
+
+                        "Content-Type":
+                            "text/plain;charset=utf-8"
+
+                    },
+
+                    body:
+                        JSON.stringify({
+
+                            action:
+                                "getInspection",
+
+                            recordId:
+                                recordId
+
+                        })
+
+                }
+
+            );
+
+
+        const data =
+            await response.json();
+
+
+        console.log(
+            "ผลการดึง Inspection:",
+            data
+        );
+
+
+        return data;
+
+    } catch (error) {
+
+        console.error(
+            "apiGetInspection Error:",
+            error
+        );
+
+
+        return {
+
+            success: false,
+
+            message:
+                "ไม่สามารถดึงรายละเอียดรายการตรวจได้"
+
+        };
+
+    }
+
+}
+
+
+// ========================================
+// UPDATE INSPECTION
+// ========================================
+
+async function apiUpdateInspection(
+    inspection
+) {
+
+    try {
+
+        if (
+            !inspection ||
+            !inspection.recordId
+        ) {
+
+            return {
+
+                success: false,
+
+                message:
+                    "ไม่พบ Record ID สำหรับแก้ไข"
+
+            };
+
+        }
+
+
+        const response =
+            await fetch(
+
+                API_URL,
+
+                {
+
+                    method:
+                        "POST",
+
+                    headers: {
+
+                        "Content-Type":
+                            "text/plain;charset=utf-8"
+
+                    },
+
+                    body:
+                        JSON.stringify({
+
+                            action:
+                                "updateInspection",
+
+                            inspection:
+                                inspection
+
+                        })
+
+                }
+
+            );
+
+
+        const data =
+            await response.json();
+
+
+        console.log(
+            "ผลการแก้ไข Inspection:",
+            data
+        );
+
+
+        return data;
+
+    } catch (error) {
+
+        console.error(
+            "apiUpdateInspection Error:",
+            error
+        );
+
+
+        return {
+
+            success: false,
+
+            message:
+                "ไม่สามารถแก้ไขรายการตรวจได้"
+
+        };
+
+    }
+
+}
+
+
+// ========================================
+// DELETE INSPECTION
+// ========================================
+
+async function apiDeleteInspection(
+    recordId,
+    deletedBy = ""
+) {
+
+    try {
+
+        if (!recordId) {
+
+            return {
+
+                success: false,
+
+                message:
+                    "ไม่พบ Record ID สำหรับลบ"
+
+            };
+
+        }
+
+
+        const response =
+            await fetch(
+
+                API_URL,
+
+                {
+
+                    method:
+                        "POST",
+
+                    headers: {
+
+                        "Content-Type":
+                            "text/plain;charset=utf-8"
+
+                    },
+
+                    body:
+                        JSON.stringify({
+
+                            action:
+                                "deleteInspection",
+
+                            recordId:
+                                recordId,
+
+                            deletedBy:
+                                deletedBy
+
+                        })
+
+                }
+
+            );
+
+
+        const data =
+            await response.json();
+
+
+        console.log(
+            "ผลการลบ Inspection:",
+            data
+        );
+
+
+        return data;
+
+    } catch (error) {
+
+        console.error(
+            "apiDeleteInspection Error:",
+            error
+        );
+
+
+        return {
+
+            success: false,
+
+            message:
+                "ไม่สามารถลบรายการตรวจได้"
+
+        };
+
+    }
+
+}
+
+
+// ========================================
+// GET SETTINGS
+// ========================================
+
+async function apiGetSettings(
+    settingType = ""
+) {
+
+    try {
+
+        const response =
+            await fetch(
+
+                API_URL,
+
+                {
+
+                    method:
+                        "POST",
+
+                    headers: {
+
+                        "Content-Type":
+                            "text/plain;charset=utf-8"
+
+                    },
+
+                    body:
+                        JSON.stringify({
+
+                            action:
+                                "getSettings",
+
+                            settingType:
+                                settingType
+
+                        })
+
+                }
+
+            );
+
+
+        const data =
+            await response.json();
+
+
+        console.log(
+            "ผลการดึง Settings:",
+            settingType,
+            data
+        );
+
+
+        return data;
+
+    } catch (error) {
+
+        console.error(
+            "apiGetSettings Error:",
+            error
+        );
+
+
+        return {
+
+            success: false,
+
+            message:
+                "ไม่สามารถดึงข้อมูล Settings ได้",
+
+            settings:
+                []
+
+        };
+
+    }
+
+}
+
+
+// ========================================
+// GENERATE FM-OP-11
+// ========================================
+
+async function apiGenerateFMOP11(
+    records,
+    createdBy = "",
+    createdByEmail = ""
+) {
+
+    try {
+
+        if (
+            !records ||
+            !Array.isArray(records) ||
+            records.length === 0
+        ) {
+
+            return {
+
+                success: false,
+
+                message:
+                    "กรุณาเลือกรายการตรวจ"
+
+            };
+
+        }
+
+
+        const response =
+            await fetch(
+
+                API_URL,
+
+                {
+
+                    method:
+                        "POST",
+
+                    headers: {
+
+                        "Content-Type":
+                            "text/plain;charset=utf-8"
+
+                    },
+
+                    body:
+                        JSON.stringify({
+
+                            action:
+                                "generateFMOP11",
+
+                            records:
+                                records,
+
+                            createdBy:
+                                createdBy,
+
+                            createdByEmail:
+                                createdByEmail
+
+                        })
+
+                }
+
+            );
+
+
+        const data =
+            await response.json();
+
+
+        console.log(
+            "ผลการสร้าง FM-OP-11:",
+            data
+        );
+
+
+        return data;
+
+    } catch (error) {
+
+        console.error(
+            "apiGenerateFMOP11 Error:",
+            error
+        );
+
+
+        return {
+
+            success: false,
+
+            message:
+                "ไม่สามารถสร้างเอกสาร FM-OP-11 ได้"
+
+        };
+
+    }
+
+}
