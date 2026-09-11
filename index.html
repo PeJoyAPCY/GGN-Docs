@@ -1434,11 +1434,7 @@
 
 </div>
 
-    <!-- ==========================================
-         JAVASCRIPT
-    =========================================== -->
-
-    <!-- ==========================================
+<!-- ==========================================
      INSPECTION SUCCESS MODAL
 ========================================== -->
 
@@ -1448,21 +1444,36 @@
     style="display: none;"
 >
 
-    <div class="inspection-success-modal">
+    <div
+        class="inspection-success-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="inspection-success-title"
+    >
 
-        <!-- HEADER -->
+        <!-- SUCCESS ICON -->
 
-        <div class="inspection-success-icon">
+        <div
+            class="inspection-success-icon"
+            aria-hidden="true"
+        >
             ✓
         </div>
 
 
-        <h3>
+        <!-- TITLE -->
+
+        <h3 id="inspection-success-title">
             บันทึกการตรวจสำเร็จ
         </h3>
 
 
-        <p class="inspection-success-message">
+        <!-- MESSAGE -->
+
+        <p
+            id="inspection-success-message"
+            class="inspection-success-message"
+        >
             ระบบบันทึกข้อมูลการตรวจเรียบร้อยแล้ว
         </p>
 
@@ -1483,6 +1494,8 @@
 
         <div class="inspection-success-actions">
 
+            <!-- ดูรายการตรวจ -->
+
             <button
                 id="inspection-success-view-button"
                 class="primary-button"
@@ -1492,14 +1505,18 @@
             </button>
 
 
+            <!-- ตรวจรายการถัดไป -->
+
             <button
                 id="inspection-success-next-button"
                 class="secondary-button"
                 type="button"
             >
-                ➕ บันทึกการตรวจถัดไป
+                ➕ ตรวจรายการถัดไป
             </button>
 
+
+            <!-- กลับหน้าหลัก -->
 
             <button
                 id="inspection-success-home-button"
@@ -1514,7 +1531,6 @@
     </div>
 
 </div>
-
 <!-- ======================================== -->
 <!-- GGN Docs JavaScript -->
 <!-- ======================================== -->
