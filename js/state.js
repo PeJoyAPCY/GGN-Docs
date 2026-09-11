@@ -40,10 +40,11 @@ let inspectionPageInitialized = false;
 // INSPECTION EDIT STATE
 // ========================================
 
-// recordId ของรายการที่กำลังแก้ไข
 let editingInspectionRecordId = null;
 
-// โหมดของฟอร์ม
+// เก็บข้อมูลรายการเดิมขณะกำลังแก้ไข
+let editingInspectionData = null;
+
 // create = สร้างรายการใหม่
 // edit   = แก้ไขรายการเดิม
 let inspectionMode = "create";
