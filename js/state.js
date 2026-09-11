@@ -1,3 +1,4 @@
+
 // ========================================
 // GLOBAL DATA
 // ========================================
@@ -17,20 +18,32 @@ let inspectionRecords = [];
 // เขตทั้งหมด
 let inspectionZones = [];
 
-
 // ผู้ตรวจ / สายตรวจทั้งหมด
 let inspectionInspectors = [];
-
 
 // รายการตรวจทั้งหมด
 let inspectionItems = [];
 
 
+// ========================================
+// INSPECTION STATE
+// ========================================
+
 // ป้องกันการโหลด Settings ซ้ำโดยไม่จำเป็น
 let inspectionSettingsLoaded = false;
-
 
 // ป้องกันการ bind event ซ้ำ
 let inspectionPageInitialized = false;
 
 
+// ========================================
+// INSPECTION EDIT STATE
+// ========================================
+
+// recordId ของรายการที่กำลังแก้ไข
+let editingInspectionRecordId = null;
+
+// โหมดของฟอร์ม
+// create = สร้างรายการใหม่
+// edit   = แก้ไขรายการเดิม
+let inspectionMode = "create";
