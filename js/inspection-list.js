@@ -1751,23 +1751,319 @@ async function deleteInspectionRecord(
 
 
     // ----------------------------------------
-    // CONFIRM
+    // FIND RECORD
     // ----------------------------------------
 
-    const confirmed =
-        confirm(
-            "ต้องการลบรายการตรวจนี้หรือไม่?\n\n" +
-            "การลบข้อมูลจะไม่สามารถย้อนกลับได้"
+    const record =
+        inspectionListRecords.find(
+            function (item) {
+
+                return (
+                    item.recordId ===
+                    recordId
+                );
+
+            }
         );
 
 
-    if (!confirmed) {
+    if (!record) {
 
-        console.log(
-            "ยกเลิกการลบรายการตรวจ"
+        console.warn(
+            "ไม่พบข้อมูลรายการตรวจ:",
+            recordId
+        );
+
+        alert(
+            "ไม่พบข้อมูลรายการตรวจ"
         );
 
         return;
+
+    }
+
+
+    // ----------------------------------------
+    // SHOW DELETE CONFIRMATION
+    // ----------------------------------------
+
+    showDeleteInspectionConfirm(
+        record
+    );
+
+}
+
+
+
+// ======================================================
+// SHOW DELETE CONFIRMATION POPUP
+// ======================================================
+
+function showDeleteInspectionConfirm(
+    record
+) {
+
+    const date =
+        record.inspectionDate || "-";
+
+    const time =
+        record.inspectionTime || "-";
+
+    const location =
+        record.locationName || "-";
+
+    const zone =
+        record.zone || "-";
+
+    const inspector =
+        record.inspectorName || "-";
+
+
+    openPopup(
+
+        `
+
+            <div class="inspection-delete-confirm">
+
+                <div class="inspection-delete-icon">
+                    !
+                </div>
+
+
+                <div class="inspection-delete-message">
+
+                    <strong>
+                        คุณต้องการลบรายการตรวจนี้หรือไม่?
+                    </strong>
+
+                    <span>
+                        กรุณาตรวจสอบข้อมูลก่อนยืนยันการลบ
+                    </span>
+
+                </div>
+
+
+                <div class="inspection-delete-summary">
+
+                    <div
+                        class="inspection-delete-summary-row"
+                    >
+
+                        <span>
+                            วันที่ตรวจ
+                        </span>
+
+                        <strong>
+                            ${escapeHTML(date)}
+                        </strong>
+
+                    </div>
+
+
+                    <div
+                        class="inspection-delete-summary-row"
+                    >
+
+                        <span>
+                            เวลา
+                        </span>
+
+                        <strong>
+                            ${escapeHTML(time)}
+                        </strong>
+
+                    </div>
+
+
+                    <div
+                        class="inspection-delete-summary-row"
+                    >
+
+                        <span>
+                            เขต
+                        </span>
+
+                        <strong>
+                            ${escapeHTML(zone)}
+                        </strong>
+
+                    </div>
+
+
+                    <div
+                        class="inspection-delete-summary-row"
+                    >
+
+                        <span>
+                            จุดตรวจ
+                        </span>
+
+                        <strong>
+                            ${escapeHTML(location)}
+                        </strong>
+
+                    </div>
+
+
+                    <div
+                        class="inspection-delete-summary-row"
+                    >
+
+                        <span>
+                            ผู้ตรวจ
+                        </span>
+
+                        <strong>
+                            ${escapeHTML(inspector)}
+                        </strong>
+
+                    </div>
+
+                </div>
+
+
+                <div class="inspection-delete-warning">
+
+                    <span
+                        class="inspection-delete-warning-icon"
+                    >
+                        ⚠
+                    </span>
+
+                    <span>
+                        เมื่อลบรายการตรวจแล้ว
+                        จะไม่สามารถกู้คืนข้อมูลได้
+                    </span>
+
+                </div>
+
+
+                <div class="inspection-delete-actions">
+
+                    <button
+                        id="cancel-delete-inspection-button"
+                        type="button"
+                        class="secondary-button"
+                    >
+                        ยกเลิก
+                    </button>
+
+
+                    <button
+                        id="confirm-delete-inspection-button"
+                        type="button"
+                        class="danger-button"
+                    >
+                        🗑 ลบรายการตรวจ
+                    </button>
+
+                </div>
+
+            </div>
+
+        `,
+
+        {
+            title:
+                "ยืนยันการลบรายการตรวจ",
+
+            size:
+                "small"
+        }
+
+    );
+
+
+    // ----------------------------------------
+    // CANCEL
+    // ----------------------------------------
+
+    const cancelButton =
+        document.getElementById(
+            "cancel-delete-inspection-button"
+        );
+
+
+    if (cancelButton) {
+
+        cancelButton.addEventListener(
+            "click",
+            function () {
+
+                console.log(
+                    "ยกเลิกการลบรายการตรวจ"
+                );
+
+                closePopup();
+
+            }
+        );
+
+    }
+
+
+    // ----------------------------------------
+    // CONFIRM DELETE
+    // ----------------------------------------
+
+    const confirmButton =
+        document.getElementById(
+            "confirm-delete-inspection-button"
+        );
+
+
+    if (confirmButton) {
+
+        confirmButton.addEventListener(
+            "click",
+            async function () {
+
+                await confirmDeleteInspection(
+                    record.recordId,
+                    confirmButton
+                );
+
+            }
+        );
+
+    }
+
+}
+
+
+
+// ======================================================
+// CONFIRM DELETE INSPECTION
+// ======================================================
+
+async function confirmDeleteInspection(
+    recordId,
+    button
+) {
+
+    console.log(
+        "ยืนยันลบรายการตรวจ:",
+        recordId
+    );
+
+
+    if (!recordId) {
+
+        return;
+
+    }
+
+
+    // ----------------------------------------
+    // PREVENT DOUBLE CLICK
+    // ----------------------------------------
+
+    if (button) {
+
+        button.disabled = true;
+
+        button.textContent =
+            "กำลังลบ...";
 
     }
 
@@ -1817,17 +2113,88 @@ async function deleteInspectionRecord(
         );
 
 
+        // ----------------------------------------
+        // DELETE FAILED
+        // ----------------------------------------
+
         if (
             !data ||
             !data.success
         ) {
 
-            alert(
-                data &&
-                data.message
-                    ? data.message
-                    : "ไม่สามารถลบรายการตรวจได้"
+            if (button) {
+
+                button.disabled = false;
+
+                button.textContent =
+                    "🗑 ลบรายการตรวจ";
+
+            }
+
+
+            openPopup(
+
+                `
+
+                    <div class="inspection-delete-result">
+
+                        <div class="inspection-delete-result-icon error">
+                            !
+                        </div>
+
+                        <strong>
+                            ไม่สามารถลบรายการตรวจได้
+                        </strong>
+
+                        <span>
+                            ${
+                                escapeHTML(
+                                    data &&
+                                    data.message
+                                        ? data.message
+                                        : "เกิดข้อผิดพลาดในการลบข้อมูล"
+                                )
+                            }
+                        </span>
+
+                        <button
+                            type="button"
+                            class="secondary-button"
+                            id="close-delete-error-button"
+                        >
+                            ปิด
+                        </button>
+
+                    </div>
+
+                `,
+
+                {
+                    title:
+                        "ลบรายการตรวจ",
+
+                    size:
+                        "small"
+                }
+
             );
+
+
+            const closeButton =
+                document.getElementById(
+                    "close-delete-error-button"
+                );
+
+
+            if (closeButton) {
+
+                closeButton.addEventListener(
+                    "click",
+                    closePopup
+                );
+
+            }
+
 
             return;
 
@@ -1852,15 +2219,82 @@ async function deleteInspectionRecord(
 
 
         // ----------------------------------------
-        // RENDER
+        // CLOSE CONFIRMATION
+        // ----------------------------------------
+
+        closePopup();
+
+
+        // ----------------------------------------
+        // RENDER LIST
         // ----------------------------------------
 
         renderInspectionList();
 
 
-        alert(
-            "ลบรายการตรวจเรียบร้อยแล้ว"
+        // ----------------------------------------
+        // SUCCESS POPUP
+        // ----------------------------------------
+
+        openPopup(
+
+            `
+
+                <div class="inspection-delete-result">
+
+                    <div class="inspection-delete-result-icon success">
+                        ✓
+                    </div>
+
+
+                    <strong>
+                        ลบรายการตรวจสำเร็จ
+                    </strong>
+
+
+                    <span>
+                        ระบบลบข้อมูลการตรวจ
+                        และรายการตรวจย่อยเรียบร้อยแล้ว
+                    </span>
+
+
+                    <button
+                        type="button"
+                        class="primary-button"
+                        id="close-delete-success-button"
+                    >
+                        ตกลง
+                    </button>
+
+                </div>
+
+            `,
+
+            {
+                title:
+                    "ดำเนินการสำเร็จ",
+
+                size:
+                    "small"
+            }
+
         );
+
+
+        const closeButton =
+            document.getElementById(
+                "close-delete-success-button"
+            );
+
+
+        if (closeButton) {
+
+            closeButton.addEventListener(
+                "click",
+                closePopup
+            );
+
+        }
 
 
     } catch (error) {
@@ -1871,14 +2305,69 @@ async function deleteInspectionRecord(
         );
 
 
-        alert(
-            "เกิดข้อผิดพลาดในการลบรายการตรวจ"
+        openPopup(
+
+            `
+
+                <div class="inspection-delete-result">
+
+                    <div class="inspection-delete-result-icon error">
+                        !
+                    </div>
+
+
+                    <strong>
+                        เกิดข้อผิดพลาด
+                    </strong>
+
+
+                    <span>
+                        ไม่สามารถลบรายการตรวจได้
+                        กรุณาลองใหม่อีกครั้ง
+                    </span>
+
+
+                    <button
+                        type="button"
+                        class="secondary-button"
+                        id="close-delete-error-button"
+                    >
+                        ปิด
+                    </button>
+
+                </div>
+
+            `,
+
+            {
+                title:
+                    "ลบรายการตรวจ",
+
+                size:
+                    "small"
+            }
+
         );
+
+
+        const closeButton =
+            document.getElementById(
+                "close-delete-error-button"
+            );
+
+
+        if (closeButton) {
+
+            closeButton.addEventListener(
+                "click",
+                closePopup
+            );
+
+        }
 
     }
 
 }
-
 
 
 // ======================================================
