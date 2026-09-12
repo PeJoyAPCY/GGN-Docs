@@ -1,0 +1,198 @@
+/* ======================================================
+   INSPECTION SUCCESS MODAL
+   ====================================================== */
+
+.inspection-modal-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 20px;
+
+    background: rgba(23, 54, 93, 0.38);
+
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+}
+
+
+/* ------------------------------------------------------
+   MODAL CARD
+   ------------------------------------------------------ */
+
+.inspection-success-modal {
+    width: 100%;
+    max-width: 460px;
+
+    background: var(--surface);
+
+    border: 1px solid var(--border-soft);
+    border-radius: 18px;
+
+    padding: 30px;
+
+    box-shadow: var(--shadow-lg);
+
+    text-align: center;
+
+    animation: inspectionModalIn 0.2s ease-out;
+}
+
+
+/* ------------------------------------------------------
+   SUCCESS ICON
+   ------------------------------------------------------ */
+
+.inspection-success-icon {
+    width: 64px;
+    height: 64px;
+
+    margin: 0 auto 18px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 50%;
+
+    background: var(--success-bg);
+    border: 1px solid var(--success-border);
+
+    color: var(--success-text);
+
+    font-size: 32px;
+    font-weight: 700;
+
+    box-shadow:
+        0 4px 12px rgba(21, 128, 61, 0.08);
+}
+
+
+/* ------------------------------------------------------
+   SUMMARY ROW
+   ------------------------------------------------------ */
+
+.inspection-success-summary-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 16px;
+
+    padding: 9px 0;
+
+    border-bottom: 1px solid var(--border-soft);
+}
+
+
+.inspection-success-summary-row:last-child {
+    border-bottom: none;
+}
+
+
+/* ------------------------------------------------------
+   SUMMARY LABEL
+   ------------------------------------------------------ */
+
+.inspection-success-summary-label {
+    color: var(--text-500);
+
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+
+/* ------------------------------------------------------
+   SUMMARY VALUE
+   ------------------------------------------------------ */
+
+.inspection-success-summary-value {
+    color: var(--text-800);
+
+    font-size: 13px;
+    font-weight: 600;
+
+    text-align: right;
+
+    line-height: 1.5;
+}
+
+
+/* ------------------------------------------------------
+   RESULT SUMMARY
+   ------------------------------------------------------ */
+
+.inspection-success-result {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    gap: 24px;
+
+    margin-top: 10px;
+    padding-top: 12px;
+
+    border-top: 1px solid var(--border-soft);
+}
+
+
+.inspection-success-pass {
+    color: var(--success-text);
+
+    font-size: 13px;
+    font-weight: 700;
+}
+
+
+.inspection-success-fail {
+    color: var(--danger-text);
+
+    font-size: 13px;
+    font-weight: 700;
+}
+
+
+/* ------------------------------------------------------
+   ACTION BUTTONS
+   ------------------------------------------------------ */
+
+.inspection-success-actions {
+    display: flex;
+    flex-direction: column;
+
+    gap: 10px;
+}
+
+
+.inspection-success-actions button {
+    width: 100%;
+}
+
+
+/* ------------------------------------------------------
+   MODAL ANIMATION
+   ------------------------------------------------------ */
+
+@keyframes inspectionModalIn {
+
+    from {
+        opacity: 0;
+
+        transform:
+            translateY(10px)
+            scale(0.98);
+    }
+
+    to {
+        opacity: 1;
+
+        transform:
+            translateY(0)
+            scale(1);
+    }
+
+}

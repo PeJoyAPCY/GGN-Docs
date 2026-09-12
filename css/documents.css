@@ -1,0 +1,465 @@
+/* ========================================
+   DOCUMENT PAGE
+======================================== */
+
+.document-page-header {
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    gap: 20px;
+}
+
+
+/* ========================================
+   DOCUMENT LIST CARD
+======================================== */
+
+.document-list-card {
+    width: 100%;
+
+    background: var(--surface);
+
+    border: 1px solid var(--border);
+
+    border-radius: 14px;
+
+    box-shadow: var(--shadow-sm);
+
+    overflow: hidden;
+}
+
+
+.document-list-header {
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    gap: 16px;
+
+    padding: 20px 22px;
+
+    border-bottom: 1px solid var(--border);
+
+    background:
+        linear-gradient(
+            90deg,
+            #ffffff,
+            #fbfdff
+        );
+}
+
+
+.document-list-header h3 {
+    margin: 0 0 4px;
+
+    color: var(--text-800);
+
+    font-size: 16px;
+}
+
+
+.document-list-header span {
+    color: var(--text-500);
+
+    font-size: 13px;
+}
+
+
+.document-count {
+    display: flex;
+
+    align-items: baseline;
+
+    gap: 5px;
+
+    flex-shrink: 0;
+}
+
+
+.document-count strong {
+    color: var(--ggn-blue-700);
+
+    font-size: 22px;
+}
+
+
+.document-count span {
+    font-size: 13px;
+
+    color: var(--text-500);
+}
+
+
+/* ========================================
+   DOCUMENT TABLE WRAPPER
+======================================== */
+
+.document-table-wrapper {
+    width: 100%;
+
+    overflow-x: auto;
+
+    -webkit-overflow-scrolling: touch;
+}
+
+
+.document-table-container {
+    width: 100%;
+
+    overflow-x: auto;
+
+    background: var(--surface);
+
+    border: 1px solid var(--border);
+
+    border-radius: 14px;
+}
+
+
+/* ========================================
+   DOCUMENT TABLE
+======================================== */
+
+.document-table {
+    width: 100%;
+
+    min-width: 700px;
+
+    border-collapse: collapse;
+}
+
+
+.document-table th,
+.document-table td {
+    padding: 14px 16px;
+
+    border-bottom: 1px solid var(--border);
+
+    text-align: left;
+
+    font-size: 14px;
+}
+
+
+.document-table th {
+    background:
+        linear-gradient(
+            90deg,
+            #f5faff,
+            #fffdf3
+        );
+
+    color: var(--text-700);
+
+    font-weight: 700;
+
+    white-space: nowrap;
+}
+
+
+.document-table td {
+    color: var(--text-800);
+}
+
+
+.document-table tbody tr:last-child td {
+    border-bottom: 0;
+}
+
+
+.document-table tbody tr:hover {
+    background: #fbfdff;
+}
+
+
+.document-action-button {
+    padding: 7px 12px;
+
+    border: 1px solid #cfd8e3;
+
+    border-radius: 8px;
+
+    background: #ffffff;
+
+    color: var(--text-800);
+
+    font-family: inherit;
+
+    font-size: 13px;
+
+    cursor: pointer;
+
+    transition:
+        background 0.2s ease,
+        border-color 0.2s ease,
+        color 0.2s ease;
+}
+
+
+.document-action-button:hover {
+    background: var(--ggn-blue-50);
+
+    border-color: #9cc3e5;
+
+    color: var(--ggn-blue-800);
+}
+
+
+.document-action-button:disabled {
+    opacity: 0.55;
+
+    cursor: not-allowed;
+}
+
+
+/* ========================================
+   DOCUMENT EMPTY
+======================================== */
+
+.document-empty {
+    padding: 50px 20px !important;
+
+    text-align: center !important;
+
+    color: var(--text-500) !important;
+}
+
+
+.document-empty > div {
+    margin-bottom: 10px;
+
+    font-size: 36px;
+}
+
+
+.document-empty strong {
+    display: block;
+
+    margin-bottom: 5px;
+
+    color: var(--text-800);
+}
+
+
+.document-empty span {
+    display: block;
+
+    font-size: 13px;
+
+    color: var(--text-500);
+}
+
+
+/* ========================================
+   DOCUMENT FORM
+======================================== */
+
+#document-form-container {
+    width: 100%;
+
+    max-width: 850px;
+
+    margin-bottom: 24px;
+
+    background: var(--surface);
+
+    border: 1px solid var(--border);
+
+    border-radius: 14px;
+
+    box-shadow: var(--shadow-sm);
+
+    overflow: hidden;
+}
+
+
+#document-form {
+    padding: 24px;
+}
+
+
+#document-form .form-group {
+    margin-bottom: 18px;
+}
+
+
+#document-form .form-group:last-child {
+    margin-bottom: 0;
+}
+
+
+/* ========================================
+   DOCUMENT FORM HEADER
+======================================== */
+
+.document-form-header {
+    display: flex;
+
+    align-items: flex-start;
+
+    justify-content: space-between;
+
+    gap: 16px;
+
+    padding: 20px 24px;
+
+    border-bottom: 1px solid var(--border);
+
+    background:
+        linear-gradient(
+            90deg,
+            #f5faff,
+            #fffdf4
+        );
+}
+
+
+.document-form-header h3 {
+    margin: 0 0 5px;
+
+    color: var(--ggn-blue-900);
+
+    font-size: 18px;
+}
+
+
+.document-form-header p {
+    margin: 0;
+
+    color: var(--text-500);
+
+    font-size: 13px;
+}
+
+
+/* ========================================
+   MOBILE
+======================================== */
+
+@media (max-width: 768px) {
+/* ------------------------------------
+       DOCUMENT PAGE
+    ------------------------------------ */
+
+    .document-page-header {
+        align-items: stretch;
+
+        flex-direction: column;
+
+        gap: 14px;
+    }
+
+
+    .document-page-header .primary-button {
+        width: 100%;
+    }
+
+
+    .document-list-card {
+        border-radius: 12px;
+    }
+
+
+    .document-list-header {
+        padding: 16px;
+
+        align-items: flex-start;
+    }
+
+
+    .document-table-wrapper {
+        overflow-x: auto;
+
+        max-width: 100%;
+    }
+
+
+    .document-table {
+        min-width: 650px;
+    }
+
+
+    /* ------------------------------------
+       DOCUMENT FORM
+    ------------------------------------ */
+
+    #document-form-container {
+        border-radius: 12px;
+    }
+
+
+    #document-form {
+        padding: 18px;
+    }
+
+
+    .document-form-header {
+        padding: 18px;
+    }
+
+
+    .form-grid {
+        grid-template-columns: 1fr;
+
+        gap: 14px;
+    }
+
+
+    .form-actions {
+        flex-direction: column-reverse;
+
+        padding: 18px;
+    }
+
+
+    .form-actions button {
+        width: 100%;
+
+        min-height: 46px;
+    }
+
+
+    /* ------------------------------------
+       DOCUMENT TABLE
+    ------------------------------------ */
+
+    .document-table-container {
+        border-radius: 12px;
+    }
+
+
+    .document-table th,
+    .document-table td {
+        padding: 12px;
+
+        font-size: 13px;
+    }
+
+}
+
+
+
+/* ========================================
+   SMALL MOBILE
+======================================== */
+
+@media (max-width: 480px) {
+/* ------------------------------------
+       DOCUMENT HEADER
+    ------------------------------------ */
+
+    .document-list-header {
+        padding: 14px;
+    }
+
+
+    .document-count strong {
+        font-size: 20px;
+    }
+
+}

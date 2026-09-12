@@ -1,32 +1,32 @@
-/* =========================================================
-   GGN DOCS
-   style.css
-   Global Styles / Design Tokens / Reset
-   ========================================================= */
+/* ========================================
+   GGN Docs
+   Main Style
+   Theme:
+   Light Blue + Soft Yellow
+   ======================================== */
 
 
-/* =========================================================
+/* ========================================
    DESIGN TOKENS
-   ========================================================= */
+======================================== */
 
 :root {
-    /* GGN Blue */
+
     --ggn-blue-900: #17365d;
     --ggn-blue-800: #1f4e79;
     --ggn-blue-700: #2563a6;
     --ggn-blue-600: #2f75b5;
     --ggn-blue-500: #5b9bd5;
+
     --ggn-blue-100: #eaf4ff;
     --ggn-blue-50: #f5faff;
 
-    /* GGN Yellow */
     --ggn-yellow-500: #e6b800;
     --ggn-yellow-400: #f2c94c;
     --ggn-yellow-200: #fff2b8;
     --ggn-yellow-100: #fff9df;
     --ggn-yellow-50: #fffdf2;
 
-    /* Text */
     --text-900: #263238;
     --text-800: #344054;
     --text-700: #475467;
@@ -34,15 +34,12 @@
     --text-400: #7b8794;
     --text-300: #98a2b3;
 
-    /* Border */
     --border: #e4e7ec;
     --border-soft: #eaecf0;
 
-    /* Surface */
     --surface: #ffffff;
     --surface-soft: #f8fafc;
 
-    /* Status */
     --success-bg: #ecfdf3;
     --success-border: #86efac;
     --success-text: #15803d;
@@ -54,20 +51,25 @@
     --danger-bg: #fef3f2;
     --danger-text: #b42318;
 
-    /* Shadow */
-    --shadow-sm: 0 2px 8px rgba(31, 78, 121, 0.05);
-    --shadow-md: 0 8px 24px rgba(31, 78, 121, 0.08);
-    --shadow-lg: 0 14px 35px rgba(31, 78, 121, 0.12);
+    --shadow-sm:
+        0 2px 8px rgba(31, 78, 121, 0.05);
+
+    --shadow-md:
+        0 8px 24px rgba(31, 78, 121, 0.08);
+
+    --shadow-lg:
+        0 14px 35px rgba(31, 78, 121, 0.12);
 }
 
 
-/* =========================================================
+/* ========================================
    RESET
-   ========================================================= */
+======================================== */
 
 * {
     box-sizing: border-box;
 }
+
 
 html,
 body {
@@ -76,30 +78,30 @@ body {
     min-height: 100%;
 }
 
+
 html {
     scroll-behavior: smooth;
 }
 
 
-/* =========================================================
-   BODY
-   ========================================================= */
-
 body {
-    font-family: "Segoe UI", Tahoma, sans-serif;
-    background: linear-gradient(
-        180deg,
-        #f7fbff 0%,
-        #f5f7fa 100%
-    );
+    font-family:
+        "Segoe UI",
+        Tahoma,
+        sans-serif;
+
+    background:
+        linear-gradient(
+            180deg,
+            #f7fbff 0%,
+            #f5f7fa 100%
+        );
+
     color: var(--text-900);
+
     line-height: 1.5;
 }
 
-
-/* =========================================================
-   GLOBAL FORM FONT
-   ========================================================= */
 
 button,
 input,
@@ -109,26 +111,25 @@ textarea {
 }
 
 
-/* =========================================================
-   MOBILE TAP HIGHLIGHT
-   ========================================================= */
+button {
+    -webkit-tap-highlight-color: transparent;
+}
 
-button,
+
 input,
 select,
 textarea {
     -webkit-tap-highlight-color: transparent;
 }
 
+/* ========================================
+   MODULAR CSS IMPORTS
+   ======================================== */
 
-/* =========================================================
-   GLOBAL FOCUS
-   ========================================================= */
-
-button:focus-visible,
-input:focus-visible,
-select:focus-visible,
-textarea:focus-visible {
-    outline: 3px solid rgba(47, 117, 181, 0.18);
-    outline-offset: 1px;
-}
+@import url("layout.css");
+@import url("components.css");
+@import url("documents.css");
+@import url("fmop11.css");
+@import url("inspections.css");
+@import url("inspection-list.css");
+@import url("popup.css");

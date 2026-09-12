@@ -1,0 +1,1033 @@
+/* ========================================
+   ICON BUTTON
+======================================== */
+
+.icon-button {
+    width: 36px;
+
+    height: 36px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    flex-shrink: 0;
+
+    border: 0;
+
+    border-radius: 8px;
+
+    background: transparent;
+
+    color: var(--text-500);
+
+    font-size: 24px;
+
+    line-height: 1;
+
+    cursor: pointer;
+
+    transition:
+        background 0.2s ease,
+        color 0.2s ease;
+}
+
+
+.icon-button:hover {
+    background: var(--ggn-blue-100);
+
+    color: var(--ggn-blue-700);
+}
+
+
+/* ========================================
+   GENERIC FORM
+======================================== */
+
+.form-grid {
+    display: grid;
+
+    grid-template-columns:
+        repeat(2, minmax(0, 1fr));
+
+    gap: 18px;
+}
+
+
+.form-group {
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 7px;
+}
+
+
+.form-group label {
+    font-size: 14px;
+
+    font-weight: 600;
+
+    color: var(--text-800);
+}
+
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+    width: 100%;
+
+    min-height: 44px;
+
+    padding: 11px 14px;
+
+    border: 1px solid #cfd8e3;
+
+    border-radius: 10px;
+
+    background: #ffffff;
+
+    color: var(--text-900);
+
+    font-family: inherit;
+
+    font-size: 15px;
+
+    outline: none;
+
+    transition:
+        border-color 0.2s ease,
+        box-shadow 0.2s ease,
+        background 0.2s ease;
+}
+
+
+.form-group input::placeholder,
+.form-group textarea::placeholder {
+    color: var(--text-300);
+}
+
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    border-color: var(--ggn-blue-500);
+
+    background: #fcfeff;
+
+    box-shadow:
+        0 0 0 3px rgba(47, 117, 181, 0.11);
+}
+
+
+/* ========================================
+   FORM ACTIONS
+======================================== */
+
+.form-actions {
+    display: flex;
+
+    justify-content: flex-end;
+
+    gap: 10px;
+
+    padding: 20px 24px;
+
+    border-top: 1px solid var(--border);
+
+    background: #fafcfe;
+}
+
+
+/* ========================================
+   ISO MENU
+======================================== */
+
+.iso-menu {
+    width: 100%;
+
+    max-width: 900px;
+
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 14px;
+}
+
+
+/* ========================================
+   ISO MENU CARD
+======================================== */
+
+.iso-menu-card {
+    position: relative;
+
+    width: 100%;
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 18px;
+
+    padding: 20px 22px 20px 26px;
+
+    border: 1px solid #dfe7ef;
+
+    border-radius: 15px;
+
+    background:
+        linear-gradient(
+            100deg,
+            #ffffff 0%,
+            #fbfdff 100%
+        );
+
+    color: var(--text-800);
+
+    text-align: left;
+
+    cursor: pointer;
+
+    box-shadow:
+        0 2px 7px rgba(31, 78, 121, 0.045);
+
+    overflow: hidden;
+
+    transition:
+        transform 0.18s ease,
+        border-color 0.18s ease,
+        box-shadow 0.18s ease,
+        background 0.18s ease;
+}
+
+
+/* แถบด้านซ้าย */
+
+.iso-menu-card::before {
+    content: "";
+
+    position: absolute;
+
+    left: 0;
+
+    top: 0;
+
+    bottom: 0;
+
+    width: 5px;
+
+    background:
+        linear-gradient(
+            180deg,
+            var(--ggn-blue-500),
+            var(--ggn-yellow-400)
+        );
+
+    opacity: 0.75;
+
+    transition:
+        width 0.18s ease,
+        opacity 0.18s ease;
+}
+
+
+.iso-menu-card:hover {
+    transform: translateY(-2px);
+
+    border-color: #a9c8e4;
+
+    background:
+        linear-gradient(
+            100deg,
+            #f7fbff 0%,
+            #fffdf5 100%
+        );
+
+    box-shadow:
+        0 8px 22px rgba(31, 78, 121, 0.10);
+}
+
+
+.iso-menu-card:hover::before {
+    width: 7px;
+
+    opacity: 1;
+}
+
+
+.iso-menu-card:active {
+    transform: translateY(0);
+
+    background: #f5faff;
+}
+
+
+/* ========================================
+   ISO MENU ICON
+======================================== */
+
+.iso-menu-icon {
+    position: relative;
+
+    width: 52px;
+
+    height: 52px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    flex-shrink: 0;
+
+    border-radius: 14px;
+
+    background:
+        linear-gradient(
+            135deg,
+            #e7f3ff,
+            #f5faff
+        );
+
+    border: 1px solid #d4e8f8;
+
+    color: var(--ggn-blue-700);
+
+    font-size: 25px;
+
+    box-shadow:
+        inset 0 0 0 1px rgba(255,255,255,0.6);
+}
+
+
+.iso-menu-card:hover .iso-menu-icon {
+    background:
+        linear-gradient(
+            135deg,
+            #e3f1ff,
+            #fff8d9
+        );
+
+    border-color: #b9d7ed;
+}
+
+
+/* ========================================
+   ISO MENU CONTENT
+======================================== */
+
+.iso-menu-content {
+    flex: 1;
+
+    min-width: 0;
+}
+
+
+.iso-menu-content h3 {
+    margin: 0 0 5px;
+
+    color: var(--ggn-blue-900);
+
+    font-size: 16px;
+
+    font-weight: 700;
+
+    line-height: 1.4;
+}
+
+
+.iso-menu-content p {
+    margin: 0;
+
+    color: var(--text-500);
+
+    font-size: 13px;
+
+    line-height: 1.55;
+}
+
+
+/* ========================================
+   ISO MENU ARROW
+======================================== */
+
+.iso-menu-arrow {
+    flex-shrink: 0;
+
+    width: 32px;
+
+    height: 32px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    border-radius: 9px;
+
+    color: var(--text-300);
+
+    font-size: 25px;
+
+    line-height: 1;
+
+    transition:
+        background 0.18s ease,
+        color 0.18s ease,
+        transform 0.18s ease;
+}
+
+
+.iso-menu-card:hover .iso-menu-arrow {
+    background:
+        linear-gradient(
+            135deg,
+            var(--ggn-blue-100),
+            var(--ggn-yellow-100)
+        );
+
+    color: var(--ggn-blue-700);
+
+    transform: translateX(3px);
+}
+
+
+/* ========================================
+   BUTTONS
+======================================== */
+
+.primary-button,
+.secondary-button {
+    min-height: 42px;
+
+    padding: 10px 18px;
+
+    border-radius: 9px;
+
+    font-family: inherit;
+
+    font-size: 14px;
+
+    font-weight: 600;
+
+    cursor: pointer;
+
+    transition:
+        background 0.2s ease,
+        border-color 0.2s ease,
+        box-shadow 0.2s ease,
+        opacity 0.2s ease,
+        transform 0.15s ease;
+}
+
+
+.primary-button {
+    border: 1px solid var(--ggn-blue-700);
+
+    background:
+        linear-gradient(
+            135deg,
+            var(--ggn-blue-600),
+            var(--ggn-blue-700)
+        );
+
+    color: #ffffff;
+}
+
+
+.primary-button:hover {
+    background:
+        linear-gradient(
+            135deg,
+            var(--ggn-blue-700),
+            var(--ggn-blue-800)
+        );
+
+    box-shadow:
+        0 5px 14px rgba(31, 78, 121, 0.20);
+
+    transform: translateY(-1px);
+}
+
+
+.primary-button:active {
+    transform: translateY(1px);
+}
+
+
+.primary-button:disabled {
+    opacity: 0.6;
+
+    cursor: not-allowed;
+
+    box-shadow: none;
+
+    transform: none;
+}
+
+
+.secondary-button {
+    border: 1px solid #cfd8e3;
+
+    background: #ffffff;
+
+    color: var(--text-800);
+}
+
+
+.secondary-button:hover {
+    background:
+        linear-gradient(
+            90deg,
+            #f5faff,
+            #fffdf4
+        );
+
+    border-color: #abc9e2;
+
+    color: var(--ggn-blue-800);
+}
+
+
+.secondary-button:active {
+    background: #f1f5f9;
+}
+
+
+/* ========================================
+   GENERAL FOCUS
+======================================== */
+
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+    outline: 3px solid rgba(47, 117, 181, 0.18);
+
+    outline-offset: 1px;
+}
+
+
+/* ========================================
+   MOBILE
+======================================== */
+
+@media (max-width: 768px) {
+/* ------------------------------------
+       HEADER
+    ------------------------------------ */
+
+    .app-header {
+        height: auto;
+
+        min-height: 64px;
+
+        padding: 12px 16px;
+
+        gap: 12px;
+    }
+
+
+    .brand {
+        display: block;
+
+        min-width: 0;
+    }
+
+
+    .brand h1 {
+        font-size: 20px;
+
+        line-height: 1.3;
+    }
+
+
+    .brand span {
+        display: none;
+    }
+
+
+    .user-menu {
+        gap: 8px;
+    }
+
+
+    .header-user-role {
+        display: none;
+    }
+
+
+    .header-user-name {
+        max-width: 130px;
+
+        font-size: 14px;
+    }
+
+
+    #logout-button {
+        padding: 7px 8px;
+
+        font-size: 13px;
+    }
+
+
+    /* ------------------------------------
+       LAYOUT
+    ------------------------------------ */
+
+    .app-layout {
+        display: block;
+
+        min-height:
+            calc(100vh - 64px);
+    }
+
+
+    /* ------------------------------------
+       MAIN
+    ------------------------------------ */
+
+    .main-content {
+        width: 100%;
+
+        padding:
+            24px 16px 105px;
+    }
+
+
+    .page-header {
+        margin-bottom: 22px;
+    }
+
+
+    .page-header h2 {
+        font-size: 23px;
+
+        line-height: 1.4;
+    }
+
+
+    .page-header p {
+        font-size: 14px;
+    }
+
+
+    /* ------------------------------------
+       ISO MENU
+    ------------------------------------ */
+
+    .iso-menu {
+        gap: 12px;
+    }
+
+
+    .iso-menu-card {
+        min-height: 90px;
+
+        padding: 16px 15px 16px 19px;
+
+        gap: 13px;
+
+        border-radius: 13px;
+    }
+
+
+    .iso-menu-card::before {
+        width: 4px;
+    }
+
+
+    .iso-menu-card:hover::before {
+        width: 5px;
+    }
+
+
+    .iso-menu-icon {
+        width: 44px;
+
+        height: 44px;
+
+        border-radius: 11px;
+
+        font-size: 22px;
+    }
+
+
+    .iso-menu-content h3 {
+        margin-bottom: 3px;
+
+        font-size: 15px;
+    }
+
+
+    .iso-menu-content p {
+        font-size: 12px;
+
+        line-height: 1.5;
+    }
+
+
+    .iso-menu-arrow {
+        width: 26px;
+
+        height: 26px;
+
+        font-size: 22px;
+    }
+
+
+    /* ------------------------------------
+       ISO CARD
+    ------------------------------------ */
+
+    .iso-form-card {
+        border-radius: 12px;
+    }
+
+
+    /* ------------------------------------
+       ISO HEADER
+    ------------------------------------ */
+
+    .iso-form-header {
+        padding: 20px 18px;
+    }
+
+
+    .iso-document-code {
+        margin-bottom: 7px;
+
+        padding: 5px 9px;
+
+        font-size: 12px;
+    }
+
+
+    .iso-form-header h3 {
+        font-size: 17px;
+
+        line-height: 1.5;
+    }
+
+
+    .iso-form-header p {
+        font-size: 13px;
+
+        line-height: 1.5;
+    }
+
+
+    /* ------------------------------------
+       FORM INPUT MOBILE
+    ------------------------------------ */
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+        min-height: 46px;
+
+        font-size: 15px;
+    }
+
+
+    /* ------------------------------------
+       RESULT MOBILE
+    ------------------------------------ */
+
+    .inspection-result-group {
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+
+        gap: 8px;
+    }
+
+
+    .inspection-result-option {
+        min-height: 48px;
+
+        padding: 9px 8px;
+
+        font-size: 13px;
+    }
+
+
+    /* ------------------------------------
+       REMARK / SOLUTION MOBILE
+    ------------------------------------ */
+
+    .inspection-additional {
+        grid-template-columns: 1fr;
+
+        gap: 12px;
+
+        margin-top: 2px;
+
+        padding: 15px;
+
+        border-radius: 11px;
+    }
+
+
+    .inspection-remark,
+    .inspection-solution {
+        min-height: 85px;
+
+        font-size: 14px;
+    }
+
+
+    /* ------------------------------------
+       ACTIONS MOBILE
+    ------------------------------------ */
+
+    .iso-form-actions {
+        flex-direction: column-reverse;
+
+        padding: 18px;
+    }
+
+
+    .iso-form-actions button {
+        width: 100%;
+
+        min-height: 46px;
+    }
+
+
+    }
+
+
+
+/* ========================================
+   SMALL MOBILE
+======================================== */
+
+@media (max-width: 480px) {
+/* ------------------------------------
+       ISO MENU SMALL MOBILE
+    ------------------------------------ */
+
+    .iso-menu-card {
+        padding: 14px 12px 14px 16px;
+
+        gap: 11px;
+    }
+
+
+    .iso-menu-icon {
+        width: 40px;
+
+        height: 40px;
+
+        font-size: 20px;
+    }
+
+
+    .iso-menu-content h3 {
+        font-size: 14px;
+    }
+
+
+    .iso-menu-content p {
+        font-size: 11.5px;
+    }
+
+
+    .iso-menu-arrow {
+        font-size: 20px;
+    }
+
+
+    }
+
+
+/* ------------------------------------------------------
+   TITLE
+   ------------------------------------------------------ */
+
+.inspection-success-modal h3 {
+    margin: 0 0 8px;
+
+    color: var(--text-900);
+
+    font-size: 22px;
+    font-weight: 700;
+    line-height: 1.4;
+}
+
+
+/* ------------------------------------------------------
+   MESSAGE
+   ------------------------------------------------------ */
+
+.inspection-success-message {
+    margin: 0 0 20px;
+
+    color: var(--text-500);
+
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+
+/* ------------------------------------------------------
+   SUMMARY
+   ------------------------------------------------------ */
+
+.inspection-success-summary {
+    margin-bottom: 22px;
+    padding: 14px 16px;
+
+    background: var(--surface-soft);
+
+    border: 1px solid var(--border-soft);
+    border-radius: 12px;
+
+    text-align: left;
+}
+
+
+/*
+ * ใช้ style เดียวกับปุ่มหลักของ GGN Docs
+ */
+
+.inspection-success-actions .primary-button {
+    min-height: 44px;
+}
+
+
+/*
+ * ใช้ style เดียวกับปุ่มรองของ GGN Docs
+ */
+
+.inspection-success-actions .secondary-button {
+    min-height: 44px;
+}
+
+
+/* ------------------------------------------------------
+   MOBILE
+   ------------------------------------------------------ */
+
+@media (max-width: 600px) {
+
+    .inspection-modal-overlay {
+        padding: 16px;
+    }
+
+
+    .inspection-success-modal {
+        max-width: 100%;
+
+        padding: 24px 20px;
+
+        border-radius: 16px;
+    }
+
+
+    .inspection-success-icon {
+        width: 58px;
+        height: 58px;
+
+        margin-bottom: 15px;
+
+        font-size: 29px;
+    }
+
+
+    .inspection-success-modal h3 {
+        font-size: 20px;
+    }
+
+
+    .inspection-success-message {
+        font-size: 13px;
+    }
+
+
+    .inspection-success-summary {
+        padding: 12px 14px;
+    }
+
+
+    .inspection-success-summary-row {
+        align-items: flex-start;
+
+        gap: 10px;
+    }
+
+
+    .inspection-success-summary-value {
+        max-width: 60%;
+
+        word-break: break-word;
+    }
+
+}
+
+/* ======================================================
+   SHOW
+   ====================================================== */
+
+.global-popup.show {
+
+    opacity: 1;
+
+    visibility: visible;
+
+    pointer-events: auto;
+
+}
+
+
+/* ======================================================
+   MOBILE
+   ====================================================== */
+
+@media (max-width: 768px) {
+
+    .inspection-table-wrapper {
+        border-radius: 10px;
+    }
+
+
+    .inspection-records-table {
+        min-width: 780px;
+    }
+
+}
+
+/* ======================================================
+   MOBILE
+====================================================== */
+
+@media (max-width: 600px) {
+
+    .inspection-delete-summary-row {
+        align-items: flex-start;
+
+        gap: 10px;
+    }
+
+
+    .inspection-delete-summary-row strong {
+        max-width: 58%;
+    }
+
+
+    .inspection-delete-actions {
+        flex-direction: column;
+    }
+
+
+    .inspection-delete-actions button {
+        width: 100%;
+    }
+
+}
