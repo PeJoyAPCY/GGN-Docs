@@ -214,6 +214,24 @@ function openInspectionRecordPage() {
 
 
 // ======================================================
+// OPEN INSPECTION RECORDS LIST PAGE
+// ======================================================
+
+function openInspectionRecordsPage() {
+
+    console.log(
+        "เปิดหน้ารายการตรวจ"
+    );
+
+
+    showPage(
+        "inspection-records"
+    );
+
+}
+
+
+// ======================================================
 // OPEN FM-OP-11 GENERATOR PAGE
 // ======================================================
 
@@ -272,6 +290,41 @@ function setupISOMenu() {
 
         console.warn(
             "ไม่พบปุ่ม #open-inspection-record"
+        );
+
+    }
+
+
+    // ========================================
+    // OPEN INSPECTION RECORDS LIST
+    // ========================================
+
+    const inspectionRecordsButton =
+        document.getElementById(
+            "open-inspection-records"
+        );
+
+
+    if (inspectionRecordsButton) {
+
+        inspectionRecordsButton.addEventListener(
+            "click",
+            function () {
+
+                openInspectionRecordsPage();
+
+            }
+        );
+
+
+        console.log(
+            "ผูกปุ่มรายการตรวจสำเร็จ"
+        );
+
+    } else {
+
+        console.warn(
+            "ไม่พบปุ่ม #open-inspection-records"
         );
 
     }
@@ -344,6 +397,37 @@ function setupISOMenu() {
 
 
     // ========================================
+    // BACK FROM INSPECTION RECORDS LIST
+    // ========================================
+
+    const backFromRecords =
+        document.getElementById(
+            "back-to-inspections-from-records"
+        );
+
+
+    if (backFromRecords) {
+
+        backFromRecords.addEventListener(
+            "click",
+            function () {
+
+                console.log(
+                    "กลับไปหน้าเมนูการตรวจ ISO"
+                );
+
+
+                showPage(
+                    "inspections"
+                );
+
+            }
+        );
+
+    }
+
+
+    // ========================================
     // BACK FROM FM-OP-11
     // ========================================
 
@@ -397,6 +481,12 @@ function setupInspectionPageEvents() {
         );
 
 
+    const backRecordsButton =
+        document.getElementById(
+            "back-to-inspections-from-records"
+        );
+
+
     const backFMOP11Button =
         document.getElementById(
             "back-to-inspections-from-fmop11"
@@ -410,6 +500,26 @@ function setupInspectionPageEvents() {
     if (backButton) {
 
         backButton.addEventListener(
+            "click",
+            function () {
+
+                showPage(
+                    "inspections"
+                );
+
+            }
+        );
+
+    }
+
+
+    // ----------------------------------------
+    // BACK FROM INSPECTION RECORDS LIST
+    // ----------------------------------------
+
+    if (backRecordsButton) {
+
+        backRecordsButton.addEventListener(
             "click",
             function () {
 
