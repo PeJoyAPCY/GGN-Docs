@@ -6,6 +6,8 @@
 // - ค้นหารายการตรวจสำหรับ FM-OP-11
 // - เลือกรายการตรวจ
 // - จำกัดจำนวนสูงสุด 14 จุดต่อเอกสาร
+// - ส่งเฉพาะ recordId ไป Backend
+// - Backend เป็นผู้ดึงข้อมูล Inspection + 7 Items
 // - สร้างเอกสาร FM-OP-11
 // ======================================================
 
@@ -460,6 +462,10 @@ async function searchFMOP11Records() {
          * Backend อาจส่งข้อมูลมาในชื่อ
          * inspections หรือ data
          * เพื่อรองรับทั้งสองรูปแบบ
+         *
+         * getInspections() ตั้งใจส่งเฉพาะ
+         * ข้อมูลหลักของ Inspections
+         * ไม่โหลด InspectionItems มาพร้อมกัน
          */
 
         if (
@@ -632,12 +638,16 @@ function renderFMOP11Records() {
                 "";
 
 
+            // ==================================================
+            // FM-OP-11 มีรายการตรวจมาตรฐาน 7 ข้อ
+            //
+            // ไม่ดึง items จาก Backend ในรายการค้นหา
+            // เพราะ Items จะถูกดึงตาม recordId
+            // ตอนสร้างเอกสาร
+            // ==================================================
+
             const itemCount =
-                Array.isArray(
-                    record.items
-                )
-                    ? record.items.length
-                    : 0;
+                7;
 
 
             // ==================================================
@@ -786,6 +796,32 @@ function handleFMOP11RecordSelection(
 
 
     // ==================================================
+    // VALIDATE RECORD ID
+    // ==================================================
+
+    if (!recordId) {
+
+        checkbox.checked =
+            false;
+
+
+        console.error(
+            "รายการตรวจไม่มี recordId:",
+            record
+        );
+
+
+        alert(
+            "ไม่พบรหัสรายการตรวจของรายการนี้"
+        );
+
+
+        return;
+
+    }
+
+
+    // ==================================================
     // CHECK
     // ==================================================
 
@@ -845,6 +881,10 @@ function handleFMOP11RecordSelection(
             alreadySelected
         ) {
 
+            checkbox.checked =
+                true;
+
+
             return;
 
         }
@@ -853,10 +893,16 @@ function handleFMOP11RecordSelection(
         // ----------------------------------------------
         // ADD
         // ----------------------------------------------
+        // เก็บเฉพาะ recordId
+        // เพื่อลดข้อมูลที่เก็บใน Frontend
+        // และลดข้อมูลที่ส่งไป Backend
 
-        fmop11SelectedRecords.push(
-            record
-        );
+        fmop11SelectedRecords.push({
+
+            recordId:
+                recordId
+
+        });
 
     }
 
@@ -1099,7 +1145,7 @@ async function generateFMOP11() {
     try {
 
         console.log(
-            "กำลังสร้าง FM-OP-11 จากรายการ:",
+            "กำลังสร้าง FM-OP-11 จาก recordId:",
             fmop11SelectedRecords
         );
 
