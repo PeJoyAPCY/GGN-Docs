@@ -1,4 +1,3 @@
-
 // ======================================================
 // GGN Docs
 // FM-OP-11 GENERATOR
@@ -10,6 +9,8 @@
 // - ส่งเฉพาะ recordId ไป Backend
 // - Backend เป็นผู้ดึงข้อมูล Inspection + 7 Items
 // - สร้างเอกสาร FM-OP-11
+// - รับ PDF จาก Backend
+// - ดาวน์โหลด PDF ลงเครื่องอัตโนมัติ
 // - แสดงข้อความผิดพลาดแยกตามสาเหตุ
 // ======================================================
 
@@ -1100,6 +1101,241 @@ function clearFMOP11Selection() {
 
 
 // ======================================================
+// DOWNLOAD PDF FROM BASE64
+// ======================================================
+// Backend จะส่ง PDF กลับมาเป็น Base64
+// Frontend แปลง Base64 เป็น Blob
+// แล้วสั่ง Browser ดาวน์โหลดไฟล์ลงเครื่อง
+// ======================================================
+
+function downloadFMOP11PDF(
+    pdfBase64,
+    fileName
+) {
+
+    // ==================================================
+    // VALIDATE
+    // ==================================================
+
+    if (!pdfBase64) {
+
+        throw new Error(
+            "Backend ไม่ได้ส่งข้อมูล PDF กลับมา"
+        );
+
+    }
+
+
+    // ==================================================
+    // SUPPORT DATA URL
+    // ==================================================
+
+    let base64Data =
+        String(
+            pdfBase64
+        );
+
+
+    if (
+        base64Data.indexOf(
+            "base64,"
+        ) !== -1
+    ) {
+
+        base64Data =
+            base64Data.split(
+                "base64,"
+            )[1];
+
+    }
+
+
+    // ==================================================
+    // REMOVE WHITESPACE
+    // ==================================================
+
+    base64Data =
+        base64Data.replace(
+           (/\s/g),
+            ""
+        );
+
+
+    // ==================================================
+    // DECODE BASE64
+    // ==================================================
+
+    let binaryString;
+
+    try {
+
+        binaryString =
+            atob(
+                base64Data
+            );
+
+    } catch (error) {
+
+        console.error(
+            "ไม่สามารถแปลง PDF Base64:",
+            error
+        );
+
+
+        throw new Error(
+            "ข้อมูล PDF จาก Backend ไม่ถูกต้อง"
+        );
+
+    }
+
+
+    // ==================================================
+    // CONVERT TO BYTE ARRAY
+    // ==================================================
+
+    const length =
+        binaryString.length;
+
+
+    const bytes =
+        new Uint8Array(
+            length
+        );
+
+
+    for (
+        let index = 0;
+        index < length;
+        index++
+    ) {
+
+        bytes[index] =
+            binaryString.charCodeAt(
+                index
+            );
+
+    }
+
+
+    // ==================================================
+    // CREATE PDF BLOB
+    // ==================================================
+
+    const blob =
+        new Blob(
+            [
+                bytes
+            ],
+            {
+                type:
+                    "application/pdf"
+            }
+        );
+
+
+    // ==================================================
+    // FILE NAME
+    // ==================================================
+
+    let downloadName =
+        fileName ||
+        "FM-OP-11.pdf";
+
+
+    if (
+        !String(
+            downloadName
+        ).toLowerCase().endsWith(
+            ".pdf"
+        )
+    ) {
+
+        downloadName +=
+            ".pdf";
+
+    }
+
+
+    // ==================================================
+    // CREATE DOWNLOAD URL
+    // ==================================================
+
+    const url =
+        URL.createObjectURL(
+            blob
+        );
+
+
+    // ==================================================
+    // CREATE DOWNLOAD LINK
+    // ==================================================
+
+    const link =
+        document.createElement(
+            "a"
+        );
+
+
+    link.href =
+        url;
+
+
+    link.download =
+        downloadName;
+
+
+    link.style.display =
+        "none";
+
+
+    document.body.appendChild(
+        link
+    );
+
+
+    // ==================================================
+    // START DOWNLOAD
+    // ==================================================
+
+    link.click();
+
+
+    // ==================================================
+    // CLEANUP
+    // ==================================================
+
+    setTimeout(
+        function () {
+
+            URL.revokeObjectURL(
+                url
+            );
+
+
+            if (
+                link.parentNode
+            ) {
+
+                link.parentNode.removeChild(
+                    link
+                );
+
+            }
+
+        },
+        1000
+    );
+
+
+    console.log(
+        "ดาวน์โหลด PDF FM-OP-11 แล้ว:",
+        downloadName
+    );
+
+}
+
+
+// ======================================================
 // GENERATE FM-OP-11
 // ======================================================
 
@@ -1351,40 +1587,61 @@ async function generateFMOP11() {
 
 
         // ==================================================
-        // SUCCESS BUT NO FILE URL
+        // CHECK PDF
         // ==================================================
 
         if (
-            !data.fileUrl
+            !data.pdfBase64
         ) {
 
             if (status) {
 
                 status.textContent =
-                    "สร้างเอกสารสำเร็จ แต่ไม่พบลิงก์ไฟล์";
+                    "สร้างเอกสารสำเร็จ แต่ไม่พบไฟล์ PDF";
 
             }
 
 
             console.error(
-                "Backend แจ้งว่าสร้างสำเร็จ แต่ไม่มี fileUrl:",
+                "Backend แจ้งว่าสร้างสำเร็จ แต่ไม่มี pdfBase64:",
                 data
             );
 
 
             alert(
                 "สร้างเอกสาร FM-OP-11 สำเร็จ\n\n" +
-                "แต่ไม่พบลิงก์สำหรับเปิดไฟล์\n\n" +
-                "กรุณาตรวจสอบข้อมูลการสร้างไฟล์ใน Backend"
+                "แต่ระบบไม่ได้รับไฟล์ PDF กลับมา\n\n" +
+                "กรุณาตรวจสอบ Backend"
             );
-
-
-            clearFMOP11Selection();
 
 
             return;
 
         }
+
+
+        // ==================================================
+        // DOWNLOAD PDF
+        // ==================================================
+
+        if (status) {
+
+            status.textContent =
+                "กำลังเตรียมไฟล์ PDF สำหรับดาวน์โหลด...";
+
+        }
+
+
+        const pdfFileName =
+            data.pdfFileName ||
+            data.fileName ||
+            "FM-OP-11.pdf";
+
+
+        downloadFMOP11PDF(
+            data.pdfBase64,
+            pdfFileName
+        );
 
 
         // ==================================================
@@ -1394,13 +1651,13 @@ async function generateFMOP11() {
         if (status) {
 
             status.textContent =
-                "สร้าง FM-OP-11 สำเร็จ";
+                "สร้าง FM-OP-11 และดาวน์โหลด PDF สำเร็จ";
 
         }
 
 
         console.log(
-            "สร้าง FM-OP-11 สำเร็จ:",
+            "สร้าง FM-OP-11 และดาวน์โหลด PDF สำเร็จ:",
             {
                 documentNo:
                     data.documentNo,
@@ -1413,6 +1670,9 @@ async function generateFMOP11() {
 
                 fileName:
                     data.fileName,
+
+                pdfFileName:
+                    data.pdfFileName,
 
                 recordCount:
                     data.recordCount
@@ -1433,25 +1693,17 @@ async function generateFMOP11() {
                 data.recordCount
                     ? "จำนวนจุดตรวจ: " +
                       data.recordCount +
-                      " จุด"
+                      " จุด\n"
                     : ""
-            )
+            ) +
+            "\n" +
+            "ระบบดาวน์โหลด PDF ลงเครื่องแล้ว"
         );
 
 
-        // ----------------------------------------------
-        // OPEN FILE
-        // ----------------------------------------------
-
-        window.open(
-            data.fileUrl,
-            "_blank"
-        );
-
-
-        // ----------------------------------------------
+        // ==================================================
         // CLEAR SELECTION
-        // ----------------------------------------------
+        // ==================================================
 
         clearFMOP11Selection();
 
@@ -1467,15 +1719,21 @@ async function generateFMOP11() {
         if (status) {
 
             status.textContent =
-                "เชื่อมต่อ Backend ไม่สำเร็จ";
+                "สร้าง FM-OP-11 ไม่สำเร็จ";
 
         }
 
 
         alert(
             "สร้างเอกสาร FM-OP-11 ไม่สำเร็จ\n\n" +
-            "สาเหตุ: ไม่สามารถเชื่อมต่อกับ Backend ได้\n\n" +
-            "กรุณาตรวจสอบการเชื่อมต่อ แล้วลองใหม่อีกครั้ง"
+            "สาเหตุ: " +
+            (
+                error &&
+                error.message
+                    ? error.message
+                    : "ไม่สามารถสร้างหรือดาวน์โหลดไฟล์ PDF ได้"
+            ) +
+            "\n\nกรุณาตรวจสอบการเชื่อมต่อ แล้วลองใหม่อีกครั้ง"
         );
 
 
@@ -1508,5 +1766,3 @@ async function generateFMOP11() {
 // ======================================================
 // END FM-OP-11
 // ======================================================
-
-//เวอร์ชันนี้ยังคงหลักการเดิมทั้งหมดค่ะ แต่เวลาทดสอบ ถ้าสร้างไม่สำเร็จ เราจะเห็นได้ชัดขึ้นว่าเป็น ข้อมูลไม่ครบ / Backend ปฏิเสธ / ไม่มี response / เชื่อมต่อไม่ได้ / สร้างไฟล์แล้วแต่ไม่มี URL ทำให้เวลาคุณส่ง error มาให้ฉัน เราจะไล่ต้นเหตุได้ง่ายขึ้นค่ะ
