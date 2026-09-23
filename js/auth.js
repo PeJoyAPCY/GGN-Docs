@@ -1,3 +1,4 @@
+
 // ========================================
 // GOOGLE IDENTITY SERVICES
 // ========================================
@@ -286,27 +287,32 @@ function showUserInfo(
 
                 <p>
                     <strong>ชื่อ:</strong>
-                    ${escapeHTML(user.name)}
+                    ${escapeHTML(user.name || "")}
                 </p>
 
                 <p>
                     <strong>Email:</strong>
-                    ${escapeHTML(user.email)}
+                    ${escapeHTML(user.email || "")}
+                </p>
+
+                <p>
+                    <strong>เขต:</strong>
+                    ${escapeHTML(user.zone || "")}
                 </p>
 
                 <p>
                     <strong>แผนก:</strong>
-                    ${escapeHTML(user.department)}
+                    ${escapeHTML(user.department || "")}
                 </p>
 
                 <p>
                     <strong>สิทธิ์:</strong>
-                    ${escapeHTML(user.role)}
+                    ${escapeHTML(user.role || "")}
                 </p>
 
                 <p>
                     <strong>สถานะ:</strong>
-                    ${escapeHTML(user.status)}
+                    ${escapeHTML(user.status || "")}
                 </p>
 
             </div>
@@ -400,62 +406,7 @@ function getCurrentUser() {
 
 
 // ========================================
-// LOGOUT
-// ========================================
-
-function setupLogout() {
-
-    const logoutButton =
-        document.getElementById(
-            "logout-button"
-        );
-
-
-    if (!logoutButton) {
-
-        return;
-
-    }
-
-
-    logoutButton.addEventListener(
-        "click",
-        logout
-    );
-
-}
-
-
-// ========================================
-// LOGOUT
-// ========================================
-
-function logout() {
-
-    localStorage.removeItem(
-        "ggnDocsUser"
-    );
-
-
-    if (
-        window.google &&
-        google.accounts &&
-        google.accounts.id
-    ) {
-
-        google.accounts.id
-            .disableAutoSelect();
-
-    }
-
-
-    location.reload();
-
-}
-
-
-// ========================================
-// LOGOUT
+// LOGOUT SETUP
 // ========================================
 
 function setupLogout() {
