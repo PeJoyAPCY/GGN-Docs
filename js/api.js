@@ -1,7 +1,25 @@
-
-// ========================================
-// GGN Docs - API
-// ========================================
+/**
+ * ========================================
+ * GGN Docs - API
+ * ========================================
+ *
+ * File: api.js
+ * Version: v2.1.0
+ * Updated: 2026-09-23
+ *
+ * Version History
+ *
+ * v2.1.0
+ * - เพิ่ม apiGetInspectionLocations()
+ * - รองรับการดึง LocationMaster ตาม Email ผู้ใช้งาน
+ * - ใช้ Backend ตรวจสอบ User / Zone / Active Location
+ * - รองรับ pointId สำหรับระบบ Inspection ใหม่
+ *
+ * v1.0.0
+ * - Version เริ่มต้น
+ *
+ * ========================================
+ */
 
 
 // ========================================
@@ -229,6 +247,95 @@ async function apiGetInspections(
 
             message:
                 "ไม่สามารถดึงรายการตรวจได้"
+
+        };
+
+    }
+
+}
+
+
+// ========================================
+// GET INSPECTION LOCATIONS
+// ========================================
+// ใช้สำหรับระบบบันทึก Inspection ใหม่
+//
+// Google Account
+//      ↓
+// User Email
+//      ↓
+// Backend ตรวจ User / Zone
+//      ↓
+// LocationMaster
+//      ↓
+// Active Locations
+//
+// Admin = เห็นทุก Zone
+// User  = เห็นเฉพาะ Zone ของตนเอง
+// ========================================
+
+async function apiGetInspectionLocations(
+    email = ""
+) {
+
+    try {
+
+        if (!email) {
+
+            return {
+
+                success: false,
+
+                message:
+                    "ไม่พบ Email ผู้ใช้งาน",
+
+                locations:
+                    []
+
+            };
+
+        }
+
+
+        const url =
+            `${API_URL}?action=getInspectionLocations&email=${encodeURIComponent(email)}`;
+
+
+        const response =
+            await fetch(
+                url
+            );
+
+
+        const data =
+            await response.json();
+
+
+        console.log(
+            "ผลการดึง Inspection Locations:",
+            data
+        );
+
+
+        return data;
+
+    } catch (error) {
+
+        console.error(
+            "apiGetInspectionLocations Error:",
+            error
+        );
+
+
+        return {
+
+            success: false,
+
+            message:
+                "ไม่สามารถดึงรายการจุดตรวจได้",
+
+            locations:
+                []
 
         };
 
