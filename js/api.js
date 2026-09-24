@@ -4,10 +4,20 @@
  * ========================================
  *
  * File: api.js
- * Version: v2.1.0
- * Updated: 2026-09-23
+ * Version: v2.2.0
+ * Updated: 2026-09-24
  *
  * Version History
+ *
+ * v2.2.0
+ * - เพิ่มการส่ง Email ผู้ใช้งานสำหรับ Inspection Permission
+ * - apiGetInspections() ส่ง email ไป Backend
+ * - apiGetInspection() ส่ง email ไป Backend
+ * - apiUpdateInspection() ส่ง updatedByEmail ไป Backend
+ * - apiDeleteInspection() ส่ง deletedByEmail ไป Backend
+ * - ใช้ ggnDocsUser เป็นแหล่งข้อมูล Session
+ * - คง LocationMaster / pointId API เดิม
+ * - คง FM-OP-11 V1 เดิม
  *
  * v2.1.0
  * - เพิ่ม apiGetInspectionLocations()
@@ -20,6 +30,103 @@
  *
  * ========================================
  */
+
+
+// ========================================
+// GET CURRENT LOGIN USER
+// ========================================
+//
+// ใช้ Session จาก localStorage
+// key: ggnDocsUser
+//
+// ตัวอย่าง:
+// {
+//   email: "opggn1@gmail.com",
+//   name: "สายตรวจ A",
+//   zone: "เชียงใหม่ เขต 1",
+//   department: "Operations",
+//   role: "User",
+//   status: "Active"
+// }
+//
+// ========================================
+
+function getCurrentGGNUser() {
+
+    try {
+
+        const session =
+            localStorage.getItem(
+                "ggnDocsUser"
+            );
+
+
+        if (!session) {
+
+            return null;
+
+        }
+
+
+        const user =
+            JSON.parse(
+                session
+            );
+
+
+        if (
+            !user ||
+            !user.email
+        ) {
+
+            return null;
+
+        }
+
+
+        return user;
+
+
+    } catch (error) {
+
+        console.error(
+            "getCurrentGGNUser Error:",
+            error
+        );
+
+
+        return null;
+
+    }
+
+}
+
+
+// ========================================
+// GET CURRENT USER EMAIL
+// ========================================
+
+function getCurrentGGNUserEmail() {
+
+    const user =
+        getCurrentGGNUser();
+
+
+    if (
+        !user ||
+        !user.email
+    ) {
+
+        return "";
+
+    }
+
+
+    return String(
+        user.email
+    ).trim();
+
+}
 
 
 // ========================================
@@ -182,12 +289,54 @@ async function loginToGGN(
 // ========================================
 // GET INSPECTIONS
 // ========================================
+//
+// Permission:
+//
+// User:
+//   Backend จะบังคับดูเฉพาะรายการของตัวเอง
+//
+// Admin:
+//   เห็นทั้งหมด
+//   หรือกรอง inspectorName ได้
+//
+// ========================================
 
 async function apiGetInspections(
     filters = {}
 ) {
 
     try {
+
+        const user =
+            getCurrentGGNUser();
+
+
+        if (
+            !user ||
+            !user.email
+        ) {
+
+            return {
+
+                success: false,
+
+                message:
+                    "ไม่พบ Session ผู้ใช้งาน"
+
+            };
+
+        }
+
+
+        const requestData = {
+
+            ...filters,
+
+            email:
+                user.email
+
+        };
+
 
         const response =
             await fetch(
@@ -212,7 +361,7 @@ async function apiGetInspections(
                             action:
                                 "getInspections",
 
-                            ...filters
+                            ...requestData
 
                         })
 
@@ -246,7 +395,10 @@ async function apiGetInspections(
             success: false,
 
             message:
-                "ไม่สามารถดึงรายการตรวจได้"
+                "ไม่สามารถดึงรายการตรวจได้",
+
+            inspections:
+                []
 
         };
 
@@ -347,6 +499,13 @@ async function apiGetInspectionLocations(
 // ========================================
 // GET ONE INSPECTION
 // ========================================
+//
+// Backend Permission:
+//
+// Admin → เปิดได้ทุก Inspection
+// User  → เปิดได้เฉพาะของตัวเอง
+//
+// ========================================
 
 async function apiGetInspection(
     recordId
@@ -362,6 +521,24 @@ async function apiGetInspection(
 
                 message:
                     "ไม่พบ Record ID"
+
+            };
+
+        }
+
+
+        const email =
+            getCurrentGGNUserEmail();
+
+
+        if (!email) {
+
+            return {
+
+                success: false,
+
+                message:
+                    "ไม่พบ Session ผู้ใช้งาน"
 
             };
 
@@ -392,7 +569,10 @@ async function apiGetInspection(
                                 "getInspection",
 
                             recordId:
-                                recordId
+                                recordId,
+
+                            email:
+                                email
 
                         })
 
@@ -438,6 +618,13 @@ async function apiGetInspection(
 // ========================================
 // UPDATE INSPECTION
 // ========================================
+//
+// Backend Permission:
+//
+// Admin → แก้ได้ทั้งหมด
+// User  → แก้เฉพาะของตัวเอง
+//
+// ========================================
 
 async function apiUpdateInspection(
     inspection
@@ -460,6 +647,34 @@ async function apiUpdateInspection(
             };
 
         }
+
+
+        const email =
+            getCurrentGGNUserEmail();
+
+
+        if (!email) {
+
+            return {
+
+                success: false,
+
+                message:
+                    "ไม่พบ Session ผู้ใช้งาน"
+
+            };
+
+        }
+
+
+        const requestInspection = {
+
+            ...inspection,
+
+            updatedByEmail:
+                email
+
+        };
 
 
         const response =
@@ -486,7 +701,7 @@ async function apiUpdateInspection(
                                 "updateInspection",
 
                             inspection:
-                                inspection
+                                requestInspection
 
                         })
 
@@ -532,6 +747,18 @@ async function apiUpdateInspection(
 // ========================================
 // DELETE INSPECTION
 // ========================================
+//
+// Backend Permission:
+//
+// Admin → ลบได้ทั้งหมด
+// User  → ลบเฉพาะของตัวเอง
+//
+// Business Rule:
+//
+// ถ้ามี fileId หรือ fileUrl
+// → ไม่สามารถลบได้
+//
+// ========================================
 
 async function apiDeleteInspection(
     recordId,
@@ -548,6 +775,24 @@ async function apiDeleteInspection(
 
                 message:
                     "ไม่พบ Record ID สำหรับลบ"
+
+            };
+
+        }
+
+
+        const email =
+            getCurrentGGNUserEmail();
+
+
+        if (!email) {
+
+            return {
+
+                success: false,
+
+                message:
+                    "ไม่พบ Session ผู้ใช้งาน"
 
             };
 
@@ -580,8 +825,8 @@ async function apiDeleteInspection(
                             recordId:
                                 recordId,
 
-                            deletedBy:
-                                deletedBy
+                            deletedByEmail:
+                                email
 
                         })
 
@@ -707,6 +952,11 @@ async function apiGetSettings(
 
 // ========================================
 // GENERATE FM-OP-11
+// ========================================
+//
+// FM-OP-11 V1
+// คงโครงสร้างเดิมไว้
+//
 // ========================================
 
 async function apiGenerateFMOP11(

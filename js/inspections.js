@@ -5,10 +5,25 @@
  * ======================================================
  *
  * File: inspections.js
- * Version: v2.0.0
- * Updated: 2026-09-23
+ * Version: v2.1.0
+ * Updated: 2026-09-24
  *
  * Version History
+ *
+ * v2.1.0
+ * - เพิ่มการทำงานให้สอดคล้องกับ Inspection Permission
+ * - ใช้ Session User เป็น Current User
+ * - loadInspections() ใช้ apiGetInspections()
+ * - ส่ง Email ผู้ใช้งานผ่าน api.js เพื่อให้ Backend ตรวจสอบสิทธิ์
+ * - Inspector ของ Inspection ใหม่มาจาก User ที่ Login
+ * - pointId และ Zone ของ Inspection ใหม่มาจาก LocationMaster
+ * - Admin ที่มี Zone = All จะไม่ถูกบันทึก Zone เป็น All
+ * - Admin สามารถเลือก Location ได้ทุก Zone
+ * - User เห็นเฉพาะ Location ใน Zone ของตนเอง
+ * - คงการ Edit Inspection เดิม
+ * - คงการรองรับ Inspection เก่าที่ไม่มี pointId
+ * - คงโครงสร้าง Inspections เดิม A:R
+ * - ไม่กระทบ FM-OP-11 Version 1
  *
  * v2.0.0
  * - เปลี่ยนระบบ Inspection เป็น User → Zone → LocationMaster
@@ -145,8 +160,9 @@ async function initializeInspectionPage() {
     // LOAD SETTINGS
     // ----------------------------------------
     // ยังคงใช้ Settings สำหรับ Inspection Items
-    // แต่ Zone / Location / Inspector
-    // จะใช้ข้อมูลจากระบบใหม่ด้านล่าง
+    //
+    // Zone / Location / Inspector
+    // ใช้ข้อมูลจากระบบใหม่
     // ----------------------------------------
 
     if (
@@ -222,9 +238,11 @@ async function loadInspectionMasterLocations() {
         inspectionMasterLocations =
             [];
 
+
         console.warn(
             "ไม่สามารถโหลด LocationMaster ได้ เพราะไม่พบ User Email"
         );
+
 
         return;
 
@@ -259,12 +277,14 @@ async function loadInspectionMasterLocations() {
             inspectionMasterLocations =
                 [];
 
+
             console.error(
                 "ไม่สามารถโหลด LocationMaster:",
                 data
                     ? data.message
                     : "ไม่พบข้อมูล"
             );
+
 
             return;
 
@@ -334,7 +354,8 @@ function renderInspectionUser() {
 
     if (zoneInput) {
 
-        zoneInput.innerHTML = "";
+        zoneInput.innerHTML =
+            "";
 
 
         const option =
@@ -381,7 +402,8 @@ function renderInspectionUser() {
 
     if (inspectorInput) {
 
-        inspectorInput.innerHTML = "";
+        inspectorInput.innerHTML =
+            "";
 
 
         const option =
@@ -604,6 +626,12 @@ function normalizeDateForInput(
 // ======================================================
 // LOAD INSPECTIONS
 // ======================================================
+// Permission ถูกตรวจสอบที่ Backend
+//
+// apiGetInspections()
+// จะดึง Email จาก ggnDocsUser
+// แล้วส่งไป Backend ให้ตรวจสอบ User / Admin
+// ======================================================
 
 async function loadInspections() {
 
@@ -614,29 +642,43 @@ async function loadInspections() {
         );
 
 
-        const response =
-            await fetch(
-                API_URL,
-                {
-                    method:
-                        "POST",
+        // ----------------------------------------
+        // CURRENT USER
+        // ----------------------------------------
 
-                    headers: {
-                        "Content-Type":
-                            "text/plain;charset=utf-8"
-                    },
+        const user =
+            getCurrentUser();
 
-                    body:
-                        JSON.stringify({
-                            action:
-                                "getInspections"
-                        })
-                }
+
+        if (
+            !user ||
+            !user.email
+        ) {
+
+            console.warn(
+                "ไม่พบ Current User สำหรับโหลด Inspections"
             );
 
 
+            inspectionRecords =
+                [];
+
+
+            return;
+
+        }
+
+
+        // ----------------------------------------
+        // USE API LAYER
+        // ----------------------------------------
+        // api.js v2.2.0
+        // จะส่ง email ของ Session User
+        // ไป Backend อัตโนมัติ
+        // ----------------------------------------
+
         const data =
-            await response.json();
+            await apiGetInspections();
 
 
         console.log(
@@ -646,17 +688,21 @@ async function loadInspections() {
 
 
         if (
+            !data ||
             !data.success
         ) {
 
             console.error(
                 "ไม่สามารถโหลด Inspections:",
-                data.message
+                data
+                    ? data.message
+                    : "ไม่พบข้อมูล"
             );
 
 
             inspectionRecords =
                 [];
+
 
             return;
 
@@ -702,8 +748,16 @@ async function loadInspections() {
 // ======================================================
 // RENDER INSPECTION ZONES
 // ======================================================
-// Zone ไม่ได้มาจาก Settings แล้ว
-// Zone มาจาก Current User
+// Zone ที่แสดงบนฟอร์ม
+// ใช้เป็นข้อมูลประกอบจาก Current User
+//
+// IMPORTANT:
+// สำหรับ Admin ค่า Zone อาจเป็น "All"
+// แต่ "All" เป็น Access Scope เท่านั้น
+// ไม่ใช่ Zone ที่จะบันทึกลง Inspection
+//
+// Zone ที่บันทึกจริงจะมาจาก LocationMaster
+// ของ pointId ที่เลือก
 // ======================================================
 
 function renderInspectionZones() {
@@ -719,6 +773,7 @@ function renderInspectionZones() {
         console.warn(
             "ไม่พบ #inspection-zone"
         );
+
 
         return;
 
@@ -750,6 +805,7 @@ function renderInspectionZones() {
         console.warn(
             "User ไม่มี Zone"
         );
+
 
         return;
 
@@ -784,7 +840,7 @@ function renderInspectionZones() {
 
 
     console.log(
-        "กำหนด Zone จาก User:",
+        "กำหนด Zone Scope จาก User:",
         zone
     );
 
@@ -798,6 +854,12 @@ function renderInspectionZones() {
 //
 // option.value = pointId
 // option.textContent = location
+//
+// User:
+//   ได้เฉพาะ Location ใน Zone ของตนเอง
+//
+// Admin:
+//   ได้ Location ทุก Zone
 // ======================================================
 
 function renderInspectionLocations() {
@@ -813,6 +875,7 @@ function renderInspectionLocations() {
         console.warn(
             "ไม่พบ #inspection-location"
         );
+
 
         return;
 
@@ -862,6 +925,13 @@ function renderInspectionLocations() {
                 ).trim();
 
 
+            const locationZone =
+                String(
+                    location.zone ||
+                    ""
+                ).trim();
+
+
             if (
                 !pointId ||
                 !locationName
@@ -891,8 +961,7 @@ function renderInspectionLocations() {
 
 
             option.dataset.zone =
-                location.zone ||
-                "";
+                locationZone;
 
 
             option.dataset.location =
@@ -919,7 +988,10 @@ function renderInspectionLocations() {
 // RENDER INSPECTION INSPECTORS
 // ======================================================
 // Inspector มาจาก Current User
-// ไม่ให้ User เลือกเอง
+// ไม่ให้ User / Admin เลือกเองในหน้า New Inspection
+//
+// FM-OP-11 จะมี Logic แยกต่างหากสำหรับ
+// Admin ที่ต้องการเลือก Inspector
 // ======================================================
 
 function renderInspectionInspectors() {
@@ -935,6 +1007,7 @@ function renderInspectionInspectors() {
         console.warn(
             "ไม่พบ #inspection-inspector"
         );
+
 
         return;
 
@@ -1410,18 +1483,24 @@ function getSelectedInspectionLocation() {
     return {
 
         pointId:
-            option.dataset.pointId ||
-            option.value ||
-            "",
+            String(
+                option.dataset.pointId ||
+                option.value ||
+                ""
+            ).trim(),
 
         location:
-            option.dataset.location ||
-            option.textContent.trim() ||
-            "",
+            String(
+                option.dataset.location ||
+                option.textContent.trim() ||
+                ""
+            ).trim(),
 
         zone:
-            option.dataset.zone ||
-            ""
+            String(
+                option.dataset.zone ||
+                ""
+            ).trim()
 
     };
 
@@ -1505,12 +1584,36 @@ function validateInspectionForm() {
         !location.value
     ) {
 
-        alert(
-            "กรุณาเลือกจุดตรวจ"
-        );
+        // ------------------------------------------------
+        // CREATE / EDIT
+        // ------------------------------------------------
+        // ทั้งสองโหมดต้องมี Location
+        //
+        // แต่ Legacy Inspection ที่ไม่มี pointId
+        // ยังสามารถแก้ไขได้
+        // ดังนั้นห้ามใช้ location.value
+        // เป็นตัวตัดสิน pointId ใน EDIT
+        // ------------------------------------------------
+
+        if (
+            inspectionMode === "edit" &&
+            editingInspectionData &&
+            editingInspectionData.locationName
+        ) {
+
+            // Legacy Inspection
+            // สามารถใช้ Location เดิมได้
+
+        } else {
+
+            alert(
+                "กรุณาเลือกจุดตรวจ"
+            );
 
 
-        return false;
+            return false;
+
+        }
 
     }
 
@@ -1519,34 +1622,146 @@ function validateInspectionForm() {
         getSelectedInspectionLocation();
 
 
+    // ------------------------------------------------
+    // CREATE MODE
+    // ------------------------------------------------
+    //
+    // Inspection ใหม่ต้องใช้ Point ID
+    // และ Zone จาก LocationMaster
+    // ------------------------------------------------
+
     if (
-        !selectedLocation ||
-        !selectedLocation.pointId
+        inspectionMode === "create"
     ) {
 
-        alert(
-            "ไม่พบ Point ID ของจุดตรวจ"
-        );
+        if (
+            !selectedLocation ||
+            !selectedLocation.pointId
+        ) {
+
+            alert(
+                "ไม่พบ Point ID ของจุดตรวจ"
+            );
 
 
-        return false;
+            return false;
+
+        }
+
+
+        if (
+            !selectedLocation.location
+        ) {
+
+            alert(
+                "ไม่พบชื่อจุดตรวจ"
+            );
+
+
+            return false;
+
+        }
+
+
+        if (
+            !selectedLocation.zone
+        ) {
+
+            alert(
+                "ไม่พบ Zone ของจุดตรวจจาก LocationMaster"
+            );
+
+
+            return false;
+
+        }
+
+
+        // --------------------------------------------
+        // ADMIN SAFETY CHECK
+        // --------------------------------------------
+        // Admin มี Zone = All เป็น Access Scope
+        // แต่ห้ามบันทึก Inspection ด้วย Zone = All
+        // --------------------------------------------
+
+        if (
+            String(
+                selectedLocation.zone ||
+                ""
+            ).trim().toLowerCase() === "all"
+        ) {
+
+            console.error(
+                "ไม่อนุญาตให้สร้าง Inspection ด้วย Zone = All:",
+                selectedLocation
+            );
+
+
+            alert(
+                "ไม่สามารถบันทึก Inspection ด้วย Zone = All ได้ กรุณาเลือกจุดตรวจใหม่"
+            );
+
+
+            return false;
+
+        }
 
     }
 
 
+    // ------------------------------------------------
+    // EDIT MODE
+    // ------------------------------------------------
+    //
+    // Inspection เดิมสามารถไม่มี pointId ได้
+    // เช่นข้อมูลก่อนเพิ่ม LocationMaster
+    //
+    // Backend จะเป็นผู้ตรวจสอบ Permission
+    // จาก recordId + Current User
+    // ------------------------------------------------
+
     if (
-        !selectedLocation.location
+        inspectionMode === "edit"
     ) {
 
-        alert(
-            "ไม่พบชื่อจุดตรวจ"
-        );
+        const original =
+            editingInspectionData ||
+            {};
 
 
-        return false;
+        if (
+            !original.recordId
+        ) {
+
+            alert(
+                "ไม่พบรหัสรายการตรวจเดิม"
+            );
+
+
+            return false;
+
+        }
+
+
+        if (
+            !original.locationName
+        ) {
+
+            alert(
+                "ไม่พบข้อมูลจุดตรวจเดิม"
+            );
+
+
+            return false;
+
+        }
 
     }
 
+
+    // ------------------------------------------------
+    // CURRENT USER
+    // ------------------------------------------------
 
     if (
         !user.name
@@ -1561,6 +1776,24 @@ function validateInspectionForm() {
 
     }
 
+
+    if (
+        !user.email
+    ) {
+
+        alert(
+            "ไม่พบ Email ของผู้ใช้งาน"
+        );
+
+
+        return false;
+
+    }
+
+
+    // ------------------------------------------------
+    // INSPECTION ITEMS
+    // ------------------------------------------------
 
     const items =
         collectInspectionItems();
@@ -1761,10 +1994,6 @@ function updateInspectionFormMode() {
         "create"
     ) {
 
-        const user =
-            getCurrentUser();
-
-
         const zoneInput =
             document.getElementById(
                 "inspection-zone"
@@ -1849,24 +2078,6 @@ async function saveInspection() {
     const timeInput =
         document.getElementById(
             "inspection-time"
-        );
-
-
-    const zoneInput =
-        document.getElementById(
-            "inspection-zone"
-        );
-
-
-    const locationInput =
-        document.getElementById(
-            "inspection-location"
-        );
-
-
-    const inspectorInput =
-        document.getElementById(
-            "inspection-inspector"
         );
 
 
@@ -2008,6 +2219,20 @@ async function saveInspection() {
             : timeInput.value;
 
 
+    // ----------------------------------------
+    // ZONE
+    // ----------------------------------------
+    //
+    // CREATE:
+    // Zone ต้องมาจาก LocationMaster
+    //
+    // ห้ามใช้ user.zone เป็น fallback
+    // เพราะ Admin มี user.zone = "All"
+    //
+    // EDIT:
+    // ใช้ Zone เดิมของ Inspection
+    // ----------------------------------------
+
     const zone =
         inspectionMode === "edit"
             ? (
@@ -2015,11 +2240,14 @@ async function saveInspection() {
                 ""
             )
             : (
-                user.zone ||
                 selectedLocation.zone ||
                 ""
             );
 
+
+    // ----------------------------------------
+    // LOCATION NAME
+    // ----------------------------------------
 
     const locationName =
         inspectionMode === "edit"
@@ -2033,6 +2261,17 @@ async function saveInspection() {
             );
 
 
+    // ----------------------------------------
+    // INSPECTOR
+    // ----------------------------------------
+    //
+    // CREATE:
+    // ใช้ User ที่ Login
+    //
+    // EDIT:
+    // รักษา Inspector เดิม
+    // ----------------------------------------
+
     const inspectorName =
         inspectionMode === "edit"
             ? (
@@ -2044,6 +2283,10 @@ async function saveInspection() {
                 ""
             );
 
+
+    // ----------------------------------------
+    // POINT ID
+    // ----------------------------------------
 
     const pointId =
         inspectionMode === "edit"
@@ -2138,6 +2381,37 @@ async function saveInspection() {
         "ข้อมูลการตรวจที่จะบันทึก:",
         inspectionData
     );
+
+
+    // ----------------------------------------
+    // SAFETY CHECK
+    // ----------------------------------------
+    // ป้องกันกรณี Admin Zone = All
+    // หลุดเข้ามาในข้อมูล Inspection ใหม่
+    // ----------------------------------------
+
+    if (
+        inspectionMode === "create" &&
+        String(
+            inspectionData.zone ||
+            ""
+        ).trim().toLowerCase() === "all"
+    ) {
+
+        console.error(
+            "ไม่อนุญาตให้บันทึก Inspection ด้วย Zone = All:",
+            inspectionData
+        );
+
+
+        alert(
+            "ไม่สามารถบันทึก Inspection ด้วย Zone = All ได้ กรุณาเลือกจุดตรวจใหม่"
+        );
+
+
+        return;
+
+    }
 
 
     // ----------------------------------------
@@ -2367,6 +2641,12 @@ async function loadInspectionForEdit(
             recordId
         );
 
+
+        // ----------------------------------------
+        // api.js v2.2.0
+        // จะส่ง Current User Email
+        // ไป Backend ให้ตรวจสอบสิทธิ์
+        // ----------------------------------------
 
         const data =
             await apiGetInspection(
@@ -2705,6 +2985,31 @@ function populateInspectionForm(
 
 
     if (zoneInput) {
+
+        zoneInput.innerHTML =
+            "";
+
+
+        const zoneOption =
+            document.createElement(
+                "option"
+            );
+
+
+        zoneOption.value =
+            inspection.zone ||
+            "";
+
+
+        zoneOption.textContent =
+            inspection.zone ||
+            "-";
+
+
+        zoneInput.appendChild(
+            zoneOption
+        );
+
 
         zoneInput.value =
             inspection.zone ||
