@@ -1,53 +1,32 @@
-/**
- * ========================================
- * GGN Docs - API
- * ========================================
- *
- * File: api.js
- * Version: v2.2.0
- * Updated: 2026-09-24
- *
- * Version History
- *
- * v2.2.0
- * - เพิ่มการส่ง Email ผู้ใช้งานสำหรับ Inspection Permission
- * - apiGetInspections() ส่ง email ไป Backend
- * - apiGetInspection() ส่ง email ไป Backend
- * - apiUpdateInspection() ส่ง updatedByEmail ไป Backend
- * - apiDeleteInspection() ส่ง deletedByEmail ไป Backend
- * - ใช้ ggnDocsUser เป็นแหล่งข้อมูล Session
- * - คง LocationMaster / pointId API เดิม
- * - คง FM-OP-11 V1 เดิม
- *
- * v2.1.0
- * - เพิ่ม apiGetInspectionLocations()
- * - รองรับการดึง LocationMaster ตาม Email ผู้ใช้งาน
- * - ใช้ Backend ตรวจสอบ User / Zone / Active Location
- * - รองรับ pointId สำหรับระบบ Inspection ใหม่
- *
- * v1.0.0
- * - Version เริ่มต้น
- *
- * ========================================
- */
+// ======================================================
+// GGN DOCS - API
+// VERSION: 2.2.0
+// DATE: 2026-09-24
+//
+// CHANGE:
+// - เพิ่ม getCurrentGGNUser()
+// - เพิ่ม getCurrentGGNUserEmail()
+// - เพิ่ม apiGetInspectionUsers()
+// - ใช้ Users Sheet เป็น Source of Truth สำหรับ Inspector / Zone
+// - ส่ง Email ผู้ใช้งานไป Backend สำหรับ Inspection Permission
+// - ปรับ apiGetInspections() ให้ส่ง email
+// - ปรับ apiGetInspection() ให้ส่ง email
+// - ปรับ apiUpdateInspection() ให้ส่ง updatedByEmail
+// - ปรับ apiDeleteInspection() ให้ส่ง deletedByEmail
+// - คง LocationMaster / pointId Flow
+// - คง Settings API สำหรับ inspectionItem
+// - คง FM-OP-11 API เดิม
+// - ไม่กระทบ FM-OP-11 Version 1
+// ======================================================
 
 
 // ========================================
-// GET CURRENT LOGIN USER
+// GET CURRENT GGN USER
 // ========================================
 //
-// ใช้ Session จาก localStorage
-// key: ggnDocsUser
-//
-// ตัวอย่าง:
-// {
-//   email: "opggn1@gmail.com",
-//   name: "สายตรวจ A",
-//   zone: "เชียงใหม่ เขต 1",
-//   department: "Operations",
-//   role: "User",
-//   status: "Active"
-// }
+// อ่านข้อมูล User จาก localStorage
+// Key:
+//   ggnDocsUser
 //
 // ========================================
 
@@ -55,37 +34,22 @@ function getCurrentGGNUser() {
 
     try {
 
-        const session =
+        const storedUser =
             localStorage.getItem(
                 "ggnDocsUser"
             );
 
 
-        if (!session) {
+        if (!storedUser) {
 
             return null;
 
         }
 
 
-        const user =
-            JSON.parse(
-                session
-            );
-
-
-        if (
-            !user ||
-            !user.email
-        ) {
-
-            return null;
-
-        }
-
-
-        return user;
-
+        return JSON.parse(
+            storedUser
+        );
 
     } catch (error) {
 
@@ -103,7 +67,7 @@ function getCurrentGGNUser() {
 
 
 // ========================================
-// GET CURRENT USER EMAIL
+// GET CURRENT GGN USER EMAIL
 // ========================================
 
 function getCurrentGGNUserEmail() {
@@ -124,7 +88,8 @@ function getCurrentGGNUserEmail() {
 
     return String(
         user.email
-    ).trim();
+    )
+    .trim();
 
 }
 
@@ -138,7 +103,9 @@ async function testAPI() {
     try {
 
         const response =
-            await fetch(API_URL);
+            await fetch(
+                API_URL
+            );
 
 
         const data =
@@ -290,14 +257,13 @@ async function loginToGGN(
 // GET INSPECTIONS
 // ========================================
 //
-// Permission:
-//
-// User:
-//   Backend จะบังคับดูเฉพาะรายการของตัวเอง
+// Backend Permission:
 //
 // Admin:
-//   เห็นทั้งหมด
-//   หรือกรอง inspectorName ได้
+//   เห็นรายการทั้งหมด
+//
+// User:
+//   เห็นเฉพาะรายการของตัวเอง
 //
 // ========================================
 
@@ -307,35 +273,25 @@ async function apiGetInspections(
 
     try {
 
-        const user =
-            getCurrentGGNUser();
+        const email =
+            getCurrentGGNUserEmail();
 
 
-        if (
-            !user ||
-            !user.email
-        ) {
+        if (!email) {
 
             return {
 
                 success: false,
 
                 message:
-                    "ไม่พบ Session ผู้ใช้งาน"
+                    "ไม่พบ Email ผู้ใช้งาน",
+
+                inspections:
+                    []
 
             };
 
         }
-
-
-        const requestData = {
-
-            ...filters,
-
-            email:
-                user.email
-
-        };
 
 
         const response =
@@ -361,7 +317,10 @@ async function apiGetInspections(
                             action:
                                 "getInspections",
 
-                            ...requestData
+                            ...filters,
+
+                            email:
+                                email
 
                         })
 
@@ -408,8 +367,121 @@ async function apiGetInspections(
 
 
 // ========================================
+// GET INSPECTION USERS
+// ========================================
+//
+// ใช้สำหรับ Admin Filter
+//
+// Source:
+//   Users Sheet
+//
+// Backend ตรวจสอบ:
+//   Admin เท่านั้น
+//
+// Response:
+//   users[]
+//
+// ========================================
+
+async function apiGetInspectionUsers() {
+
+    try {
+
+        const email =
+            getCurrentGGNUserEmail();
+
+
+        if (!email) {
+
+            return {
+
+                success: false,
+
+                message:
+                    "ไม่พบ Email ผู้ใช้งาน",
+
+                users:
+                    []
+
+            };
+
+        }
+
+
+        const response =
+            await fetch(
+
+                API_URL,
+
+                {
+
+                    method:
+                        "POST",
+
+                    headers: {
+
+                        "Content-Type":
+                            "text/plain;charset=utf-8"
+
+                    },
+
+                    body:
+                        JSON.stringify({
+
+                            action:
+                                "getInspectionUsers",
+
+                            email:
+                                email
+
+                        })
+
+                }
+
+            );
+
+
+        const data =
+            await response.json();
+
+
+        console.log(
+            "ผลการดึง Inspection Users:",
+            data
+        );
+
+
+        return data;
+
+    } catch (error) {
+
+        console.error(
+            "apiGetInspectionUsers Error:",
+            error
+        );
+
+
+        return {
+
+            success: false,
+
+            message:
+                "ไม่สามารถดึงรายชื่อผู้ตรวจได้",
+
+            users:
+                []
+
+        };
+
+    }
+
+}
+
+
+// ========================================
 // GET INSPECTION LOCATIONS
 // ========================================
+//
 // ใช้สำหรับระบบบันทึก Inspection ใหม่
 //
 // Google Account
@@ -424,6 +496,7 @@ async function apiGetInspections(
 //
 // Admin = เห็นทุก Zone
 // User  = เห็นเฉพาะ Zone ของตนเอง
+//
 // ========================================
 
 async function apiGetInspectionLocations(
@@ -432,7 +505,12 @@ async function apiGetInspectionLocations(
 
     try {
 
-        if (!email) {
+        const requesterEmail =
+            email ||
+            getCurrentGGNUserEmail();
+
+
+        if (!requesterEmail) {
 
             return {
 
@@ -450,7 +528,7 @@ async function apiGetInspectionLocations(
 
 
         const url =
-            `${API_URL}?action=getInspectionLocations&email=${encodeURIComponent(email)}`;
+            `${API_URL}?action=getInspectionLocations&email=${encodeURIComponent(requesterEmail)}`;
 
 
         const response =
@@ -501,9 +579,8 @@ async function apiGetInspectionLocations(
 // ========================================
 //
 // Backend Permission:
-//
-// Admin → เปิดได้ทุก Inspection
-// User  → เปิดได้เฉพาะของตัวเอง
+//   Admin → ได้ทั้งหมด
+//   User  → ได้เฉพาะรายการของตัวเอง
 //
 // ========================================
 
@@ -538,7 +615,7 @@ async function apiGetInspection(
                 success: false,
 
                 message:
-                    "ไม่พบ Session ผู้ใช้งาน"
+                    "ไม่พบ Email ผู้ใช้งาน"
 
             };
 
@@ -620,9 +697,8 @@ async function apiGetInspection(
 // ========================================
 //
 // Backend Permission:
-//
-// Admin → แก้ได้ทั้งหมด
-// User  → แก้เฉพาะของตัวเอง
+//   User  → แก้เฉพาะรายการตัวเอง
+//   Admin → แก้ได้ทั้งหมด
 //
 // ========================================
 
@@ -660,21 +736,11 @@ async function apiUpdateInspection(
                 success: false,
 
                 message:
-                    "ไม่พบ Session ผู้ใช้งาน"
+                    "ไม่พบ Email ผู้ใช้งาน"
 
             };
 
         }
-
-
-        const requestInspection = {
-
-            ...inspection,
-
-            updatedByEmail:
-                email
-
-        };
 
 
         const response =
@@ -700,8 +766,14 @@ async function apiUpdateInspection(
                             action:
                                 "updateInspection",
 
-                            inspection:
-                                requestInspection
+                            inspection: {
+
+                                ...inspection,
+
+                                updatedByEmail:
+                                    email
+
+                            }
 
                         })
 
@@ -749,14 +821,12 @@ async function apiUpdateInspection(
 // ========================================
 //
 // Backend Permission:
-//
-// Admin → ลบได้ทั้งหมด
-// User  → ลบเฉพาะของตัวเอง
+//   User  → ลบเฉพาะรายการตัวเอง
+//   Admin → ลบได้ทั้งหมด
 //
 // Business Rule:
-//
-// ถ้ามี fileId หรือ fileUrl
-// → ไม่สามารถลบได้
+//   ถ้ามี fileId หรือ fileUrl
+//   จะไม่สามารถลบได้
 //
 // ========================================
 
@@ -792,7 +862,7 @@ async function apiDeleteInspection(
                 success: false,
 
                 message:
-                    "ไม่พบ Session ผู้ใช้งาน"
+                    "ไม่พบ Email ผู้ใช้งาน"
 
             };
 
@@ -871,6 +941,14 @@ async function apiDeleteInspection(
 
 // ========================================
 // GET SETTINGS
+// ========================================
+//
+// ปัจจุบัน Settings ใช้สำหรับ:
+//   inspectionItem
+//
+// Zone / Location / Inspector
+// จะไม่ใช้จาก Settings แล้ว
+//
 // ========================================
 
 async function apiGetSettings(
@@ -954,8 +1032,8 @@ async function apiGetSettings(
 // GENERATE FM-OP-11
 // ========================================
 //
-// FM-OP-11 V1
-// คงโครงสร้างเดิมไว้
+// คง Flow เดิม
+// ไม่เปลี่ยน PDF Generation
 //
 // ========================================
 
