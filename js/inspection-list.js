@@ -2,21 +2,21 @@
 // GGN DOCS
 // INSPECTION LIST SYSTEM
 //
-// VERSION: 2.1.0
+// VERSION: 2.1.1
 // DATE: 2026-09-24
 //
 // CHANGE:
-// - เพิ่มการรองรับ Inspection Permission ระหว่าง User / Admin
-// - User เห็นรายการตรวจของตัวเอง
-// - Admin เห็นรายการตรวจทั้งหมด
-// - User แสดงเฉพาะสิทธิ์ Edit / Delete ของตัวเอง
-// - Admin สามารถ Edit / Delete รายการตรวจทั้งหมด
-// - ใช้ Session จาก ggnDocsUser เป็นข้อมูลผู้ใช้งานปัจจุบัน
-// - api.js เป็นผู้ส่ง Email ไปตรวจสอบสิทธิ์ที่ Backend
-// - ปรับ Delete ให้ไม่ส่ง Email จาก UI โดยตรง
-// - User ไม่จำเป็นต้องเลือก Inspector ใน Filter
-// - Admin สามารถ Filter ตาม Inspector ได้
+// - ปรับ UI Filter ตาม Permission ของ User / Admin
+// - User ไม่แสดง Dropdown เขต
+// - User ไม่สามารถเลือกหรือกรองตามเขตจาก UI
+// - User ใช้ Zone จากสิทธิ์ของ Session / Backend
+// - Admin สามารถแสดงและใช้ Dropdown เขตได้
+// - Admin สามารถ Filter ตาม Zone และ Inspector ได้
+// - คง Backend Permission เดิม
+// - คง User เห็นเฉพาะรายการของตัวเอง
+// - คง Admin เห็นรายการตรวจทั้งหมด
 // - คง View / Edit / Delete Flow เดิม
+// - คงกฎห้ามลบรายการที่สร้างเอกสาร ISO แล้ว
 // - ไม่เปลี่ยนโครงสร้าง Inspection
 // - ไม่กระทบ FM-OP-11 V1
 // ======================================================
@@ -212,6 +212,114 @@ function canDeleteInspectionRecord(
     return canEditInspectionRecord(
         record
     );
+
+}
+
+
+
+// ======================================================
+// FILTER UI HELPER
+// ======================================================
+
+function setInspectionListZoneFilterVisibility(
+    visible
+) {
+
+    const zoneSelect =
+        document.getElementById(
+            "inspection-records-zone"
+        );
+
+
+    if (!zoneSelect) {
+
+        return;
+
+    }
+
+
+    // ----------------------------------------
+    // FIND FILTER WRAPPER
+    // ----------------------------------------
+    // รองรับโครงสร้าง HTML หลายรูปแบบ
+    // โดยไม่บังคับให้ต้องแก้ HTML ตอนนี้
+
+    const wrapper =
+        zoneSelect.closest(
+            ".filter-group, " +
+            ".form-group, " +
+            ".filter-item, " +
+            ".inspection-filter-group, " +
+            ".inspection-filter-item"
+        );
+
+
+    const label =
+        document.querySelector(
+            'label[for="inspection-records-zone"]'
+        );
+
+
+    if (visible) {
+
+        // ----------------------------------------
+        // ADMIN
+        // ----------------------------------------
+
+        if (wrapper) {
+
+            wrapper.style.display = "";
+
+        } else {
+
+            zoneSelect.style.display = "";
+
+        }
+
+
+        if (label) {
+
+            label.style.display = "";
+
+        }
+
+
+        zoneSelect.disabled =
+            false;
+
+
+    } else {
+
+        // ----------------------------------------
+        // USER
+        // ----------------------------------------
+
+        if (wrapper) {
+
+            wrapper.style.display = "none";
+
+        } else {
+
+            zoneSelect.style.display = "none";
+
+        }
+
+
+        if (label) {
+
+            label.style.display = "none";
+
+        }
+
+
+        zoneSelect.disabled =
+            true;
+
+
+        zoneSelect.value =
+            "";
+
+    }
 
 }
 
@@ -1039,9 +1147,9 @@ async function loadInspectionListFilters() {
     );
 
 
-    // ----------------------------------------
+    // ==================================================
     // INSPECTOR
-    // ----------------------------------------
+    // ==================================================
 
     if (inspectorSelect) {
 
@@ -1157,9 +1265,9 @@ async function loadInspectionListFilters() {
     }
 
 
-    // ----------------------------------------
-    // ZONES
-    // ----------------------------------------
+    // ==================================================
+    // ZONE
+    // ==================================================
 
     if (zoneSelect) {
 
@@ -1172,69 +1280,95 @@ async function loadInspectionListFilters() {
         `;
 
 
-        if (
-            Array.isArray(
-                inspectionZones
-            )
-        ) {
+        if (isAdmin) {
 
-            inspectionZones.forEach(
-                function (zone) {
+            // ----------------------------------------
+            // ADMIN
+            // ----------------------------------------
+            // Admin สามารถเลือก Zone เพื่อกรองข้อมูล
 
-                    if (!zone) {
-
-                        return;
-
-                    }
+            setInspectionListZoneFilterVisibility(
+                true
+            );
 
 
-                    if (
-                        zone.status &&
-                        String(
-                            zone.status
-                        ).toLowerCase() !==
-                        "active"
-                    ) {
+            if (
+                Array.isArray(
+                    inspectionZones
+                )
+            ) {
 
-                        return;
+                inspectionZones.forEach(
+                    function (zone) {
 
-                    }
+                        if (!zone) {
 
+                            return;
 
-                    const name =
-                        zone.settingName ||
-                        zone.name ||
-                        zone.settingValue ||
-                        zone.zone ||
-                        "";
+                        }
 
 
-                    if (!name) {
+                        if (
+                            zone.status &&
+                            String(
+                                zone.status
+                            ).toLowerCase() !==
+                            "active"
+                        ) {
 
-                        return;
+                            return;
 
-                    }
+                        }
 
 
-                    const option =
-                        document.createElement(
-                            "option"
+                        const name =
+                            zone.settingName ||
+                            zone.name ||
+                            zone.settingValue ||
+                            zone.zone ||
+                            "";
+
+
+                        if (!name) {
+
+                            return;
+
+                        }
+
+
+                        const option =
+                            document.createElement(
+                                "option"
+                            );
+
+
+                        option.value =
+                            name;
+
+
+                        option.textContent =
+                            name;
+
+
+                        zoneSelect.appendChild(
+                            option
                         );
 
+                    }
+                );
 
-                    option.value =
-                        name;
+            }
 
+        } else {
 
-                    option.textContent =
-                        name;
+            // ----------------------------------------
+            // USER
+            // ----------------------------------------
+            // User ไม่สามารถเลือก Zone
+            // Zone ถูกกำหนดจาก Session / Backend
 
-
-                    zoneSelect.appendChild(
-                        option
-                    );
-
-                }
+            setInspectionListZoneFilterVisibility(
+                false
             );
 
         }
@@ -1269,6 +1403,10 @@ function filterInspectionRecords() {
         );
 
 
+    const isAdmin =
+        isInspectionListAdmin();
+
+
     const date =
         dateInput
             ? dateInput.value
@@ -1277,13 +1415,16 @@ function filterInspectionRecords() {
 
     const inspector =
         inspectorInput &&
+        isAdmin &&
         !inspectorInput.disabled
             ? inspectorInput.value
             : "";
 
 
     const zone =
-        zoneInput
+        zoneInput &&
+        isAdmin &&
+        !zoneInput.disabled
             ? zoneInput.value
             : "";
 
@@ -1293,7 +1434,10 @@ function filterInspectionRecords() {
         {
             date,
             inspector,
-            zone,
+            zone:
+                isAdmin
+                    ? zone
+                    : "(User - ใช้ Zone จากสิทธิ์ Backend)",
             role:
                 getInspectionListCurrentRole()
         }
@@ -1303,6 +1447,10 @@ function filterInspectionRecords() {
     const filtered =
         inspectionListRecords.filter(
             function (record) {
+
+                // ----------------------------------------
+                // DATE
+                // ----------------------------------------
 
                 if (
                     date &&
@@ -1318,11 +1466,11 @@ function filterInspectionRecords() {
                 // ----------------------------------------
                 // INSPECTOR
                 // ----------------------------------------
-                // User ไม่ใช้ค่าจาก Filter Inspector
-                // Backend เป็นผู้กำหนดรายการของ User อยู่แล้ว
+                // เฉพาะ Admin เท่านั้น
+                // User ใช้ข้อมูลที่ Backend กรองมาแล้ว
 
                 if (
-                    isInspectionListAdmin() &&
+                    isAdmin &&
                     inspector &&
                     record.inspectorName !==
                     inspector
@@ -1336,8 +1484,11 @@ function filterInspectionRecords() {
                 // ----------------------------------------
                 // ZONE
                 // ----------------------------------------
+                // เฉพาะ Admin เท่านั้น
+                // User ไม่มีสิทธิ์เลือก Zone
 
                 if (
+                    isAdmin &&
                     zone &&
                     record.zone !==
                     zone
