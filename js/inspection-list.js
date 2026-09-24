@@ -6,11 +6,12 @@
 // DATE: 2026-09-24
 //
 // CHANGE:
-// - Admin ใช้ Dropdown ผู้ตรวจสำหรับกรองข้อมูล
-// - Admin ใช้ Dropdown เขตสำหรับกรองข้อมูล
-// - รองรับการกรอง ผู้ตรวจอย่างเดียว
-// - รองรับการกรอง เขตอย่างเดียว
-// - รองรับการกรอง ผู้ตรวจ + เขต พร้อมกัน
+// - แก้ปัญหา Admin Inspector / Zone Dropdown ว่าง
+// - ตรวจสอบและโหลด Inspector Setting ก่อนแสดง Filter
+// - ตรวจสอบและโหลด Zone Setting ก่อนแสดง Filter
+// - Admin สามารถกรองด้วย Inspector ได้
+// - Admin สามารถกรองด้วย Zone ได้
+// - รองรับ Inspector + Zone พร้อมกัน
 // - User ไม่แสดง Dropdown เขต
 // - User ไม่สามารถกรองตามเขตจาก UI
 // - คง Backend Permission เดิม
@@ -1116,8 +1117,6 @@ function setupInspectionListActions() {
 
 }
 
-
-
 // ======================================================
 // LOAD FILTERS
 // ======================================================
@@ -1151,23 +1150,16 @@ async function loadInspectionListFilters() {
 
 
     // ==================================================
-    // INSPECTOR FILTER
+    // USER
     // ==================================================
 
-    if (inspectorSelect) {
+    if (!isAdmin) {
 
-        // ----------------------------------------
-        // CLEAR OLD OPTIONS
-        // ----------------------------------------
+        // ----------------------------------------------
+        // INSPECTOR
+        // ----------------------------------------------
 
-        inspectorSelect.innerHTML = "";
-
-
-        // ----------------------------------------
-        // USER
-        // ----------------------------------------
-
-        if (!isAdmin) {
+        if (inspectorSelect) {
 
             inspectorSelect.innerHTML = `
 
@@ -1181,360 +1173,14 @@ async function loadInspectionListFilters() {
             inspectorSelect.disabled =
                 true;
 
-
-            console.log(
-                "Inspection List Inspector Filter: USER LOCKED"
-            );
-
         }
 
 
-        // ----------------------------------------
-        // ADMIN
-        // ----------------------------------------
-
-        else {
-
-            inspectorSelect.disabled =
-                false;
-
-
-            // Default = ALL INSPECTORS
-
-            inspectorSelect.innerHTML = `
-
-                <option value="">
-                    -- ผู้ตรวจทั้งหมด --
-                </option>
-
-            `;
-
-
-            // ----------------------------------------
-            // LOAD INSPECTORS
-            // ----------------------------------------
-
-            if (
-                Array.isArray(
-                    inspectionInspectors
-                )
-            ) {
-
-                const inspectorNames =
-                    [];
-
-
-                inspectionInspectors.forEach(
-                    function (inspector) {
-
-                        if (!inspector) {
-
-                            return;
-
-                        }
-
-
-                        // --------------------------------
-                        // ACTIVE ONLY
-                        // --------------------------------
-
-                        if (
-                            inspector.status &&
-                            String(
-                                inspector.status
-                            ).trim().toLowerCase() !==
-                            "active"
-                        ) {
-
-                            return;
-
-                        }
-
-
-                        // --------------------------------
-                        // FIND INSPECTOR NAME
-                        // --------------------------------
-
-                        const name =
-                            inspector.settingName ||
-                            inspector.name ||
-                            inspector.settingValue ||
-                            inspector.inspectorName ||
-                            "";
-
-
-                        const normalizedName =
-                            String(
-                                name
-                            ).trim();
-
-
-                        if (!normalizedName) {
-
-                            return;
-
-                        }
-
-
-                        // --------------------------------
-                        // PREVENT DUPLICATE
-                        // --------------------------------
-
-                        if (
-                            inspectorNames.includes(
-                                normalizedName
-                            )
-                        ) {
-
-                            return;
-
-                        }
-
-
-                        inspectorNames.push(
-                            normalizedName
-                        );
-
-                    }
-                );
-
-
-                // ----------------------------------------
-                // SORT
-                // ----------------------------------------
-
-                inspectorNames.sort(
-                    function (a, b) {
-
-                        return a.localeCompare(
-                            b,
-                            "th"
-                        );
-
-                    }
-                );
-
-
-                // ----------------------------------------
-                // CREATE OPTIONS
-                // ----------------------------------------
-
-                inspectorNames.forEach(
-                    function (name) {
-
-                        const option =
-                            document.createElement(
-                                "option"
-                            );
-
-
-                        option.value =
-                            name;
-
-
-                        option.textContent =
-                            name;
-
-
-                        inspectorSelect.appendChild(
-                            option
-                        );
-
-                    }
-                );
-
-
-                console.log(
-                    "Admin Inspector Filter:",
-                    inspectorNames
-                );
-
-            }
-
-        }
-
-    }
-
-
-    // ==================================================
-    // ZONE FILTER
-    // ==================================================
-
-    if (zoneSelect) {
-
-        // ----------------------------------------
-        // ADMIN
-        // ----------------------------------------
-
-        if (isAdmin) {
-
-            setInspectionListZoneFilterVisibility(
-                true
-            );
-
-
-            zoneSelect.disabled =
-                false;
-
-
-            zoneSelect.innerHTML = `
-
-                <option value="">
-                    -- เขตทั้งหมด --
-                </option>
-
-            `;
-
-
-            // ----------------------------------------
-            // LOAD ZONES
-            // ----------------------------------------
-
-            if (
-                Array.isArray(
-                    inspectionZones
-                )
-            ) {
-
-                const zoneNames =
-                    [];
-
-
-                inspectionZones.forEach(
-                    function (zone) {
-
-                        if (!zone) {
-
-                            return;
-
-                        }
-
-
-                        // --------------------------------
-                        // ACTIVE ONLY
-                        // --------------------------------
-
-                        if (
-                            zone.status &&
-                            String(
-                                zone.status
-                            ).trim().toLowerCase() !==
-                            "active"
-                        ) {
-
-                            return;
-
-                        }
-
-
-                        // --------------------------------
-                        // FIND ZONE NAME
-                        // --------------------------------
-
-                        const name =
-                            zone.settingName ||
-                            zone.name ||
-                            zone.settingValue ||
-                            zone.zone ||
-                            "";
-
-
-                        const normalizedName =
-                            String(
-                                name
-                            ).trim();
-
-
-                        if (!normalizedName) {
-
-                            return;
-
-                        }
-
-
-                        // --------------------------------
-                        // PREVENT DUPLICATE
-                        // --------------------------------
-
-                        if (
-                            zoneNames.includes(
-                                normalizedName
-                            )
-                        ) {
-
-                            return;
-
-                        }
-
-
-                        zoneNames.push(
-                            normalizedName
-                        );
-
-                    }
-                );
-
-
-                // ----------------------------------------
-                // SORT
-                // ----------------------------------------
-
-                zoneNames.sort(
-                    function (a, b) {
-
-                        return a.localeCompare(
-                            b,
-                            "th"
-                        );
-
-                    }
-                );
-
-
-                // ----------------------------------------
-                // CREATE OPTIONS
-                // ----------------------------------------
-
-                zoneNames.forEach(
-                    function (name) {
-
-                        const option =
-                            document.createElement(
-                                "option"
-                            );
-
-
-                        option.value =
-                            name;
-
-
-                        option.textContent =
-                            name;
-
-
-                        zoneSelect.appendChild(
-                            option
-                        );
-
-                    }
-                );
-
-
-                console.log(
-                    "Admin Zone Filter:",
-                    zoneNames
-                );
-
-            }
-
-        }
-
-
-        // ----------------------------------------
-        // USER
-        // ----------------------------------------
-
-        else {
+        // ----------------------------------------------
+        // ZONE
+        // ----------------------------------------------
+
+        if (zoneSelect) {
 
             setInspectionListZoneFilterVisibility(
                 false
@@ -1551,18 +1197,479 @@ async function loadInspectionListFilters() {
             zoneSelect.value =
                 "";
 
+        }
 
-            console.log(
-                "Inspection List Zone Filter: USER HIDDEN"
-            );
+
+        console.log(
+            "Inspection List Filters: USER MODE"
+        );
+
+
+        return;
+
+    }
+
+
+    // ==================================================
+    // ADMIN
+    // ==================================================
+    //
+    // Admin ต้องใช้ Inspector และ Zone เป็น Dropdown
+    // สำหรับกรองข้อมูล
+    //
+    // ==================================================
+
+
+    // ==================================================
+    // ENSURE INSPECTOR DATA
+    // ==================================================
+
+    if (
+        !Array.isArray(
+            inspectionInspectors
+        ) ||
+        inspectionInspectors.length === 0
+    ) {
+
+        console.log(
+            "Inspector Setting ยังไม่มีข้อมูล กำลังโหลด..."
+        );
+
+
+        if (
+            typeof loadSingleInspectionSetting ===
+            "function"
+        ) {
+
+            inspectionInspectors =
+                await loadSingleInspectionSetting(
+                    "inspector"
+                );
 
         }
 
     }
 
 
+    // ==================================================
+    // ENSURE ZONE DATA
+    // ==================================================
+
+    if (
+        !Array.isArray(
+            inspectionZones
+        ) ||
+        inspectionZones.length === 0
+    ) {
+
+        console.log(
+            "Zone Setting ยังไม่มีข้อมูล กำลังโหลด..."
+        );
+
+
+        if (
+            typeof loadSingleInspectionSetting ===
+            "function"
+        ) {
+
+            inspectionZones =
+                await loadSingleInspectionSetting(
+                    "zone"
+                );
+
+        }
+
+    }
+
+
+    // ==================================================
+    // DEBUG SETTINGS
+    // ==================================================
+
     console.log(
-        "Inspection List Filters โหลดเสร็จแล้ว"
+        "Admin Filter Settings:",
+        {
+            inspectors:
+                Array.isArray(
+                    inspectionInspectors
+                )
+                    ? inspectionInspectors.length
+                    : 0,
+
+            zones:
+                Array.isArray(
+                    inspectionZones
+                )
+                    ? inspectionZones.length
+                    : 0
+        }
+    );
+
+
+    // ==================================================
+    // INSPECTOR DROPDOWN
+    // ==================================================
+
+    if (inspectorSelect) {
+
+        inspectorSelect.innerHTML = "";
+
+
+        inspectorSelect.disabled =
+            false;
+
+
+        // ----------------------------------------------
+        // DEFAULT
+        // ----------------------------------------------
+
+        inspectorSelect.innerHTML = `
+
+            <option value="">
+                -- ผู้ตรวจทั้งหมด --
+            </option>
+
+        `;
+
+
+        // ----------------------------------------------
+        // COLLECT UNIQUE INSPECTORS
+        // ----------------------------------------------
+
+        const inspectorNames = [];
+
+
+        if (
+            Array.isArray(
+                inspectionInspectors
+            )
+        ) {
+
+            inspectionInspectors.forEach(
+                function (inspector) {
+
+                    if (!inspector) {
+
+                        return;
+
+                    }
+
+
+                    // ----------------------------------
+                    // ACTIVE ONLY
+                    // ----------------------------------
+
+                    if (
+                        inspector.status &&
+                        String(
+                            inspector.status
+                        ).trim().toLowerCase() !==
+                        "active"
+                    ) {
+
+                        return;
+
+                    }
+
+
+                    // ----------------------------------
+                    // FIND NAME
+                    // ----------------------------------
+
+                    const name =
+                        inspector.settingName ||
+                        inspector.name ||
+                        inspector.settingValue ||
+                        inspector.inspectorName ||
+                        "";
+
+
+                    const normalizedName =
+                        String(
+                            name
+                        ).trim();
+
+
+                    if (!normalizedName) {
+
+                        return;
+
+                    }
+
+
+                    // ----------------------------------
+                    // PREVENT DUPLICATE
+                    // ----------------------------------
+
+                    if (
+                        inspectorNames.includes(
+                            normalizedName
+                        )
+                    ) {
+
+                        return;
+
+                    }
+
+
+                    inspectorNames.push(
+                        normalizedName
+                    );
+
+                }
+            );
+
+        }
+
+
+        // ----------------------------------------------
+        // SORT
+        // ----------------------------------------------
+
+        inspectorNames.sort(
+            function (a, b) {
+
+                return a.localeCompare(
+                    b,
+                    "th"
+                );
+
+            }
+        );
+
+
+        // ----------------------------------------------
+        // CREATE OPTIONS
+        // ----------------------------------------------
+
+        inspectorNames.forEach(
+            function (name) {
+
+                const option =
+                    document.createElement(
+                        "option"
+                    );
+
+
+                option.value =
+                    name;
+
+
+                option.textContent =
+                    name;
+
+
+                inspectorSelect.appendChild(
+                    option
+                );
+
+            }
+        );
+
+
+        console.log(
+            "Admin Inspector Filter:",
+            inspectorNames
+        );
+
+    }
+
+
+    // ==================================================
+    // ZONE DROPDOWN
+    // ==================================================
+
+    if (zoneSelect) {
+
+        // ----------------------------------------------
+        // SHOW ZONE FILTER
+        // ----------------------------------------------
+
+        setInspectionListZoneFilterVisibility(
+            true
+        );
+
+
+        zoneSelect.disabled =
+            false;
+
+
+        zoneSelect.innerHTML = `
+
+            <option value="">
+                -- เขตทั้งหมด --
+            </option>
+
+        `;
+
+
+        // ----------------------------------------------
+        // COLLECT UNIQUE ZONES
+        // ----------------------------------------------
+
+        const zoneNames = [];
+
+
+        if (
+            Array.isArray(
+                inspectionZones
+            )
+        ) {
+
+            inspectionZones.forEach(
+                function (zone) {
+
+                    if (!zone) {
+
+                        return;
+
+                    }
+
+
+                    // ----------------------------------
+                    // ACTIVE ONLY
+                    // ----------------------------------
+
+                    if (
+                        zone.status &&
+                        String(
+                            zone.status
+                        ).trim().toLowerCase() !==
+                        "active"
+                    ) {
+
+                        return;
+
+                    }
+
+
+                    // ----------------------------------
+                    // FIND ZONE NAME
+                    // ----------------------------------
+
+                    const name =
+                        zone.settingName ||
+                        zone.name ||
+                        zone.settingValue ||
+                        zone.zone ||
+                        "";
+
+
+                    const normalizedName =
+                        String(
+                            name
+                        ).trim();
+
+
+                    if (!normalizedName) {
+
+                        return;
+
+                    }
+
+
+                    // ----------------------------------
+                    // PREVENT DUPLICATE
+                    // ----------------------------------
+
+                    if (
+                        zoneNames.includes(
+                            normalizedName
+                        )
+                    ) {
+
+                        return;
+
+                    }
+
+
+                    zoneNames.push(
+                        normalizedName
+                    );
+
+                }
+            );
+
+        }
+
+
+        // ----------------------------------------------
+        // SORT
+        // ----------------------------------------------
+
+        zoneNames.sort(
+            function (a, b) {
+
+                return a.localeCompare(
+                    b,
+                    "th"
+                );
+
+            }
+        );
+
+
+        // ----------------------------------------------
+        // CREATE OPTIONS
+        // ----------------------------------------------
+
+        zoneNames.forEach(
+            function (name) {
+
+                const option =
+                    document.createElement(
+                        "option"
+                    );
+
+
+                option.value =
+                    name;
+
+
+                option.textContent =
+                    name;
+
+
+                zoneSelect.appendChild(
+                    option
+                );
+
+            }
+        );
+
+
+        console.log(
+            "Admin Zone Filter:",
+            zoneNames
+        );
+
+    }
+
+
+    // ==================================================
+    // COMPLETE
+    // ==================================================
+
+    console.log(
+        "Inspection List Filters โหลดเสร็จแล้ว:",
+        {
+            isAdmin:
+                true,
+
+            inspectors:
+                Array.isArray(
+                    inspectionInspectors
+                )
+                    ? inspectionInspectors.length
+                    : 0,
+
+            zones:
+                Array.isArray(
+                    inspectionZones
+                )
+                    ? inspectionZones.length
+                    : 0
+        }
     );
 
 }
