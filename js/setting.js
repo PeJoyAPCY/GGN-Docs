@@ -1,15 +1,14 @@
 // ======================================================
 // GGN DOCS - INSPECTION SETTINGS
-// VERSION: 2.1.0
+// VERSION: 2.2.0
 // DATE: 2026-09-24
 //
 // CHANGE:
-// - แก้ปัญหา Promise.all() ทำให้ Inspection Items หาย
-// - แยกการโหลด Zone / Location / Inspector / Item
-// - ถ้า Setting ตัวใดตัวหนึ่งโหลดไม่สำเร็จ
-//   จะไม่ล้างข้อมูลของ Setting ตัวอื่น
-// - Inspection Items โหลดแยกเพื่อไม่ให้ได้รับผลกระทบ
-//   จาก Legacy Settings ตัวอื่น
+// - เปลี่ยนการเรียก Settings ให้ใช้ apiGetSettings()
+// - ไม่สร้าง fetch(API_URL) ซ้ำใน setting.js
+// - แก้ปัญหา getSettings ไม่ถูกส่งไปยัง Backend
+// - รองรับ Inspector / Zone สำหรับ Inspection List
+// - คงการโหลด Zone / Location / Inspector / Item
 // - คง renderInspectionZones()
 // - คง renderInspectionLocations()
 // - คง renderInspectionInspectors()
@@ -19,69 +18,75 @@
 // - ไม่กระทบ FM-OP-11 V1
 // ======================================================
 
-
-// ======================================================
-// GET SETTINGS
-// ======================================================
-
 async function getInspectionSetting(
     settingType
 ) {
 
-    const response =
-        await fetch(
+    try {
 
-            API_URL,
+        // ----------------------------------------------
+        // ตรวจว่ามี apiGetSettings หรือไม่
+        // ----------------------------------------------
 
-            {
+        if (
+            typeof apiGetSettings !==
+            "function"
+        ) {
 
-                method:
-                    "POST",
+            throw new Error(
+                "ไม่พบฟังก์ชัน apiGetSettings() จาก api.js"
+            );
 
-                headers: {
+        }
 
-                    "Content-Type":
-                        "text/plain;charset=utf-8"
 
-                },
+        // ----------------------------------------------
+        // เรียก API กลาง
+        // ----------------------------------------------
 
-                body:
-                    JSON.stringify({
+        const data =
+            await apiGetSettings(
+                settingType
+            );
 
-                        action:
-                            "getSettings",
 
-                        settingType:
-                            settingType
+        // ----------------------------------------------
+        // DEBUG
+        // ----------------------------------------------
 
-                    })
-
-            }
-
+        console.log(
+            "Inspection Setting API:",
+            settingType,
+            data
         );
 
 
-    // ----------------------------------------
-    // ตรวจ HTTP Status
-    // ----------------------------------------
+        return data;
 
-    if (!response.ok) {
 
-        throw new Error(
-            "HTTP " +
-            response.status +
-            " - " +
-            response.statusText
+    } catch (error) {
+
+        console.error(
+            "getInspectionSetting Error:",
+            settingType,
+            error
         );
+
+
+        return {
+
+            success: false,
+
+            message:
+                error.message ||
+                "ไม่สามารถดึงข้อมูล Settings ได้",
+
+            settings:
+                []
+
+        };
 
     }
-
-
-    // ----------------------------------------
-    // อ่าน JSON
-    // ----------------------------------------
-
-    return await response.json();
 
 }
 
