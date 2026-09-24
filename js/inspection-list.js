@@ -2,16 +2,17 @@
 // GGN DOCS
 // INSPECTION LIST SYSTEM
 //
-// VERSION: 2.1.1
+// VERSION: 2.1.2
 // DATE: 2026-09-24
 //
 // CHANGE:
-// - ปรับ UI Filter ตาม Permission ของ User / Admin
+// - Admin ใช้ Dropdown ผู้ตรวจสำหรับกรองข้อมูล
+// - Admin ใช้ Dropdown เขตสำหรับกรองข้อมูล
+// - รองรับการกรอง ผู้ตรวจอย่างเดียว
+// - รองรับการกรอง เขตอย่างเดียว
+// - รองรับการกรอง ผู้ตรวจ + เขต พร้อมกัน
 // - User ไม่แสดง Dropdown เขต
-// - User ไม่สามารถเลือกหรือกรองตามเขตจาก UI
-// - User ใช้ Zone จากสิทธิ์ของ Session / Backend
-// - Admin สามารถแสดงและใช้ Dropdown เขตได้
-// - Admin สามารถ Filter ตาม Zone และ Inspector ได้
+// - User ไม่สามารถกรองตามเขตจาก UI
 // - คง Backend Permission เดิม
 // - คง User เห็นเฉพาะรายการของตัวเอง
 // - คง Admin เห็นรายการตรวจทั้งหมด
@@ -1142,25 +1143,31 @@ async function loadInspectionListFilters() {
     console.log(
         "Inspection List Filter Permission:",
         {
-            isAdmin
+            isAdmin,
+            role:
+                getInspectionListCurrentRole()
         }
     );
 
 
     // ==================================================
-    // INSPECTOR
+    // INSPECTOR FILTER
     // ==================================================
 
     if (inspectorSelect) {
 
+        // ----------------------------------------
+        // CLEAR OLD OPTIONS
+        // ----------------------------------------
+
         inspectorSelect.innerHTML = "";
 
 
-        if (!isAdmin) {
+        // ----------------------------------------
+        // USER
+        // ----------------------------------------
 
-            // ----------------------------------------
-            // USER
-            // ----------------------------------------
+        if (!isAdmin) {
 
             inspectorSelect.innerHTML = `
 
@@ -1174,15 +1181,25 @@ async function loadInspectionListFilters() {
             inspectorSelect.disabled =
                 true;
 
-        } else {
 
-            // ----------------------------------------
-            // ADMIN
-            // ----------------------------------------
+            console.log(
+                "Inspection List Inspector Filter: USER LOCKED"
+            );
+
+        }
+
+
+        // ----------------------------------------
+        // ADMIN
+        // ----------------------------------------
+
+        else {
 
             inspectorSelect.disabled =
                 false;
 
+
+            // Default = ALL INSPECTORS
 
             inspectorSelect.innerHTML = `
 
@@ -1193,11 +1210,19 @@ async function loadInspectionListFilters() {
             `;
 
 
+            // ----------------------------------------
+            // LOAD INSPECTORS
+            // ----------------------------------------
+
             if (
                 Array.isArray(
                     inspectionInspectors
                 )
             ) {
+
+                const inspectorNames =
+                    [];
+
 
                 inspectionInspectors.forEach(
                     function (inspector) {
@@ -1209,11 +1234,15 @@ async function loadInspectionListFilters() {
                         }
 
 
+                        // --------------------------------
+                        // ACTIVE ONLY
+                        // --------------------------------
+
                         if (
                             inspector.status &&
                             String(
                                 inspector.status
-                            ).toLowerCase() !==
+                            ).trim().toLowerCase() !==
                             "active"
                         ) {
 
@@ -1221,6 +1250,10 @@ async function loadInspectionListFilters() {
 
                         }
 
+
+                        // --------------------------------
+                        // FIND INSPECTOR NAME
+                        // --------------------------------
 
                         const name =
                             inspector.settingName ||
@@ -1230,12 +1263,64 @@ async function loadInspectionListFilters() {
                             "";
 
 
-                        if (!name) {
+                        const normalizedName =
+                            String(
+                                name
+                            ).trim();
+
+
+                        if (!normalizedName) {
 
                             return;
 
                         }
 
+
+                        // --------------------------------
+                        // PREVENT DUPLICATE
+                        // --------------------------------
+
+                        if (
+                            inspectorNames.includes(
+                                normalizedName
+                            )
+                        ) {
+
+                            return;
+
+                        }
+
+
+                        inspectorNames.push(
+                            normalizedName
+                        );
+
+                    }
+                );
+
+
+                // ----------------------------------------
+                // SORT
+                // ----------------------------------------
+
+                inspectorNames.sort(
+                    function (a, b) {
+
+                        return a.localeCompare(
+                            b,
+                            "th"
+                        );
+
+                    }
+                );
+
+
+                // ----------------------------------------
+                // CREATE OPTIONS
+                // ----------------------------------------
+
+                inspectorNames.forEach(
+                    function (name) {
 
                         const option =
                             document.createElement(
@@ -1258,6 +1343,12 @@ async function loadInspectionListFilters() {
                     }
                 );
 
+
+                console.log(
+                    "Admin Inspector Filter:",
+                    inspectorNames
+                );
+
             }
 
         }
@@ -1266,37 +1357,48 @@ async function loadInspectionListFilters() {
 
 
     // ==================================================
-    // ZONE
+    // ZONE FILTER
     // ==================================================
 
     if (zoneSelect) {
 
-        zoneSelect.innerHTML = `
-
-            <option value="">
-                -- เขตทั้งหมด --
-            </option>
-
-        `;
-
+        // ----------------------------------------
+        // ADMIN
+        // ----------------------------------------
 
         if (isAdmin) {
-
-            // ----------------------------------------
-            // ADMIN
-            // ----------------------------------------
-            // Admin สามารถเลือก Zone เพื่อกรองข้อมูล
 
             setInspectionListZoneFilterVisibility(
                 true
             );
 
 
+            zoneSelect.disabled =
+                false;
+
+
+            zoneSelect.innerHTML = `
+
+                <option value="">
+                    -- เขตทั้งหมด --
+                </option>
+
+            `;
+
+
+            // ----------------------------------------
+            // LOAD ZONES
+            // ----------------------------------------
+
             if (
                 Array.isArray(
                     inspectionZones
                 )
             ) {
+
+                const zoneNames =
+                    [];
+
 
                 inspectionZones.forEach(
                     function (zone) {
@@ -1308,11 +1410,15 @@ async function loadInspectionListFilters() {
                         }
 
 
+                        // --------------------------------
+                        // ACTIVE ONLY
+                        // --------------------------------
+
                         if (
                             zone.status &&
                             String(
                                 zone.status
-                            ).toLowerCase() !==
+                            ).trim().toLowerCase() !==
                             "active"
                         ) {
 
@@ -1320,6 +1426,10 @@ async function loadInspectionListFilters() {
 
                         }
 
+
+                        // --------------------------------
+                        // FIND ZONE NAME
+                        // --------------------------------
 
                         const name =
                             zone.settingName ||
@@ -1329,12 +1439,64 @@ async function loadInspectionListFilters() {
                             "";
 
 
-                        if (!name) {
+                        const normalizedName =
+                            String(
+                                name
+                            ).trim();
+
+
+                        if (!normalizedName) {
 
                             return;
 
                         }
 
+
+                        // --------------------------------
+                        // PREVENT DUPLICATE
+                        // --------------------------------
+
+                        if (
+                            zoneNames.includes(
+                                normalizedName
+                            )
+                        ) {
+
+                            return;
+
+                        }
+
+
+                        zoneNames.push(
+                            normalizedName
+                        );
+
+                    }
+                );
+
+
+                // ----------------------------------------
+                // SORT
+                // ----------------------------------------
+
+                zoneNames.sort(
+                    function (a, b) {
+
+                        return a.localeCompare(
+                            b,
+                            "th"
+                        );
+
+                    }
+                );
+
+
+                // ----------------------------------------
+                // CREATE OPTIONS
+                // ----------------------------------------
+
+                zoneNames.forEach(
+                    function (name) {
 
                         const option =
                             document.createElement(
@@ -1357,26 +1519,53 @@ async function loadInspectionListFilters() {
                     }
                 );
 
+
+                console.log(
+                    "Admin Zone Filter:",
+                    zoneNames
+                );
+
             }
 
-        } else {
+        }
 
-            // ----------------------------------------
-            // USER
-            // ----------------------------------------
-            // User ไม่สามารถเลือก Zone
-            // Zone ถูกกำหนดจาก Session / Backend
+
+        // ----------------------------------------
+        // USER
+        // ----------------------------------------
+
+        else {
 
             setInspectionListZoneFilterVisibility(
                 false
+            );
+
+
+            zoneSelect.innerHTML = "";
+
+
+            zoneSelect.disabled =
+                true;
+
+
+            zoneSelect.value =
+                "";
+
+
+            console.log(
+                "Inspection List Zone Filter: USER HIDDEN"
             );
 
         }
 
     }
 
-}
 
+    console.log(
+        "Inspection List Filters โหลดเสร็จแล้ว"
+    );
+
+}
 
 
 // ======================================================
