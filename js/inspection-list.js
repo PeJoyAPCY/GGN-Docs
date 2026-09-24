@@ -2,16 +2,17 @@
 // GGN DOCS
 // INSPECTION LIST SYSTEM
 //
-// VERSION: 2.1.2
+// VERSION: 2.2.0
 // DATE: 2026-09-24
 //
 // CHANGE:
-// - แก้ปัญหา Admin Inspector / Zone Dropdown ว่าง
-// - ตรวจสอบและโหลด Inspector Setting ก่อนแสดง Filter
-// - ตรวจสอบและโหลด Zone Setting ก่อนแสดง Filter
-// - Admin สามารถกรองด้วย Inspector ได้
-// - Admin สามารถกรองด้วย Zone ได้
+// - เปลี่ยน Inspector Filter จาก Settings → Users
+// - เปลี่ยน Zone Filter จาก Settings → Users
+// - ใช้ apiGetInspectionUsers() เป็น Source of Truth
+// - Admin สามารถกรอง Inspector ได้
+// - Admin สามารถกรอง Zone ได้
 // - รองรับ Inspector + Zone พร้อมกัน
+// - ใช้เฉพาะ Active Users
 // - User ไม่แสดง Dropdown เขต
 // - User ไม่สามารถกรองตามเขตจาก UI
 // - คง Backend Permission เดิม
@@ -1120,6 +1121,18 @@ function setupInspectionListActions() {
 // ======================================================
 // LOAD FILTERS
 // ======================================================
+//
+// Source:
+//
+// Inspector
+//   → Users Sheet
+//
+// Zone
+//   → Users Sheet
+//
+// Settings ไม่ถูกใช้สำหรับ Inspector / Zone อีกต่อไป
+//
+// ======================================================
 
 async function loadInspectionListFilters() {
 
@@ -1150,7 +1163,7 @@ async function loadInspectionListFilters() {
 
 
     // ==================================================
-    // USER
+    // USER MODE
     // ==================================================
 
     if (!isAdmin) {
@@ -1211,97 +1224,224 @@ async function loadInspectionListFilters() {
 
 
     // ==================================================
-    // ADMIN
-    // ==================================================
-    //
-    // Admin ต้องใช้ Inspector และ Zone เป็น Dropdown
-    // สำหรับกรองข้อมูล
-    //
-    // ==================================================
-
-
-    // ==================================================
-    // ENSURE INSPECTOR DATA
-    // ==================================================
-
-    if (
-        !Array.isArray(
-            inspectionInspectors
-        ) ||
-        inspectionInspectors.length === 0
-    ) {
-
-        console.log(
-            "Inspector Setting ยังไม่มีข้อมูล กำลังโหลด..."
-        );
-
-
-        if (
-            typeof loadSingleInspectionSetting ===
-            "function"
-        ) {
-
-            inspectionInspectors =
-                await loadSingleInspectionSetting(
-                    "inspector"
-                );
-
-        }
-
-    }
-
-
-    // ==================================================
-    // ENSURE ZONE DATA
-    // ==================================================
-
-    if (
-        !Array.isArray(
-            inspectionZones
-        ) ||
-        inspectionZones.length === 0
-    ) {
-
-        console.log(
-            "Zone Setting ยังไม่มีข้อมูล กำลังโหลด..."
-        );
-
-
-        if (
-            typeof loadSingleInspectionSetting ===
-            "function"
-        ) {
-
-            inspectionZones =
-                await loadSingleInspectionSetting(
-                    "zone"
-                );
-
-        }
-
-    }
-
-
-    // ==================================================
-    // DEBUG SETTINGS
+    // ADMIN MODE
     // ==================================================
 
     console.log(
-        "Admin Filter Settings:",
-        {
-            inspectors:
-                Array.isArray(
-                    inspectionInspectors
-                )
-                    ? inspectionInspectors.length
-                    : 0,
+        "กำลังโหลด Inspector / Zone จาก Users..."
+    );
 
-            zones:
+
+    // ==================================================
+    // GET USERS
+    // ==================================================
+
+    let users = [];
+
+
+    try {
+
+        if (
+            typeof apiGetInspectionUsers !==
+            "function"
+        ) {
+
+            console.error(
+                "ไม่พบ apiGetInspectionUsers()"
+            );
+
+        } else {
+
+            const data =
+                await apiGetInspectionUsers();
+
+
+            console.log(
+                "ผลการดึง Inspection Users:",
+                data
+            );
+
+
+            if (
+                data &&
+                data.success &&
                 Array.isArray(
-                    inspectionZones
+                    data.users
                 )
-                    ? inspectionZones.length
-                    : 0
+            ) {
+
+                users =
+                    data.users;
+
+            } else {
+
+                console.warn(
+                    "ไม่สามารถโหลด Inspection Users:",
+                    data
+                        ? data.message
+                        : "ไม่พบข้อมูล"
+                );
+
+            }
+
+        }
+
+    } catch (error) {
+
+        console.error(
+            "โหลด Inspection Users ไม่สำเร็จ:",
+            error
+        );
+
+        users = [];
+
+    }
+
+
+    // ==================================================
+    // DEBUG USERS
+    // ==================================================
+
+    console.log(
+        "Admin Inspection Users:",
+        users
+    );
+
+
+    // ==================================================
+    // COLLECT INSPECTOR NAMES
+    // ==================================================
+
+    const inspectorNames = [];
+
+
+    users.forEach(
+        function (user) {
+
+            if (!user) {
+
+                return;
+
+            }
+
+
+            const name =
+                String(
+                    user.name || ""
+                ).trim();
+
+
+            if (!name) {
+
+                return;
+
+            }
+
+
+            if (
+                !inspectorNames.includes(
+                    name
+                )
+            ) {
+
+                inspectorNames.push(
+                    name
+                );
+
+            }
+
+        }
+    );
+
+
+    // ==================================================
+    // COLLECT ZONES
+    // ==================================================
+
+    const zoneNames = [];
+
+
+    users.forEach(
+        function (user) {
+
+            if (!user) {
+
+                return;
+
+            }
+
+
+            const zone =
+                String(
+                    user.zone || ""
+                ).trim();
+
+
+            if (!zone) {
+
+                return;
+
+            }
+
+
+            // ------------------------------------------
+            // ไม่เอา All มาเป็น Zone จริง
+            // ------------------------------------------
+
+            if (
+                zone.toLowerCase() ===
+                "all"
+            ) {
+
+                return;
+
+            }
+
+
+            if (
+                !zoneNames.includes(
+                    zone
+                )
+            ) {
+
+                zoneNames.push(
+                    zone
+                );
+
+            }
+
+        }
+    );
+
+
+    // ==================================================
+    // SORT INSPECTORS
+    // ==================================================
+
+    inspectorNames.sort(
+        function (a, b) {
+
+            return a.localeCompare(
+                b,
+                "th"
+            );
+
+        }
+    );
+
+
+    // ==================================================
+    // SORT ZONES
+    // ==================================================
+
+    zoneNames.sort(
+        function (a, b) {
+
+            return a.localeCompare(
+                b,
+                "th"
+            );
+
         }
     );
 
@@ -1312,17 +1452,6 @@ async function loadInspectionListFilters() {
 
     if (inspectorSelect) {
 
-        inspectorSelect.innerHTML = "";
-
-
-        inspectorSelect.disabled =
-            false;
-
-
-        // ----------------------------------------------
-        // DEFAULT
-        // ----------------------------------------------
-
         inspectorSelect.innerHTML = `
 
             <option value="">
@@ -1332,115 +1461,9 @@ async function loadInspectionListFilters() {
         `;
 
 
-        // ----------------------------------------------
-        // COLLECT UNIQUE INSPECTORS
-        // ----------------------------------------------
+        inspectorSelect.disabled =
+            false;
 
-        const inspectorNames = [];
-
-
-        if (
-            Array.isArray(
-                inspectionInspectors
-            )
-        ) {
-
-            inspectionInspectors.forEach(
-                function (inspector) {
-
-                    if (!inspector) {
-
-                        return;
-
-                    }
-
-
-                    // ----------------------------------
-                    // ACTIVE ONLY
-                    // ----------------------------------
-
-                    if (
-                        inspector.status &&
-                        String(
-                            inspector.status
-                        ).trim().toLowerCase() !==
-                        "active"
-                    ) {
-
-                        return;
-
-                    }
-
-
-                    // ----------------------------------
-                    // FIND NAME
-                    // ----------------------------------
-
-                    const name =
-                        inspector.settingName ||
-                        inspector.name ||
-                        inspector.settingValue ||
-                        inspector.inspectorName ||
-                        "";
-
-
-                    const normalizedName =
-                        String(
-                            name
-                        ).trim();
-
-
-                    if (!normalizedName) {
-
-                        return;
-
-                    }
-
-
-                    // ----------------------------------
-                    // PREVENT DUPLICATE
-                    // ----------------------------------
-
-                    if (
-                        inspectorNames.includes(
-                            normalizedName
-                        )
-                    ) {
-
-                        return;
-
-                    }
-
-
-                    inspectorNames.push(
-                        normalizedName
-                    );
-
-                }
-            );
-
-        }
-
-
-        // ----------------------------------------------
-        // SORT
-        // ----------------------------------------------
-
-        inspectorNames.sort(
-            function (a, b) {
-
-                return a.localeCompare(
-                    b,
-                    "th"
-                );
-
-            }
-        );
-
-
-        // ----------------------------------------------
-        // CREATE OPTIONS
-        // ----------------------------------------------
 
         inspectorNames.forEach(
             function (name) {
@@ -1503,116 +1526,6 @@ async function loadInspectionListFilters() {
         `;
 
 
-        // ----------------------------------------------
-        // COLLECT UNIQUE ZONES
-        // ----------------------------------------------
-
-        const zoneNames = [];
-
-
-        if (
-            Array.isArray(
-                inspectionZones
-            )
-        ) {
-
-            inspectionZones.forEach(
-                function (zone) {
-
-                    if (!zone) {
-
-                        return;
-
-                    }
-
-
-                    // ----------------------------------
-                    // ACTIVE ONLY
-                    // ----------------------------------
-
-                    if (
-                        zone.status &&
-                        String(
-                            zone.status
-                        ).trim().toLowerCase() !==
-                        "active"
-                    ) {
-
-                        return;
-
-                    }
-
-
-                    // ----------------------------------
-                    // FIND ZONE NAME
-                    // ----------------------------------
-
-                    const name =
-                        zone.settingName ||
-                        zone.name ||
-                        zone.settingValue ||
-                        zone.zone ||
-                        "";
-
-
-                    const normalizedName =
-                        String(
-                            name
-                        ).trim();
-
-
-                    if (!normalizedName) {
-
-                        return;
-
-                    }
-
-
-                    // ----------------------------------
-                    // PREVENT DUPLICATE
-                    // ----------------------------------
-
-                    if (
-                        zoneNames.includes(
-                            normalizedName
-                        )
-                    ) {
-
-                        return;
-
-                    }
-
-
-                    zoneNames.push(
-                        normalizedName
-                    );
-
-                }
-            );
-
-        }
-
-
-        // ----------------------------------------------
-        // SORT
-        // ----------------------------------------------
-
-        zoneNames.sort(
-            function (a, b) {
-
-                return a.localeCompare(
-                    b,
-                    "th"
-                );
-
-            }
-        );
-
-
-        // ----------------------------------------------
-        // CREATE OPTIONS
-        // ----------------------------------------------
-
         zoneNames.forEach(
             function (name) {
 
@@ -1656,19 +1569,14 @@ async function loadInspectionListFilters() {
             isAdmin:
                 true,
 
+            users:
+                users.length,
+
             inspectors:
-                Array.isArray(
-                    inspectionInspectors
-                )
-                    ? inspectionInspectors.length
-                    : 0,
+                inspectorNames.length,
 
             zones:
-                Array.isArray(
-                    inspectionZones
-                )
-                    ? inspectionZones.length
-                    : 0
+                zoneNames.length
         }
     );
 
