@@ -56,7 +56,7 @@
 
 // Location จาก LocationMaster
 let inspectionMasterLocations = [];
-
+let inspectionPageInitializing = false;
 
 // ======================================================
 // SETUP INSPECTION
