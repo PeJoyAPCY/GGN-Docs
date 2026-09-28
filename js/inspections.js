@@ -115,7 +115,15 @@ function setupInspections() {
 
 
 // ======================================================
-// INITIALIZE INSPECTION PAGE
+// GGN DOCS - INSPECTION PAGE INITIALIZATION
+// VERSION: 2.1.0
+// DATE: 2026-09-26
+// CHANGE:
+// - ปรับลำดับการโหลดข้อมูล Inspection
+// - โหลด Inspection Settings เฉพาะส่วนที่จำเป็น
+// - โหลด LocationMaster ก่อน Render
+// - Render หลังข้อมูลพร้อม
+// - Zone / Inspector ใช้ข้อมูลจาก Current User
 // ======================================================
 
 async function initializeInspectionPage() {
@@ -146,23 +154,24 @@ async function initializeInspectionPage() {
             "ไม่พบ Current User ขณะเปิดหน้า Inspection"
         );
 
-    } else {
-
-        console.log(
-            "Current Inspection User:",
-            user
-        );
+        return;
 
     }
 
 
+    console.log(
+        "Current Inspection User:",
+        user
+    );
+
+
     // ----------------------------------------
-    // LOAD SETTINGS
+    // LOAD INSPECTION SETTINGS
     // ----------------------------------------
-    // ยังคงใช้ Settings สำหรับ Inspection Items
+    // ใช้สำหรับ Inspection Items เท่านั้น
     //
     // Zone / Location / Inspector
-    // ใช้ข้อมูลจากระบบใหม่
+    // ไม่ใช้จาก Settings แล้ว
     // ----------------------------------------
 
     if (
@@ -170,7 +179,7 @@ async function initializeInspectionPage() {
     ) {
 
         console.log(
-            "กำลังโหลด Inspection Settings..."
+            "กำลังโหลด Inspection Items..."
         );
 
 
@@ -187,11 +196,18 @@ async function initializeInspectionPage() {
     // LOAD LOCATION MASTER
     // ----------------------------------------
 
+    console.log(
+        "กำลังโหลด LocationMaster..."
+    );
+
+
     await loadInspectionMasterLocations();
 
 
     // ----------------------------------------
-    // RENDER NEW INSPECTION FORM
+    // RENDER USER CONTEXT
+    // ----------------------------------------
+    // Zone / Inspector มาจาก Current User
     // ----------------------------------------
 
     renderInspectionUser();
@@ -200,11 +216,22 @@ async function initializeInspectionPage() {
     renderInspectionZones();
 
 
+    renderInspectionInspectors();
+
+
+    // ----------------------------------------
+    // RENDER LOCATION
+    // ----------------------------------------
+    // Location มาจาก LocationMaster
+    // และกรองตามสิทธิ์ User
+    // ----------------------------------------
+
     renderInspectionLocations();
 
 
-    renderInspectionInspectors();
-
+    // ----------------------------------------
+    // RENDER INSPECTION ITEMS
+    // ----------------------------------------
 
     renderInspectionItems();
 

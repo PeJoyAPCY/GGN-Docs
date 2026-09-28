@@ -152,7 +152,6 @@ async function loadSingleInspectionSetting(
 
 }
 
-
 // ======================================================
 // LOAD INSPECTION SETTINGS
 // ======================================================
@@ -160,80 +159,29 @@ async function loadSingleInspectionSetting(
 async function loadInspectionSettings() {
 
     console.log(
-        "กำลังโหลดข้อมูล Inspection Settings..."
+        "กำลังโหลด Inspection Item Settings..."
     );
 
 
     // ==================================================
-    // LOAD SETTINGS
+    // LOAD ONLY INSPECTION ITEM
     // ==================================================
     //
-    // ไม่ใช้ Promise.all()
+    // Zone / Location / Inspector
+    // ไม่โหลดจาก Settings เดิมอีกแล้ว
     //
-    // เพราะถ้า Setting ตัวใดตัวหนึ่ง 404
-    // จะไม่ทำให้ Inspection Items หาย
+    // Zone / Location
+    // → ใช้ LocationMaster + Permission
+    //
+    // Inspector
+    // → ไม่ดึงจาก Settings เก่าสำหรับ Inspection
     //
     // ==================================================
-
-
-    const zoneData =
-        await loadSingleInspectionSetting(
-            "zone"
-        );
-
-
-    const locationData =
-        await loadSingleInspectionSetting(
-            "location"
-        );
-
-
-    const inspectorData =
-        await loadSingleInspectionSetting(
-            "inspector"
-        );
-
 
     const itemData =
         await loadSingleInspectionSetting(
             "inspectionItem"
         );
-
-
-    // ==================================================
-    // ZONE
-    // ==================================================
-
-    inspectionZones =
-        Array.isArray(
-            zoneData
-        )
-            ? zoneData
-            : [];
-
-
-    // ==================================================
-    // LOCATION
-    // ==================================================
-
-    inspectionLocations =
-        Array.isArray(
-            locationData
-        )
-            ? locationData
-            : [];
-
-
-    // ==================================================
-    // INSPECTOR
-    // ==================================================
-
-    inspectionInspectors =
-        Array.isArray(
-            inspectorData
-        )
-            ? inspectorData
-            : [];
 
 
     // ==================================================
@@ -249,14 +197,8 @@ async function loadInspectionSettings() {
 
 
     // ==================================================
-    // RENDER
+    // RENDER ONLY INSPECTION ITEMS
     // ==================================================
-
-    renderInspectionZones();
-
-    renderInspectionLocations();
-
-    renderInspectionInspectors();
 
     renderInspectionItems();
 
@@ -266,25 +208,7 @@ async function loadInspectionSettings() {
     // ==================================================
 
     console.log(
-        "Inspection Settings โหลดเสร็จแล้ว"
-    );
-
-
-    console.log(
-        "Zones:",
-        inspectionZones.length
-    );
-
-
-    console.log(
-        "Locations:",
-        inspectionLocations.length
-    );
-
-
-    console.log(
-        "Inspectors:",
-        inspectionInspectors.length
+        "Inspection Item Settings โหลดเสร็จแล้ว"
     );
 
 
