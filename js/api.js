@@ -573,6 +573,127 @@ async function apiGetInspectionLocations(
 
 }
 
+// ========================================
+// SAVE INSPECTION
+// ========================================
+//
+// ส่ง Inspection พร้อม Email ของ User ที่ Login
+// ไปให้ Backend ตรวจ Permission
+//
+// Backend จะใช้ requesterEmail เป็นตัวตัดสินสิทธิ์
+// ไม่ใช้ createdByEmail จาก inspection เป็นหลัก
+//
+// ========================================
+
+async function apiSaveInspection(
+    inspection
+) {
+
+    try {
+
+        if (
+            !inspection ||
+            !inspection.recordId
+        ) {
+
+            return {
+
+                success: false,
+
+                message:
+                    "ไม่พบข้อมูลการตรวจ"
+
+            };
+
+        }
+
+
+        const requesterEmail =
+            getCurrentGGNUserEmail();
+
+
+        if (!requesterEmail) {
+
+            return {
+
+                success: false,
+
+                message:
+                    "ไม่พบ Email ผู้ใช้งาน"
+
+            };
+
+        }
+
+
+        const response =
+            await fetch(
+
+                API_URL,
+
+                {
+
+                    method:
+                        "POST",
+
+                    headers: {
+
+                        "Content-Type":
+                            "text/plain;charset=utf-8"
+
+                    },
+
+                    body:
+                        JSON.stringify({
+
+                            action:
+                                "saveInspection",
+
+                            inspection:
+                                inspection,
+
+                            requesterEmail:
+                                requesterEmail
+
+                        })
+
+                }
+
+            );
+
+
+        const data =
+            await response.json();
+
+
+        console.log(
+            "ผลการบันทึก Inspection:",
+            data
+        );
+
+
+        return data;
+
+    } catch (error) {
+
+        console.error(
+            "apiSaveInspection Error:",
+            error
+        );
+
+
+        return {
+
+            success: false,
+
+            message:
+                "ไม่สามารถบันทึกข้อมูลการตรวจได้"
+
+        };
+
+    }
+
+}
 
 // ========================================
 // GET ONE INSPECTION
