@@ -5,16 +5,10 @@
  * ======================================================
  *
  * File: inspections.js
- * Version: v2.1.1
- * Updated: 2026-09-28
+ * Version: v2.1.0
+ * Updated: 2026-09-24
  *
  * Version History
- *
- * v2.1.1
- * - เปลี่ยน Create Inspection ให้ใช้ apiSaveInspection()
- * - ไม่เรียก fetch(API_URL) โดยตรงจาก Inspection Page
- * - ให้ api.js เป็นผู้ส่ง requesterEmail ไป Backend
- * - คง Inspection Permission และ LocationMaster เดิม
  *
  * v2.1.0
  * - เพิ่มการทำงานให้สอดคล้องกับ Inspection Permission
@@ -56,7 +50,7 @@
 
 // Location จาก LocationMaster
 let inspectionMasterLocations = [];
-let inspectionPageInitializing = false;
+
 
 // ======================================================
 // SETUP INSPECTION
@@ -138,165 +132,120 @@ async function initializeInspectionPage() {
         "กำลังเตรียมหน้า การตรวจ ISO..."
     );
 
+
     // ----------------------------------------
-    // ป้องกัน initialize ซ้ำพร้อมกัน
+    // DEFAULT DATE / TIME
     // ----------------------------------------
 
-    if (inspectionPageInitializing) {
+    setDefaultInspectionDateTime();
 
-        console.log(
-            "Inspection Page กำลัง initialize อยู่แล้ว"
+
+    // ----------------------------------------
+    // CURRENT USER
+    // ----------------------------------------
+
+    const user =
+        getCurrentUser();
+
+
+    if (!user) {
+
+        console.warn(
+            "ไม่พบ Current User ขณะเปิดหน้า Inspection"
         );
 
         return;
 
     }
 
-    inspectionPageInitializing = true;
+
+    console.log(
+        "Current Inspection User:",
+        user
+    );
 
 
-    try {
+    // ----------------------------------------
+    // LOAD INSPECTION SETTINGS
+    // ----------------------------------------
+    // ใช้สำหรับ Inspection Items เท่านั้น
+    //
+    // Zone / Location / Inspector
+    // ไม่ใช้จาก Settings แล้ว
+    // ----------------------------------------
 
-        // ----------------------------------------
-        // DEFAULT DATE / TIME
-        // ----------------------------------------
-
-        setDefaultInspectionDateTime();
-
-
-        // ----------------------------------------
-        // CURRENT USER
-        // ----------------------------------------
-
-        const user =
-            getCurrentUser();
-
-
-        if (!user) {
-
-            console.warn(
-                "ไม่พบ Current User ขณะเปิดหน้า Inspection"
-            );
-
-            return;
-
-        }
-
+    if (
+        !inspectionSettingsLoaded
+    ) {
 
         console.log(
-            "Current Inspection User:",
-            user
+            "กำลังโหลด Inspection Items..."
         );
 
 
-        // ----------------------------------------
-        // LOAD DATA IN PARALLEL
-        // ----------------------------------------
-        //
-        // Settings + LocationMaster
-        // ไม่ได้ขึ้นต่อกัน
-        // จึงโหลดพร้อมกันได้
-        // ----------------------------------------
+        await loadInspectionSettings();
 
-        const tasks = [];
-
-
-        if (!inspectionSettingsLoaded) {
-
-            console.log(
-                "กำลังโหลด Inspection Items..."
-            );
-
-            tasks.push(
-                loadInspectionSettings()
-            );
-
-        }
-
-
-        if (!inspectionLocationsLoaded) {
-
-            console.log(
-                "กำลังโหลด LocationMaster..."
-            );
-
-            tasks.push(
-                loadInspectionMasterLocations()
-            );
-
-        }
-
-
-        if (tasks.length > 0) {
-
-            await Promise.all(
-                tasks
-            );
-
-        }
-
-
-        // ----------------------------------------
-        // MARK LOADED
-        // ----------------------------------------
 
         inspectionSettingsLoaded =
             true;
 
-        inspectionLocationsLoaded =
-            true;
-
-
-        // ----------------------------------------
-        // RENDER USER CONTEXT
-        // ----------------------------------------
-
-        renderInspectionUser();
-
-        renderInspectionZones();
-
-        renderInspectionInspectors();
-
-
-        // ----------------------------------------
-        // RENDER LOCATION
-        // ----------------------------------------
-
-        renderInspectionLocations();
-
-
-        // ----------------------------------------
-        // RENDER INSPECTION ITEMS
-        // ----------------------------------------
-
-        renderInspectionItems();
-
-
-        // ----------------------------------------
-        // UPDATE FORM MODE
-        // ----------------------------------------
-
-        updateInspectionFormMode();
-
-
-        console.log(
-            "เตรียมหน้าการตรวจเรียบร้อย"
-        );
-
-
-    } catch (error) {
-
-        console.error(
-            "initializeInspectionPage Error:",
-            error
-        );
-
-    } finally {
-
-        inspectionPageInitializing =
-            false;
-
     }
+
+
+    // ----------------------------------------
+    // LOAD LOCATION MASTER
+    // ----------------------------------------
+
+    console.log(
+        "กำลังโหลด LocationMaster..."
+    );
+
+
+    await loadInspectionMasterLocations();
+
+
+    // ----------------------------------------
+    // RENDER USER CONTEXT
+    // ----------------------------------------
+    // Zone / Inspector มาจาก Current User
+    // ----------------------------------------
+
+    renderInspectionUser();
+
+
+    renderInspectionZones();
+
+
+    renderInspectionInspectors();
+
+
+    // ----------------------------------------
+    // RENDER LOCATION
+    // ----------------------------------------
+    // Location มาจาก LocationMaster
+    // และกรองตามสิทธิ์ User
+    // ----------------------------------------
+
+    renderInspectionLocations();
+
+
+    // ----------------------------------------
+    // RENDER INSPECTION ITEMS
+    // ----------------------------------------
+
+    renderInspectionItems();
+
+
+    // ----------------------------------------
+    // UPDATE FORM MODE
+    // ----------------------------------------
+
+    updateInspectionFormMode();
+
+
+    console.log(
+        "เตรียมหน้าการตรวจเรียบร้อย"
+    );
 
 }
 
@@ -1709,8 +1658,7 @@ function validateInspectionForm() {
     // ------------------------------------------------
 
     if (
-        inspectionMode ===
-        "create"
+        inspectionMode === "create"
     ) {
 
         if (
@@ -1800,8 +1748,7 @@ function validateInspectionForm() {
     // ------------------------------------------------
 
     if (
-        inspectionMode ===
-        "edit"
+        inspectionMode === "edit"
     ) {
 
         const original =
@@ -2556,20 +2503,35 @@ async function saveInspection() {
             );
 
 
-            // ----------------------------------------
-            // USE API LAYER
-            // ----------------------------------------
-            // apiSaveInspection()
-            // จะดึง Current User Email จาก ggnDocsUser
-            // และส่ง requesterEmail ไป Backend
-            //
-            // ไม่ใช้ fetch(API_URL) โดยตรงที่นี่
-            // ----------------------------------------
+            const response =
+                await fetch(
+                    API_URL,
+                    {
+                        method:
+                            "POST",
+
+                        headers: {
+                            "Content-Type":
+                                "text/plain;charset=utf-8"
+                        },
+
+                        body:
+                            JSON.stringify({
+
+                                action:
+                                    "saveInspection",
+
+                                inspection:
+                                    inspectionData
+
+                            })
+
+                    }
+                );
+
 
             data =
-                await apiSaveInspection(
-                    inspectionData
-                );
+                await response.json();
 
         }
 
