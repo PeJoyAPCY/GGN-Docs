@@ -1,13 +1,15 @@
 // ======================================================
 // GGN DOCS - API
-// VERSION: 2.3.0
+// VERSION: 2.4.0
 // DATE: 2026-09-29
 //
 // CHANGE:
-// - เพิ่ม postGGNAPI() เป็นตัวกลางสำหรับ POST API
-// - ป้องกัน Browser / Google Cache ใช้ Web App Redirect เดิม
-// - ใช้ cache: no-store
-// - เพิ่ม cache-busting query parameter
+// - ปรับการเรียก Google Apps Script Web App ให้เรียบง่าย
+// - ยกเลิก cache-busting query parameter
+// - ยกเลิก cache: no-store
+// - คง redirect: follow
+// - ใช้ response.text() ก่อน JSON.parse()
+//   เพื่อรองรับ Content Service redirect ของ Apps Script
 // - คง Google Login
 // - คง Inspection Permission
 // - คง LocationMaster / pointId Flow
@@ -21,116 +23,132 @@
 // API POST HELPER
 // ========================================
 //
-// ใช้เป็นตัวกลางสำหรับ POST ทุก API
-//
 // Backend:
 //   doPost(e)
 //
-// รับ JSON:
+// Payload:
 //   {
 //      action: "...",
 //      ...
 //   }
 //
-// ใช้ Content-Type:
+// Content-Type:
 //   text/plain
 //
-// เพื่อหลีกเลี่ยง CORS preflight
-// และให้ทำงานกับ Google Apps Script Web App
+// เหตุผล:
+//   หลีกเลี่ยง CORS preflight
+//   และให้ทำงานกับ Google Apps Script Web App
 //
+// Google Apps Script Content Service
+// สามารถ redirect response ไปยัง
+// script.googleusercontent.com
+//
+// จึงใช้ redirect: "follow"
 // ========================================
 
 async function postGGNAPI(
     payload
 ) {
 
-    const cacheBuster =
-        "_ts=" +
-        Date.now();
-
-
-    const url =
-        API_URL +
-        (
-            API_URL.indexOf("?") >= 0
-                ? "&"
-                : "?"
-        ) +
-        cacheBuster;
-
-
-    const response =
-        await fetch(
-            url,
-            {
-                method: "POST",
-
-                headers: {
-                    "Content-Type":
-                        "text/plain;charset=utf-8"
-                },
-
-                body:
-                    JSON.stringify(
-                        payload
-                    ),
-
-                cache: "no-store",
-
-                redirect: "follow"
-            }
-        );
-
-
-    if (!response.ok) {
-
-        throw new Error(
-            "GGN API HTTP Error: " +
-            response.status +
-            " " +
-            response.statusText
-        );
-
-    }
-
-
-    const responseText =
-        await response.text();
-
-
-    if (!responseText) {
-
-        throw new Error(
-            "GGN API ไม่ส่งข้อมูลกลับมา"
-        );
-
-    }
-
-
-    let data;
-
     try {
 
-        data =
-            JSON.parse(
+        const response =
+            await fetch(
+                API_URL,
+                {
+                    method: "POST",
+
+                    headers: {
+                        "Content-Type":
+                            "text/plain;charset=utf-8"
+                    },
+
+                    body:
+                        JSON.stringify(
+                            payload
+                        ),
+
+                    redirect:
+                        "follow"
+                }
+            );
+
+
+        const responseText =
+            await response.text();
+
+
+        console.log(
+            "GGN API HTTP Status:",
+            response.status
+        );
+
+
+        console.log(
+            "GGN API Response:",
+            responseText
+        );
+
+
+        if (!response.ok) {
+
+            throw new Error(
+                "GGN API HTTP Error: " +
+                response.status +
+                " " +
+                response.statusText
+            );
+
+        }
+
+
+        if (!responseText) {
+
+            throw new Error(
+                "GGN API ไม่ส่งข้อมูลกลับมา"
+            );
+
+        }
+
+
+        let data;
+
+
+        try {
+
+            data =
+                JSON.parse(
+                    responseText
+                );
+
+        } catch (error) {
+
+            console.error(
+                "GGN API Response ไม่ใช่ JSON:",
                 responseText
             );
+
+
+            throw new Error(
+                "ข้อมูลตอบกลับจาก GGN API ไม่ใช่ JSON"
+            );
+
+        }
+
+
+        return data;
 
     } catch (error) {
 
         console.error(
-            "GGN API Response ไม่ใช่ JSON:",
-            responseText
+            "postGGNAPI Error:",
+            error
         );
 
-        throw new Error(
-            "ข้อมูลตอบกลับจาก GGN API ไม่ใช่ JSON"
-        );
+
+        throw error;
 
     }
-
-
-    return data;
 
 }
 
@@ -218,26 +236,32 @@ async function testAPI() {
 
     try {
 
-        const url =
-            API_URL +
-            (
-                API_URL.indexOf("?") >= 0
-                    ? "&"
-                    : "?"
-            ) +
-            "_ts=" +
-            Date.now();
-
-
         const response =
             await fetch(
-                url,
+                API_URL,
                 {
                     method: "GET",
-                    cache: "no-store",
-                    redirect: "follow"
+
+                    redirect:
+                        "follow"
                 }
             );
+
+
+        const responseText =
+            await response.text();
+
+
+        console.log(
+            "Test API HTTP Status:",
+            response.status
+        );
+
+
+        console.log(
+            "Test API Response:",
+            responseText
+        );
 
 
         if (!response.ok) {
@@ -252,8 +276,38 @@ async function testAPI() {
         }
 
 
-        const data =
-            await response.json();
+        if (!responseText) {
+
+            throw new Error(
+                "Google Apps Script ไม่ส่งข้อมูลกลับมา"
+            );
+
+        }
+
+
+        let data;
+
+
+        try {
+
+            data =
+                JSON.parse(
+                    responseText
+                );
+
+        } catch (error) {
+
+            console.error(
+                "Test API Response ไม่ใช่ JSON:",
+                responseText
+            );
+
+
+            throw new Error(
+                "ข้อมูลจาก Google Apps Script ไม่ใช่ JSON"
+            );
+
+        }
 
 
         console.log(
@@ -540,7 +594,7 @@ async function apiGetInspectionUsers() {
             users:
                 []
 
-        };
+            };
 
     }
 
@@ -598,18 +652,11 @@ async function apiGetInspectionLocations(
 
         const url =
             API_URL +
-            (
-                API_URL.indexOf("?") >= 0
-                    ? "&"
-                    : "?"
-            ) +
-            "action=getInspectionLocations" +
+            "?action=getInspectionLocations" +
             "&email=" +
             encodeURIComponent(
                 requesterEmail
-            ) +
-            "&_ts=" +
-            Date.now();
+            );
 
 
         const response =
@@ -617,10 +664,27 @@ async function apiGetInspectionLocations(
                 url,
                 {
                     method: "GET",
-                    cache: "no-store",
-                    redirect: "follow"
+
+                    redirect:
+                        "follow"
                 }
             );
+
+
+        const responseText =
+            await response.text();
+
+
+        console.log(
+            "Inspection Locations HTTP Status:",
+            response.status
+        );
+
+
+        console.log(
+            "Inspection Locations Response:",
+            responseText
+        );
 
 
         if (!response.ok) {
@@ -635,8 +699,38 @@ async function apiGetInspectionLocations(
         }
 
 
-        const data =
-            await response.json();
+        if (!responseText) {
+
+            throw new Error(
+                "ไม่พบข้อมูล Inspection Locations"
+            );
+
+        }
+
+
+        let data;
+
+
+        try {
+
+            data =
+                JSON.parse(
+                    responseText
+                );
+
+        } catch (error) {
+
+            console.error(
+                "Inspection Locations Response ไม่ใช่ JSON:",
+                responseText
+            );
+
+
+            throw new Error(
+                "ข้อมูล Inspection Locations ไม่ใช่ JSON"
+            );
+
+        }
 
 
         console.log(
