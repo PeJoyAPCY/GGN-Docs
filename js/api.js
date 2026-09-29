@@ -620,6 +620,10 @@ async function apiGetInspectionUsers() {
 // Admin = เห็นทุก Zone
 // User  = เห็นเฉพาะ Zone ของตนเอง
 //
+// ใช้ POST ผ่าน postGGNAPI()
+// เพื่อหลีกเลี่ยงปัญหา GET Redirect
+// ไปยัง script.googleusercontent.com
+//
 // ========================================
 
 async function apiGetInspectionLocations(
@@ -633,7 +637,16 @@ async function apiGetInspectionLocations(
             getCurrentGGNUserEmail();
 
 
+        // ========================================
+        // CHECK EMAIL
+        // ========================================
+
         if (!requesterEmail) {
+
+            console.error(
+                "apiGetInspectionLocations: ไม่พบ Email ผู้ใช้งาน"
+            );
+
 
             return {
 
@@ -650,88 +663,31 @@ async function apiGetInspectionLocations(
         }
 
 
-        const url =
-            API_URL +
-            "?action=getInspectionLocations" +
-            "&email=" +
-            encodeURIComponent(
-                requesterEmail
-            );
-
-
-        const response =
-            await fetch(
-                url,
-                {
-                    method: "GET",
-
-                    redirect:
-                        "follow"
-                }
-            );
-
-
-        const responseText =
-            await response.text();
-
-
         console.log(
-            "Inspection Locations HTTP Status:",
-            response.status
+            "กำลังดึง Inspection Locations สำหรับ:",
+            requesterEmail
         );
 
 
-        console.log(
-            "Inspection Locations Response:",
-            responseText
-        );
+        // ========================================
+        // CALL GGN API
+        // ========================================
+
+        const data =
+            await postGGNAPI({
+
+                action:
+                    "getInspectionLocations",
+
+                email:
+                    requesterEmail
+
+            });
 
 
-        if (!response.ok) {
-
-            throw new Error(
-                "HTTP " +
-                response.status +
-                " " +
-                response.statusText
-            );
-
-        }
-
-
-        if (!responseText) {
-
-            throw new Error(
-                "ไม่พบข้อมูล Inspection Locations"
-            );
-
-        }
-
-
-        let data;
-
-
-        try {
-
-            data =
-                JSON.parse(
-                    responseText
-                );
-
-        } catch (error) {
-
-            console.error(
-                "Inspection Locations Response ไม่ใช่ JSON:",
-                responseText
-            );
-
-
-            throw new Error(
-                "ข้อมูล Inspection Locations ไม่ใช่ JSON"
-            );
-
-        }
-
+        // ========================================
+        // LOG RESPONSE
+        // ========================================
 
         console.log(
             "ผลการดึง Inspection Locations:",
@@ -739,7 +695,91 @@ async function apiGetInspectionLocations(
         );
 
 
-        return data;
+        // ========================================
+        // CHECK RESPONSE
+        // ========================================
+
+        if (!data) {
+
+            console.error(
+                "Inspection Locations API ไม่ส่งข้อมูลกลับมา"
+            );
+
+
+            return {
+
+                success: false,
+
+                message:
+                    "ไม่พบข้อมูลจุดตรวจ",
+
+                locations:
+                    []
+
+            };
+
+        }
+
+
+        if (!data.success) {
+
+            console.error(
+                "Inspection Locations API Error:",
+                data.message
+            );
+
+
+            return {
+
+                success: false,
+
+                message:
+                    data.message ||
+                    "ไม่สามารถดึงรายการจุดตรวจได้",
+
+                locations:
+                    Array.isArray(
+                        data.locations
+                    )
+                        ? data.locations
+                        : []
+
+            };
+
+        }
+
+
+        // ========================================
+        // NORMALIZE LOCATIONS
+        // ========================================
+
+        const locations =
+            Array.isArray(
+                data.locations
+            )
+                ? data.locations
+                : [];
+
+
+        console.log(
+            "Inspection Locations สำเร็จ:",
+            locations.length,
+            "จุด"
+        );
+
+
+        // ========================================
+        // RETURN
+        // ========================================
+
+        return {
+
+            success: true,
+
+            locations:
+                locations
+
+        };
 
     } catch (error) {
 
@@ -754,6 +794,7 @@ async function apiGetInspectionLocations(
             success: false,
 
             message:
+                error.message ||
                 "ไม่สามารถดึงรายการจุดตรวจได้",
 
             locations:
