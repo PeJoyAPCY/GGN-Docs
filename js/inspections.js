@@ -116,29 +116,22 @@ function setupInspections() {
 
 // ======================================================
 // GGN DOCS - INSPECTION PAGE INITIALIZATION
-// VERSION: 2.2.0
-// DATE: 2026-09-29
+// VERSION: 2.3.0
 //
 // CHANGE:
-// - โหลด Inspection Settings และ LocationMaster พร้อมกัน
-// - ลดเวลารอหน้า Inspection
-// - ไม่เปลี่ยน Permission Logic
-// - Zone / Inspector ยังคงใช้ Current User
-// - Location ยังคงใช้ LocationMaster
+// - ใช้ข้อมูล Session User ทันที
+// - โหลด Inspection Settings เพียงครั้งเดียว
+// - โหลด LocationMaster เพียงครั้งเดียวต่อ Session
+// - ไม่เรียก API ซ้ำเมื่อเปลี่ยนเมนู
+// - Render จาก Memory Cache ได้ทันที
+// - Permission จริงยังคงตรวจสอบที่ Backend ตอนทำรายการ
 // ======================================================
 
 async function initializeInspectionPage() {
 
     console.log(
-        "กำลังเตรียมหน้า การตรวจ ISO..."
+        "เตรียมหน้า การตรวจ ISO..."
     );
-
-
-    // ----------------------------------------
-    // DEFAULT DATE / TIME
-    // ----------------------------------------
-
-    setDefaultInspectionDateTime();
 
 
     // ----------------------------------------
@@ -167,20 +160,66 @@ async function initializeInspectionPage() {
 
 
     // ----------------------------------------
-    // LOAD REQUIRED DATA
+    // DEFAULT DATE / TIME
+    // ----------------------------------------
+
+    setDefaultInspectionDateTime();
+
+
+    // ----------------------------------------
+    // FIRST LOAD
     // ----------------------------------------
     //
-    // Settings และ LocationMaster
-    // ไม่ได้ขึ้นต่อกัน
-    //
-    // จึงโหลดพร้อมกันเพื่อลดเวลา
+    // ถ้าโหลดข้อมูลพื้นฐานสำเร็จแล้ว
+    // ไม่ต้องเรียก API ซ้ำ
     // ----------------------------------------
+
+    if (
+        inspectionPageInitialized
+    ) {
+
+        console.log(
+            "Inspection Page ใช้ข้อมูลจาก Memory Cache"
+        );
+
+
+        renderInspectionUser();
+
+        renderInspectionZones();
+
+        renderInspectionInspectors();
+
+        renderInspectionLocations();
+
+        renderInspectionItems();
+
+        updateInspectionFormMode();
+
+
+        console.log(
+            "เปิดหน้า Inspection จาก Cache สำเร็จ"
+        );
+
+
+        return;
+
+    }
+
+
+    // ----------------------------------------
+    // FIRST LOAD
+    // ----------------------------------------
+
+    console.log(
+        "กำลังโหลดข้อมูลพื้นฐาน Inspection ครั้งแรก..."
+    );
+
 
     const loadTasks = [];
 
 
     // ----------------------------------------
-    // INSPECTION ITEM SETTINGS
+    // INSPECTION SETTINGS
     // ----------------------------------------
 
     if (
@@ -193,6 +232,7 @@ async function initializeInspectionPage() {
 
 
         loadTasks.push(
+
             loadInspectionSettings()
                 .then(
                     function () {
@@ -202,6 +242,7 @@ async function initializeInspectionPage() {
 
                     }
                 )
+
         );
 
     }
@@ -211,18 +252,26 @@ async function initializeInspectionPage() {
     // LOCATION MASTER
     // ----------------------------------------
 
-    console.log(
-        "กำลังโหลด LocationMaster..."
-    );
+    if (
+        !inspectionLocationsLoaded
+    ) {
+
+        console.log(
+            "กำลังโหลด LocationMaster ครั้งแรก..."
+        );
 
 
-    loadTasks.push(
-        loadInspectionMasterLocations()
-    );
+        loadTasks.push(
+
+            loadInspectionMasterLocations()
+
+        );
+
+    }
 
 
     // ----------------------------------------
-    // WAIT FOR ALL
+    // WAIT FOR REQUIRED DATA
     // ----------------------------------------
 
     await Promise.all(
@@ -230,23 +279,21 @@ async function initializeInspectionPage() {
     );
 
 
-    console.log(
-        "โหลดข้อมูล Inspection สำหรับหน้าเรียบร้อย"
-    );
+    // ----------------------------------------
+    // MARK PAGE INITIALIZED
+    // ----------------------------------------
+
+    inspectionPageInitialized =
+        true;
 
 
     // ----------------------------------------
     // RENDER USER CONTEXT
     // ----------------------------------------
-    // Zone / Inspector
-    // มาจาก Current User
-    // ----------------------------------------
 
     renderInspectionUser();
 
-
     renderInspectionZones();
-
 
     renderInspectionInspectors();
 
@@ -254,15 +301,12 @@ async function initializeInspectionPage() {
     // ----------------------------------------
     // RENDER LOCATION
     // ----------------------------------------
-    // Location มาจาก LocationMaster
-    // ซึ่ง Backend ตรวจ Permission มาแล้ว
-    // ----------------------------------------
 
     renderInspectionLocations();
 
 
     // ----------------------------------------
-    // RENDER INSPECTION ITEMS
+    // RENDER ITEMS
     // ----------------------------------------
 
     renderInspectionItems();
@@ -276,11 +320,10 @@ async function initializeInspectionPage() {
 
 
     console.log(
-        "เตรียมหน้าการตรวจเรียบร้อย"
+        "เตรียมหน้า Inspection ครั้งแรกเรียบร้อย"
     );
 
 }
-
 
 // ======================================================
 // LOAD LOCATION MASTER
@@ -297,9 +340,32 @@ async function loadInspectionMasterLocations() {
         inspectionMasterLocations =
             [];
 
+        inspectionLocationsLoaded =
+            false;
+
 
         console.warn(
             "ไม่สามารถโหลด LocationMaster ได้ เพราะไม่พบ User Email"
+        );
+
+
+        return;
+
+    }
+
+
+    // ----------------------------------------
+    // CACHE CHECK
+    // ----------------------------------------
+
+    if (
+        inspectionLocationsLoaded
+    ) {
+
+        console.log(
+            "LocationMaster ใช้ข้อมูลจาก Memory Cache:",
+            inspectionMasterLocations.length,
+            "จุด"
         );
 
 
@@ -337,6 +403,10 @@ async function loadInspectionMasterLocations() {
                 [];
 
 
+            inspectionLocationsLoaded =
+                false;
+
+
             console.error(
                 "ไม่สามารถโหลด LocationMaster:",
                 data
@@ -358,9 +428,18 @@ async function loadInspectionMasterLocations() {
                 : [];
 
 
+        // ----------------------------------------
+        // MARK CACHE READY
+        // ----------------------------------------
+
+        inspectionLocationsLoaded =
+            true;
+
+
         console.log(
             "โหลด LocationMaster สำเร็จ:",
-            inspectionMasterLocations
+            inspectionMasterLocations.length,
+            "จุด"
         );
 
 
@@ -381,10 +460,13 @@ async function loadInspectionMasterLocations() {
         inspectionMasterLocations =
             [];
 
+
+        inspectionLocationsLoaded =
+            false;
+
     }
 
 }
-
 
 // ======================================================
 // RENDER CURRENT USER

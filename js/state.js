@@ -32,7 +32,10 @@ let inspectionItems = [];
 // ป้องกันการโหลด Settings ซ้ำโดยไม่จำเป็น
 let inspectionSettingsLoaded = false;
 
-// ป้องกันการ bind event ซ้ำ
+// ป้องกันการโหลด LocationMaster ซ้ำโดยไม่จำเป็น
+let inspectionLocationsLoaded = false;
+
+// ป้องกันการ initialize หน้า Inspection ซ้ำ
 let inspectionPageInitialized = false;
 
 
