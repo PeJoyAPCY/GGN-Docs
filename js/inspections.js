@@ -116,14 +116,15 @@ function setupInspections() {
 
 // ======================================================
 // GGN DOCS - INSPECTION PAGE INITIALIZATION
-// VERSION: 2.1.0
-// DATE: 2026-09-26
+// VERSION: 2.2.0
+// DATE: 2026-09-29
+//
 // CHANGE:
-// - ปรับลำดับการโหลดข้อมูล Inspection
-// - โหลด Inspection Settings เฉพาะส่วนที่จำเป็น
-// - โหลด LocationMaster ก่อน Render
-// - Render หลังข้อมูลพร้อม
-// - Zone / Inspector ใช้ข้อมูลจาก Current User
+// - โหลด Inspection Settings และ LocationMaster พร้อมกัน
+// - ลดเวลารอหน้า Inspection
+// - ไม่เปลี่ยน Permission Logic
+// - Zone / Inspector ยังคงใช้ Current User
+// - Location ยังคงใช้ LocationMaster
 // ======================================================
 
 async function initializeInspectionPage() {
@@ -166,12 +167,20 @@ async function initializeInspectionPage() {
 
 
     // ----------------------------------------
-    // LOAD INSPECTION SETTINGS
+    // LOAD REQUIRED DATA
     // ----------------------------------------
-    // ใช้สำหรับ Inspection Items เท่านั้น
     //
-    // Zone / Location / Inspector
-    // ไม่ใช้จาก Settings แล้ว
+    // Settings และ LocationMaster
+    // ไม่ได้ขึ้นต่อกัน
+    //
+    // จึงโหลดพร้อมกันเพื่อลดเวลา
+    // ----------------------------------------
+
+    const loadTasks = [];
+
+
+    // ----------------------------------------
+    // INSPECTION ITEM SETTINGS
     // ----------------------------------------
 
     if (
@@ -183,17 +192,23 @@ async function initializeInspectionPage() {
         );
 
 
-        await loadInspectionSettings();
+        loadTasks.push(
+            loadInspectionSettings()
+                .then(
+                    function () {
 
+                        inspectionSettingsLoaded =
+                            true;
 
-        inspectionSettingsLoaded =
-            true;
+                    }
+                )
+        );
 
     }
 
 
     // ----------------------------------------
-    // LOAD LOCATION MASTER
+    // LOCATION MASTER
     // ----------------------------------------
 
     console.log(
@@ -201,13 +216,30 @@ async function initializeInspectionPage() {
     );
 
 
-    await loadInspectionMasterLocations();
+    loadTasks.push(
+        loadInspectionMasterLocations()
+    );
+
+
+    // ----------------------------------------
+    // WAIT FOR ALL
+    // ----------------------------------------
+
+    await Promise.all(
+        loadTasks
+    );
+
+
+    console.log(
+        "โหลดข้อมูล Inspection สำหรับหน้าเรียบร้อย"
+    );
 
 
     // ----------------------------------------
     // RENDER USER CONTEXT
     // ----------------------------------------
-    // Zone / Inspector มาจาก Current User
+    // Zone / Inspector
+    // มาจาก Current User
     // ----------------------------------------
 
     renderInspectionUser();
@@ -223,7 +255,7 @@ async function initializeInspectionPage() {
     // RENDER LOCATION
     // ----------------------------------------
     // Location มาจาก LocationMaster
-    // และกรองตามสิทธิ์ User
+    // ซึ่ง Backend ตรวจ Permission มาแล้ว
     // ----------------------------------------
 
     renderInspectionLocations();
