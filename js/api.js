@@ -1,23 +1,138 @@
 // ======================================================
 // GGN DOCS - API
-// VERSION: 2.2.0
-// DATE: 2026-09-24
+// VERSION: 2.3.0
+// DATE: 2026-09-29
 //
 // CHANGE:
-// - เพิ่ม getCurrentGGNUser()
-// - เพิ่ม getCurrentGGNUserEmail()
-// - เพิ่ม apiGetInspectionUsers()
-// - ใช้ Users Sheet เป็น Source of Truth สำหรับ Inspector / Zone
-// - ส่ง Email ผู้ใช้งานไป Backend สำหรับ Inspection Permission
-// - ปรับ apiGetInspections() ให้ส่ง email
-// - ปรับ apiGetInspection() ให้ส่ง email
-// - ปรับ apiUpdateInspection() ให้ส่ง updatedByEmail
-// - ปรับ apiDeleteInspection() ให้ส่ง deletedByEmail
+// - เพิ่ม postGGNAPI() เป็นตัวกลางสำหรับ POST API
+// - ป้องกัน Browser / Google Cache ใช้ Web App Redirect เดิม
+// - ใช้ cache: no-store
+// - เพิ่ม cache-busting query parameter
+// - คง Google Login
+// - คง Inspection Permission
 // - คง LocationMaster / pointId Flow
-// - คง Settings API สำหรับ inspectionItem
-// - คง FM-OP-11 API เดิม
-// - ไม่กระทบ FM-OP-11 Version 1
+// - คง Settings API
+// - คง FM-OP-11 API
+// - ไม่เปลี่ยน Backend API Contract
 // ======================================================
+
+
+// ========================================
+// API POST HELPER
+// ========================================
+//
+// ใช้เป็นตัวกลางสำหรับ POST ทุก API
+//
+// Backend:
+//   doPost(e)
+//
+// รับ JSON:
+//   {
+//      action: "...",
+//      ...
+//   }
+//
+// ใช้ Content-Type:
+//   text/plain
+//
+// เพื่อหลีกเลี่ยง CORS preflight
+// และให้ทำงานกับ Google Apps Script Web App
+//
+// ========================================
+
+async function postGGNAPI(
+    payload
+) {
+
+    const cacheBuster =
+        "_ts=" +
+        Date.now();
+
+
+    const url =
+        API_URL +
+        (
+            API_URL.indexOf("?") >= 0
+                ? "&"
+                : "?"
+        ) +
+        cacheBuster;
+
+
+    const response =
+        await fetch(
+            url,
+            {
+                method: "POST",
+
+                headers: {
+                    "Content-Type":
+                        "text/plain;charset=utf-8"
+                },
+
+                body:
+                    JSON.stringify(
+                        payload
+                    ),
+
+                cache: "no-store",
+
+                redirect: "follow"
+            }
+        );
+
+
+    if (!response.ok) {
+
+        throw new Error(
+            "GGN API HTTP Error: " +
+            response.status +
+            " " +
+            response.statusText
+        );
+
+    }
+
+
+    const responseText =
+        await response.text();
+
+
+    if (!responseText) {
+
+        throw new Error(
+            "GGN API ไม่ส่งข้อมูลกลับมา"
+        );
+
+    }
+
+
+    let data;
+
+    try {
+
+        data =
+            JSON.parse(
+                responseText
+            );
+
+    } catch (error) {
+
+        console.error(
+            "GGN API Response ไม่ใช่ JSON:",
+            responseText
+        );
+
+        throw new Error(
+            "ข้อมูลตอบกลับจาก GGN API ไม่ใช่ JSON"
+        );
+
+    }
+
+
+    return data;
+
+}
 
 
 // ========================================
@@ -25,6 +140,7 @@
 // ========================================
 //
 // อ่านข้อมูล User จาก localStorage
+//
 // Key:
 //   ggnDocsUser
 //
@@ -102,10 +218,38 @@ async function testAPI() {
 
     try {
 
+        const url =
+            API_URL +
+            (
+                API_URL.indexOf("?") >= 0
+                    ? "&"
+                    : "?"
+            ) +
+            "_ts=" +
+            Date.now();
+
+
         const response =
             await fetch(
-                API_URL
+                url,
+                {
+                    method: "GET",
+                    cache: "no-store",
+                    redirect: "follow"
+                }
             );
+
+
+        if (!response.ok) {
+
+            throw new Error(
+                "HTTP " +
+                response.status +
+                " " +
+                response.statusText
+            );
+
+        }
 
 
         const data =
@@ -173,41 +317,16 @@ async function loginToGGN(
         );
 
 
-        const response =
-            await fetch(
-
-                API_URL,
-
-                {
-
-                    method:
-                        "POST",
-
-                    headers: {
-
-                        "Content-Type":
-                            "text/plain;charset=utf-8"
-
-                    },
-
-                    body:
-                        JSON.stringify({
-
-                            action:
-                                "googleLogin",
-
-                            credential:
-                                credential
-
-                        })
-
-                }
-
-            );
-
-
         const data =
-            await response.json();
+            await postGGNAPI({
+
+                action:
+                    "googleLogin",
+
+                credential:
+                    credential
+
+            });
 
 
         console.log(
@@ -294,43 +413,18 @@ async function apiGetInspections(
         }
 
 
-        const response =
-            await fetch(
-
-                API_URL,
-
-                {
-
-                    method:
-                        "POST",
-
-                    headers: {
-
-                        "Content-Type":
-                            "text/plain;charset=utf-8"
-
-                    },
-
-                    body:
-                        JSON.stringify({
-
-                            action:
-                                "getInspections",
-
-                            ...filters,
-
-                            email:
-                                email
-
-                        })
-
-                }
-
-            );
-
-
         const data =
-            await response.json();
+            await postGGNAPI({
+
+                action:
+                    "getInspections",
+
+                ...filters,
+
+                email:
+                    email
+
+            });
 
 
         console.log(
@@ -408,41 +502,16 @@ async function apiGetInspectionUsers() {
         }
 
 
-        const response =
-            await fetch(
-
-                API_URL,
-
-                {
-
-                    method:
-                        "POST",
-
-                    headers: {
-
-                        "Content-Type":
-                            "text/plain;charset=utf-8"
-
-                    },
-
-                    body:
-                        JSON.stringify({
-
-                            action:
-                                "getInspectionUsers",
-
-                            email:
-                                email
-
-                        })
-
-                }
-
-            );
-
-
         const data =
-            await response.json();
+            await postGGNAPI({
+
+                action:
+                    "getInspectionUsers",
+
+                email:
+                    email
+
+            });
 
 
         console.log(
@@ -528,13 +597,42 @@ async function apiGetInspectionLocations(
 
 
         const url =
-            `${API_URL}?action=getInspectionLocations&email=${encodeURIComponent(requesterEmail)}`;
+            API_URL +
+            (
+                API_URL.indexOf("?") >= 0
+                    ? "&"
+                    : "?"
+            ) +
+            "action=getInspectionLocations" +
+            "&email=" +
+            encodeURIComponent(
+                requesterEmail
+            ) +
+            "&_ts=" +
+            Date.now();
 
 
         const response =
             await fetch(
-                url
+                url,
+                {
+                    method: "GET",
+                    cache: "no-store",
+                    redirect: "follow"
+                }
             );
+
+
+        if (!response.ok) {
+
+            throw new Error(
+                "HTTP " +
+                response.status +
+                " " +
+                response.statusText
+            );
+
+        }
 
 
         const data =
@@ -572,6 +670,7 @@ async function apiGetInspectionLocations(
     }
 
 }
+
 
 // ========================================
 // SAVE INSPECTION
@@ -626,44 +725,19 @@ async function apiSaveInspection(
         }
 
 
-        const response =
-            await fetch(
-
-                API_URL,
-
-                {
-
-                    method:
-                        "POST",
-
-                    headers: {
-
-                        "Content-Type":
-                            "text/plain;charset=utf-8"
-
-                    },
-
-                    body:
-                        JSON.stringify({
-
-                            action:
-                                "saveInspection",
-
-                            inspection:
-                                inspection,
-
-                            requesterEmail:
-                                requesterEmail
-
-                        })
-
-                }
-
-            );
-
-
         const data =
-            await response.json();
+            await postGGNAPI({
+
+                action:
+                    "saveInspection",
+
+                inspection:
+                    inspection,
+
+                requesterEmail:
+                    requesterEmail
+
+            });
 
 
         console.log(
@@ -694,6 +768,7 @@ async function apiSaveInspection(
     }
 
 }
+
 
 // ========================================
 // GET ONE INSPECTION
@@ -743,44 +818,19 @@ async function apiGetInspection(
         }
 
 
-        const response =
-            await fetch(
-
-                API_URL,
-
-                {
-
-                    method:
-                        "POST",
-
-                    headers: {
-
-                        "Content-Type":
-                            "text/plain;charset=utf-8"
-
-                    },
-
-                    body:
-                        JSON.stringify({
-
-                            action:
-                                "getInspection",
-
-                            recordId:
-                                recordId,
-
-                            email:
-                                email
-
-                        })
-
-                }
-
-            );
-
-
         const data =
-            await response.json();
+            await postGGNAPI({
+
+                action:
+                    "getInspection",
+
+                recordId:
+                    recordId,
+
+                email:
+                    email
+
+            });
 
 
         console.log(
@@ -864,47 +914,22 @@ async function apiUpdateInspection(
         }
 
 
-        const response =
-            await fetch(
+        const data =
+            await postGGNAPI({
 
-                API_URL,
+                action:
+                    "updateInspection",
 
-                {
+                inspection: {
 
-                    method:
-                        "POST",
+                    ...inspection,
 
-                    headers: {
-
-                        "Content-Type":
-                            "text/plain;charset=utf-8"
-
-                    },
-
-                    body:
-                        JSON.stringify({
-
-                            action:
-                                "updateInspection",
-
-                            inspection: {
-
-                                ...inspection,
-
-                                updatedByEmail:
-                                    email
-
-                            }
-
-                        })
+                    updatedByEmail:
+                        email
 
                 }
 
-            );
-
-
-        const data =
-            await response.json();
+            });
 
 
         console.log(
@@ -990,44 +1015,19 @@ async function apiDeleteInspection(
         }
 
 
-        const response =
-            await fetch(
-
-                API_URL,
-
-                {
-
-                    method:
-                        "POST",
-
-                    headers: {
-
-                        "Content-Type":
-                            "text/plain;charset=utf-8"
-
-                    },
-
-                    body:
-                        JSON.stringify({
-
-                            action:
-                                "deleteInspection",
-
-                            recordId:
-                                recordId,
-
-                            deletedByEmail:
-                                email
-
-                        })
-
-                }
-
-            );
-
-
         const data =
-            await response.json();
+            await postGGNAPI({
+
+                action:
+                    "deleteInspection",
+
+                recordId:
+                    recordId,
+
+                deletedByEmail:
+                    email
+
+            });
 
 
         console.log(
@@ -1078,41 +1078,16 @@ async function apiGetSettings(
 
     try {
 
-        const response =
-            await fetch(
-
-                API_URL,
-
-                {
-
-                    method:
-                        "POST",
-
-                    headers: {
-
-                        "Content-Type":
-                            "text/plain;charset=utf-8"
-
-                    },
-
-                    body:
-                        JSON.stringify({
-
-                            action:
-                                "getSettings",
-
-                            settingType:
-                                settingType
-
-                        })
-
-                }
-
-            );
-
-
         const data =
-            await response.json();
+            await postGGNAPI({
+
+                action:
+                    "getSettings",
+
+                settingType:
+                    settingType
+
+            });
 
 
         console.log(
@@ -1184,47 +1159,22 @@ async function apiGenerateFMOP11(
         }
 
 
-        const response =
-            await fetch(
-
-                API_URL,
-
-                {
-
-                    method:
-                        "POST",
-
-                    headers: {
-
-                        "Content-Type":
-                            "text/plain;charset=utf-8"
-
-                    },
-
-                    body:
-                        JSON.stringify({
-
-                            action:
-                                "generateFMOP11",
-
-                            records:
-                                records,
-
-                            createdBy:
-                                createdBy,
-
-                            createdByEmail:
-                                createdByEmail
-
-                        })
-
-                }
-
-            );
-
-
         const data =
-            await response.json();
+            await postGGNAPI({
+
+                action:
+                    "generateFMOP11",
+
+                records:
+                    records,
+
+                createdBy:
+                    createdBy,
+
+                createdByEmail:
+                    createdByEmail
+
+            });
 
 
         console.log(
