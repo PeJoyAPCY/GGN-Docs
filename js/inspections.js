@@ -5,10 +5,25 @@
  * ======================================================
  *
  * File: inspections.js
- * Version: v2.1.0
- * Updated: 2026-09-24
+ * Version: v2.4.1
+ * Updated: 2026-09-28
  *
  * Version History
+ *
+ * v2.4.1
+ * - แก้ validateInspectionForm() ให้รองรับ location และ locationName
+ * - รองรับ Edit Inspection รุ่นใหม่ที่มี location
+ * - รองรับ Legacy Inspection ที่ใช้ locationName
+ * - ปรับการตรวจสอบ Edit ให้สอดคล้องกับ populateInspectionForm()
+ * - คงการรองรับ Inspection ที่ไม่มี pointId
+ * - คง Promise Lock สำหรับป้องกัน Initialize ซ้ำ
+ * - คง Memory Cache สำหรับ Inspection Settings / LocationMaster
+ *
+ * v2.4.0
+ * - ป้องกัน initialize ซ้อนกัน
+ * - ไม่ mark page ready ถ้าข้อมูลไม่ครบ
+ * - Retry ได้เมื่อ Location / Settings โหลดไม่สำเร็จ
+ * - ใช้ Memory Cache เมื่อข้อมูลโหลดสำเร็จแล้ว
  *
  * v2.1.0
  * - เพิ่มการทำงานให้สอดคล้องกับ Inspection Permission
@@ -549,6 +564,7 @@ async function initializeInspectionPage() {
 
 }
 
+
 // ======================================================
 // LOAD LOCATION MASTER
 // ======================================================
@@ -658,9 +674,7 @@ async function loadInspectionMasterLocations() {
 
 
         // ----------------------------------------
-        // IMPORTANT
-        // ----------------------------------------
-        // success แต่ไม่มี locations
+        // SUCCESS แต่ไม่มี locations
         // ถือว่ายังไม่พร้อม
         // ----------------------------------------
 
@@ -723,6 +737,7 @@ async function loadInspectionMasterLocations() {
     }
 
 }
+
 
 // ======================================================
 // RENDER CURRENT USER
@@ -1069,10 +1084,6 @@ async function loadInspections() {
         // ----------------------------------------
         // USE API LAYER
         // ----------------------------------------
-        // api.js v2.2.0
-        // จะส่ง email ของ Session User
-        // ไป Backend อัตโนมัติ
-        // ----------------------------------------
 
         const data =
             await apiGetInspections();
@@ -1144,17 +1155,6 @@ async function loadInspections() {
 
 // ======================================================
 // RENDER INSPECTION ZONES
-// ======================================================
-// Zone ที่แสดงบนฟอร์ม
-// ใช้เป็นข้อมูลประกอบจาก Current User
-//
-// IMPORTANT:
-// สำหรับ Admin ค่า Zone อาจเป็น "All"
-// แต่ "All" เป็น Access Scope เท่านั้น
-// ไม่ใช่ Zone ที่จะบันทึกลง Inspection
-//
-// Zone ที่บันทึกจริงจะมาจาก LocationMaster
-// ของ pointId ที่เลือก
 // ======================================================
 
 function renderInspectionZones() {
@@ -1246,17 +1246,6 @@ function renderInspectionZones() {
 
 // ======================================================
 // RENDER INSPECTION LOCATIONS
-// ======================================================
-// Location มาจาก LocationMaster
-//
-// option.value = pointId
-// option.textContent = location
-//
-// User:
-//   ได้เฉพาะ Location ใน Zone ของตนเอง
-//
-// Admin:
-//   ได้ Location ทุก Zone
 // ======================================================
 
 function renderInspectionLocations() {
@@ -1383,12 +1372,6 @@ function renderInspectionLocations() {
 
 // ======================================================
 // RENDER INSPECTION INSPECTORS
-// ======================================================
-// Inspector มาจาก Current User
-// ไม่ให้ User / Admin เลือกเองในหน้า New Inspection
-//
-// FM-OP-11 จะมี Logic แยกต่างหากสำหรับ
-// Admin ที่ต้องการเลือก Inspector
 // ======================================================
 
 function renderInspectionInspectors() {
@@ -1907,6 +1890,24 @@ function getSelectedInspectionLocation() {
 // ======================================================
 // VALIDATE INSPECTION FORM
 // ======================================================
+// รองรับทั้ง:
+//
+// New Inspection:
+//   location
+//   pointId
+//
+// Newer Edit:
+//   location
+//   pointId
+//
+// Legacy Edit:
+//   locationName
+//   ไม่มี pointId
+//
+// IMPORTANT:
+// Edit จะไม่บังคับ pointId
+// เพราะ Inspection รุ่นเก่าสามารถไม่มี pointId ได้
+// ======================================================
 
 function validateInspectionForm() {
 
@@ -1932,6 +1933,10 @@ function validateInspectionForm() {
         getCurrentUser();
 
 
+    // ------------------------------------------------
+    // CURRENT USER
+    // ------------------------------------------------
+
     if (
         !user
     ) {
@@ -1945,6 +1950,10 @@ function validateInspectionForm() {
 
     }
 
+
+    // ------------------------------------------------
+    // DATE
+    // ------------------------------------------------
 
     if (
         !inspectionDate ||
@@ -1961,6 +1970,10 @@ function validateInspectionForm() {
     }
 
 
+    // ------------------------------------------------
+    // TIME
+    // ------------------------------------------------
+
     if (
         !inspectionTime ||
         !inspectionTime.value
@@ -1976,32 +1989,34 @@ function validateInspectionForm() {
     }
 
 
+    // ------------------------------------------------
+    // SELECTED LOCATION
+    // ------------------------------------------------
+
+    const selectedLocation =
+        getSelectedInspectionLocation();
+
+
+    // ------------------------------------------------
+    // CREATE MODE
+    // ------------------------------------------------
+    //
+    // Inspection ใหม่ต้องมี:
+    // - Point ID
+    // - Location
+    // - Zone
+    //
+    // Zone จริงต้องมาจาก LocationMaster
+    // ------------------------------------------------
+
     if (
-        !location ||
-        !location.value
+        inspectionMode === "create"
     ) {
 
-        // ------------------------------------------------
-        // CREATE / EDIT
-        // ------------------------------------------------
-        // ทั้งสองโหมดต้องมี Location
-        //
-        // แต่ Legacy Inspection ที่ไม่มี pointId
-        // ยังสามารถแก้ไขได้
-        // ดังนั้นห้ามใช้ location.value
-        // เป็นตัวตัดสิน pointId ใน EDIT
-        // ------------------------------------------------
-
         if (
-            inspectionMode === "edit" &&
-            editingInspectionData &&
-            editingInspectionData.locationName
+            !location ||
+            !location.value
         ) {
-
-            // Legacy Inspection
-            // สามารถใช้ Location เดิมได้
-
-        } else {
 
             alert(
                 "กรุณาเลือกจุดตรวจ"
@@ -2012,24 +2027,6 @@ function validateInspectionForm() {
 
         }
 
-    }
-
-
-    const selectedLocation =
-        getSelectedInspectionLocation();
-
-
-    // ------------------------------------------------
-    // CREATE MODE
-    // ------------------------------------------------
-    //
-    // Inspection ใหม่ต้องใช้ Point ID
-    // และ Zone จาก LocationMaster
-    // ------------------------------------------------
-
-    if (
-        inspectionMode === "create"
-    ) {
 
         if (
             !selectedLocation ||
@@ -2077,8 +2074,9 @@ function validateInspectionForm() {
         // --------------------------------------------
         // ADMIN SAFETY CHECK
         // --------------------------------------------
-        // Admin มี Zone = All เป็น Access Scope
-        // แต่ห้ามบันทึก Inspection ด้วย Zone = All
+        // Admin ที่มี Zone = All
+        // ใช้ All เป็น Access Scope เท่านั้น
+        // ห้ามบันทึก Inspection เป็น Zone = All
         // --------------------------------------------
 
         if (
@@ -2110,11 +2108,18 @@ function validateInspectionForm() {
     // EDIT MODE
     // ------------------------------------------------
     //
-    // Inspection เดิมสามารถไม่มี pointId ได้
-    // เช่นข้อมูลก่อนเพิ่ม LocationMaster
+    // รองรับ:
     //
-    // Backend จะเป็นผู้ตรวจสอบ Permission
-    // จาก recordId + Current User
+    // 1. Inspection ใหม่:
+    //    original.location
+    //
+    // 2. Inspection Legacy:
+    //    original.locationName
+    //
+    // 3. Inspection ที่มี pointId:
+    //    original.pointId
+    //
+    // ไม่บังคับ pointId เพราะ Legacy ไม่มี pointId
     // ------------------------------------------------
 
     if (
@@ -2125,6 +2130,10 @@ function validateInspectionForm() {
             editingInspectionData ||
             {};
 
+
+        // --------------------------------------------
+        // RECORD ID
+        // --------------------------------------------
 
         if (
             !original.recordId
@@ -2140,8 +2149,63 @@ function validateInspectionForm() {
         }
 
 
+        // --------------------------------------------
+        // NORMALIZE ORIGINAL LOCATION
+        // --------------------------------------------
+        //
+        // รองรับทั้ง:
+        // location
+        // locationName
+        // --------------------------------------------
+
+        const originalLocation =
+            String(
+                original.location ||
+                original.locationName ||
+                ""
+            ).trim();
+
+
         if (
-            !original.locationName
+            !originalLocation
+        ) {
+
+            alert(
+                "ไม่พบข้อมูลจุดตรวจเดิม"
+            );
+
+
+            return false;
+
+        }
+
+
+        // --------------------------------------------
+        // LOCATION CHECK
+        // --------------------------------------------
+        //
+        // กรณีข้อมูลใหม่:
+        // select จะมี value
+        //
+        // กรณี Legacy:
+        // option อาจมี value = ""
+        // แต่ originalLocation ยังมีข้อมูล
+        //
+        // ดังนั้น Legacy สามารถ Edit ต่อได้
+        // --------------------------------------------
+
+        if (
+            !location
+        ) {
+
+            console.warn(
+                "ไม่พบ #inspection-location แต่ Edit มีข้อมูล Location เดิม:",
+                originalLocation
+            );
+
+        } else if (
+            !location.value &&
+            !originalLocation
         ) {
 
             alert(
@@ -2157,7 +2221,7 @@ function validateInspectionForm() {
 
 
     // ------------------------------------------------
-    // CURRENT USER
+    // USER NAME
     // ------------------------------------------------
 
     if (
@@ -2173,6 +2237,10 @@ function validateInspectionForm() {
 
     }
 
+
+    // ------------------------------------------------
+    // USER EMAIL
+    // ------------------------------------------------
 
     if (
         !user.email
@@ -2210,13 +2278,22 @@ function validateInspectionForm() {
     }
 
 
+    // ------------------------------------------------
+    // CHECK INCOMPLETE ITEM
+    // ------------------------------------------------
+
     const incomplete =
         items.find(
             function (
                 item
             ) {
 
-                return !item.result;
+                return (
+                    !item.result ||
+                    String(
+                        item.result
+                    ).trim() === ""
+                );
 
             }
         );
@@ -2429,183 +2506,306 @@ function updateInspectionFormMode() {
 
 async function saveInspection() {
 
-    console.log("========== SAVE INSPECTION ==========");
+    console.log(
+        "========== SAVE INSPECTION =========="
+    );
+
+
+    // --------------------------------------------------
+    // SAVE BUTTON
+    // --------------------------------------------------
+
+    const saveButton =
+        document.getElementById(
+            "save-inspection-button"
+        );
+
+
+    const originalText =
+        saveButton
+            ? saveButton.textContent
+            : "บันทึก";
+
 
     try {
 
         // --------------------------------------------------
-        // 1. Current User
+        // 1. CURRENT USER
         // --------------------------------------------------
 
-        const user = getCurrentGGNUser();
+        const user =
+            getCurrentGGNUser();
 
-        if (!user || !user.email) {
 
-            showInspectionMessage(
-                "ไม่พบข้อมูลผู้ใช้งาน กรุณาเข้าสู่ระบบใหม่",
-                "error"
+        if (
+            !user ||
+            !user.email
+        ) {
+
+            alert(
+                "ไม่พบข้อมูลผู้ใช้งาน กรุณาเข้าสู่ระบบใหม่"
             );
 
             return;
+
         }
 
-        console.log("Current User:", user);
+
+        console.log(
+            "Current User:",
+            user
+        );
 
 
         // --------------------------------------------------
-        // 2. Validate Form
+        // 2. VALIDATE FORM
         // --------------------------------------------------
 
-        const validation = validateInspectionForm();
+        const validation =
+            validateInspectionForm();
 
-        if (!validation.valid) {
 
-            showInspectionMessage(
-                validation.message || "กรุณากรอกข้อมูลให้ครบถ้วน",
-                "warning"
-            );
+        if (!validation) {
 
             return;
+
         }
 
 
         // --------------------------------------------------
-        // 3. Collect Form Data
+        // 3. SELECTED LOCATION
         // --------------------------------------------------
 
         const selectedLocation =
             getSelectedInspectionLocation();
 
-        if (!selectedLocation) {
 
-            showInspectionMessage(
-                "ไม่พบข้อมูลจุดตรวจที่เลือก",
-                "warning"
+        if (
+            inspectionMode === "create" &&
+            (
+                !selectedLocation ||
+                !selectedLocation.pointId
+            )
+        ) {
+
+            alert(
+                "ไม่พบข้อมูลจุดตรวจที่เลือก"
             );
 
             return;
+
         }
 
 
         // --------------------------------------------------
-        // 4. Inspection Items
+        // 4. INSPECTION ITEMS
         // --------------------------------------------------
 
         const items =
             collectInspectionItems();
 
-        if (!Array.isArray(items) || items.length === 0) {
 
-            showInspectionMessage(
-                "ไม่พบรายการตรวจสอบ",
-                "warning"
+        if (
+            !Array.isArray(items) ||
+            items.length === 0
+        ) {
+
+            alert(
+                "ไม่พบรายการตรวจสอบ"
             );
 
             return;
+
         }
 
 
-        // ตรวจสอบว่าครบทุกข้อ
         const incompleteItem =
-            items.find(item =>
-                !item.result ||
-                String(item.result).trim() === ""
+            items.find(
+                function (item) {
+
+                    return (
+                        !item.result ||
+                        String(
+                            item.result
+                        ).trim() === ""
+                    );
+
+                }
             );
+
 
         if (incompleteItem) {
 
-            showInspectionMessage(
-                "กรุณาระบุผลการตรวจสอบให้ครบทุกข้อ",
-                "warning"
+            alert(
+                "กรุณาระบุผลการตรวจสอบให้ครบทุกข้อ"
             );
 
             return;
+
         }
 
 
         // --------------------------------------------------
-        // 5. Record ID
+        // 5. RECORD ID
         // --------------------------------------------------
 
         let recordId =
             editingInspectionRecordId;
 
+
         if (!recordId) {
-            recordId = generateRecordId();
+
+            recordId =
+                generateRecordId();
+
         }
 
 
         // --------------------------------------------------
-        // 6. Date / Time
+        // 6. DATE / TIME
         // --------------------------------------------------
+
+        const dateInput =
+            document.getElementById(
+                "inspection-date"
+            );
+
+
+        const timeInput =
+            document.getElementById(
+                "inspection-time"
+            );
+
 
         const date =
-            document.getElementById("inspection-date")?.value || "";
+            dateInput
+                ? dateInput.value
+                : "";
+
 
         const time =
-            document.getElementById("inspection-time")?.value || "";
+            timeInput
+                ? timeInput.value
+                : "";
 
 
         // --------------------------------------------------
-        // 7. Remark / Solution
+        // 7. REMARK / SOLUTION
         // --------------------------------------------------
 
         const remark =
-            getInspectionRemark();
+            collectInspectionRemark();
+
 
         const solution =
-            getInspectionSolution();
+            collectInspectionSolution();
 
 
         // --------------------------------------------------
-        // 8. Zone
+        // 8. ZONE
         // --------------------------------------------------
-        //
-        // สำคัญ:
-        // ตอน Create ให้ใช้ Zone จาก LocationMaster
-        // ไม่ใช้ user.zone โดยตรง
-        //
-        // ตอน Edit ให้รักษาข้อมูลเดิม
-        //
 
         let zone = "";
 
-        if (inspectionMode === "edit" && editingInspectionData) {
+
+        if (
+            inspectionMode === "edit" &&
+            editingInspectionData
+        ) {
 
             zone =
                 editingInspectionData.zone ||
-                selectedLocation.zone ||
+                (
+                    selectedLocation
+                        ? selectedLocation.zone
+                        : ""
+                ) ||
                 "";
 
         } else {
 
             zone =
-                selectedLocation.zone ||
+                selectedLocation
+                    ? selectedLocation.zone
+                    : "";
+
+        }
+
+
+        // --------------------------------------------------
+        // 9. LOCATION / POINT ID
+        // --------------------------------------------------
+
+        let location = "";
+
+        let pointId = "";
+
+
+        if (selectedLocation) {
+
+            location =
+                selectedLocation.location ||
+                "";
+
+            pointId =
+                selectedLocation.pointId ||
                 "";
 
         }
 
 
         // --------------------------------------------------
-        // 9. Location
+        // LEGACY EDIT
         // --------------------------------------------------
 
-        const location =
-            selectedLocation.location ||
-            selectedLocation.name ||
-            "";
+        if (
+            inspectionMode === "edit" &&
+            editingInspectionData
+        ) {
 
-        const pointId =
-            selectedLocation.pointId ||
-            "";
+            if (
+                !pointId &&
+                editingInspectionData.pointId
+            ) {
+
+                pointId =
+                    editingInspectionData.pointId;
+
+            }
+
+
+            if (
+                !location &&
+                editingInspectionData.location
+            ) {
+
+                location =
+                    editingInspectionData.location;
+
+            }
+
+
+            if (
+                !location &&
+                editingInspectionData.locationName
+            ) {
+
+                location =
+                    editingInspectionData.locationName;
+
+            }
+
+        }
 
 
         // --------------------------------------------------
-        // 10. Inspector
+        // 10. INSPECTOR
         // --------------------------------------------------
 
         let inspector =
-            user.name || "";
+            user.name ||
+            "";
+
 
         if (
             inspectionMode === "edit" &&
@@ -2619,62 +2819,119 @@ async function saveInspection() {
         }
 
 
+        if (
+            !inspector &&
+            inspectionMode === "edit" &&
+            editingInspectionData &&
+            editingInspectionData.inspectorName
+        ) {
+
+            inspector =
+                editingInspectionData.inspectorName;
+
+        }
+
+
         // --------------------------------------------------
-        // 11. Document Information
+        // 11. DOCUMENT INFORMATION
         // --------------------------------------------------
 
-        const documentCode =
-            editingInspectionData?.documentCode ||
+        let documentCode =
             "FM-OP-11";
 
-        const documentName =
-            editingInspectionData?.documentName ||
+
+        let documentName =
             "รายงานการตรวจจุดพนักงานรักษาความปลอดภัย";
 
-        const documentNo =
-            editingInspectionData?.documentNo ||
+
+        let documentNo =
             "";
 
 
+        let documentStatus =
+            "Draft";
+
+
+        if (
+            inspectionMode === "edit" &&
+            editingInspectionData
+        ) {
+
+            documentCode =
+                editingInspectionData.documentCode ||
+                documentCode;
+
+
+            documentName =
+                editingInspectionData.documentName ||
+                documentName;
+
+
+            documentNo =
+                editingInspectionData.documentNo ||
+                "";
+
+
+            documentStatus =
+                editingInspectionData.documentStatus ||
+                "Draft";
+
+        }
+
+
         // --------------------------------------------------
-        // 12. Build Inspection Data
+        // 12. BUILD INSPECTION DATA
         // --------------------------------------------------
 
         const inspectionData = {
 
-            recordId: recordId,
+            recordId:
+                recordId,
 
-            date: date,
+            date:
+                date,
 
-            time: time,
+            time:
+                time,
 
-            zone: zone,
+            zone:
+                zone,
 
-            location: location,
+            location:
+                location,
 
-            pointId: pointId,
+            pointId:
+                pointId,
 
-            inspector: inspector,
+            inspector:
+                inspector,
 
-            remark: remark,
+            remark:
+                remark,
 
-            solution: solution,
+            solution:
+                solution,
 
-            documentCode: documentCode,
+            documentCode:
+                documentCode,
 
-            documentName: documentName,
+            documentName:
+                documentName,
 
-            documentNo: documentNo,
+            documentNo:
+                documentNo,
 
-            createdBy: user.email,
+            createdBy:
+                user.email,
 
-            createdByEmail: user.email,
+            createdByEmail:
+                user.email,
 
             documentStatus:
-                editingInspectionData?.documentStatus ||
-                "Draft",
+                documentStatus,
 
-            items: items
+            items:
+                items
 
         };
 
@@ -2686,38 +2943,49 @@ async function saveInspection() {
 
 
         // --------------------------------------------------
-        // 13. Double Check Create Zone
+        // 13. FINAL SAFETY CHECK
         // --------------------------------------------------
 
         if (
             inspectionMode !== "edit" &&
-            (!zone || zone === "All")
+            (
+                !zone ||
+                String(zone).trim().toLowerCase() === "all"
+            )
         ) {
 
-            showInspectionMessage(
-                "ไม่สามารถบันทึกได้ เนื่องจากไม่พบ Zone ของจุดตรวจ",
-                "error"
+            alert(
+                "ไม่สามารถบันทึกได้ เนื่องจากไม่พบ Zone ของจุดตรวจ"
             );
 
             return;
+
+        }
+
+
+        if (
+            inspectionMode === "create" &&
+            !pointId
+        ) {
+
+            alert(
+                "ไม่พบ Point ID ของจุดตรวจ"
+            );
+
+            return;
+
         }
 
 
         // --------------------------------------------------
-        // 14. Disable Save Button
+        // 14. DISABLE SAVE BUTTON
         // --------------------------------------------------
-
-        const saveButton =
-            document.getElementById(
-                "btn-save-inspection"
-            );
-
-        const originalText =
-            saveButton?.textContent || "บันทึก";
 
         if (saveButton) {
 
-            saveButton.disabled = true;
+            saveButton.disabled =
+                true;
+
 
             saveButton.textContent =
                 inspectionMode === "edit"
@@ -2728,17 +2996,21 @@ async function saveInspection() {
 
 
         // --------------------------------------------------
-        // 15. Call Backend
+        // 15. CALL BACKEND
         // --------------------------------------------------
 
         let result;
 
-        if (inspectionMode === "edit") {
+
+        if (
+            inspectionMode === "edit"
+        ) {
 
             console.log(
                 "Updating Inspection:",
                 recordId
             );
+
 
             result =
                 await apiUpdateInspection(
@@ -2753,58 +3025,17 @@ async function saveInspection() {
             );
 
 
-            // ใช้ API wrapper กลาง
-            // แทน fetch() ตรงจากหน้านี้
-
-            if (typeof apiSaveInspection === "function") {
-
-                result =
-                    await apiSaveInspection(
-                        inspectionData
-                    );
-
-            } else {
-
-                // fallback กรณี apiSaveInspection
-                // ยังไม่มีใน api.js
-
-                const response =
-                    await fetch(
-                        API_URL,
-                        {
-                            method: "POST",
-
-                            headers: {
-                                "Content-Type":
-                                    "text/plain;charset=utf-8"
-                            },
-
-                            body: JSON.stringify({
-
-                                action:
-                                    "saveInspection",
-
-                                email:
-                                    user.email,
-
-                                requesterEmail:
-                                    user.email,
-
-                                inspection:
-                                    inspectionData
-
-                            })
-                        }
-                    );
-
-
-                result =
-                    await response.json();
-
-            }
+            result =
+                await apiSaveInspection(
+                    inspectionData
+                );
 
         }
 
+
+        // --------------------------------------------------
+        // 16. CHECK RESULT
+        // --------------------------------------------------
 
         console.log(
             "Save Inspection Result:",
@@ -2812,22 +3043,23 @@ async function saveInspection() {
         );
 
 
-        // --------------------------------------------------
-        // 16. Check Result
-        // --------------------------------------------------
-
-        if (!result || !result.success) {
+        if (
+            !result ||
+            !result.success
+        ) {
 
             throw new Error(
-                result?.message ||
-                "ไม่สามารถบันทึกข้อมูลได้"
+                result &&
+                result.message
+                    ? result.message
+                    : "ไม่สามารถบันทึกข้อมูลได้"
             );
 
         }
 
 
         // --------------------------------------------------
-        // 17. Success
+        // 17. SUCCESS
         // --------------------------------------------------
 
         console.log(
@@ -2836,33 +3068,37 @@ async function saveInspection() {
         );
 
 
-        const successMessage =
-            inspectionMode === "edit"
-                ? "แก้ไขบันทึกการตรวจเรียบร้อยแล้ว"
-                : "บันทึกการตรวจเรียบร้อยแล้ว";
+        const savedInspection =
+            result.inspection ||
+            inspectionData;
 
 
-        showInspectionMessage(
-            successMessage,
-            "success"
+        // --------------------------------------------------
+        // 18. SUCCESS MODAL
+        // --------------------------------------------------
+
+        showInspectionSuccessModal(
+            savedInspection,
+            inspectionMode
         );
 
 
         // --------------------------------------------------
-        // 18. Reset Form
+        // 19. RESET FORM
         // --------------------------------------------------
 
         resetInspectionForm();
 
 
         // --------------------------------------------------
-        // 19. Refresh Inspection Records
+        // 20. REFRESH RECORDS
         // --------------------------------------------------
 
         try {
 
             if (
-                typeof loadInspections === "function"
+                typeof loadInspections ===
+                "function"
             ) {
 
                 await loadInspections();
@@ -2887,36 +3123,33 @@ async function saveInspection() {
         );
 
 
-        // --------------------------------------------------
-        // Error Message
-        // --------------------------------------------------
-
-        showInspectionMessage(
-            error.message ||
-            "เกิดข้อผิดพลาดในการบันทึกข้อมูล",
-            "error"
+        alert(
+            error &&
+            error.message
+                ? error.message
+                : "เกิดข้อผิดพลาดในการบันทึกข้อมูล"
         );
 
 
     } finally {
 
         // --------------------------------------------------
-        // 20. Restore Save Button
+        // 21. RESTORE SAVE BUTTON
         // --------------------------------------------------
-
-        const saveButton =
-            document.getElementById(
-                "btn-save-inspection"
-            );
 
         if (saveButton) {
 
-            saveButton.disabled = false;
+            saveButton.disabled =
+                false;
+
 
             saveButton.textContent =
-                inspectionMode === "edit"
-                    ? "บันทึกการแก้ไข"
-                    : "บันทึก";
+                originalText ||
+                (
+                    inspectionMode === "edit"
+                        ? "บันทึกการแก้ไข"
+                        : "บันทึกการตรวจ"
+                );
 
         }
 
@@ -3020,13 +3253,6 @@ async function loadInspectionForEdit(
         // ----------------------------------------
         // WAIT FOR INSPECTION PAGE
         // ----------------------------------------
-        //
-        // showPage() เรียก initializeInspectionPage()
-        // อยู่แล้ว
-        //
-        // เราเรียกซ้ำได้อย่างปลอดภัยเพราะ
-        // initializeInspectionPage() มี Promise Lock
-        // ----------------------------------------
 
         const pageReady =
             await initializeInspectionPage();
@@ -3075,13 +3301,22 @@ async function loadInspectionForEdit(
 
 }
 
+
 // ======================================================
 // ENSURE OLD LOCATION OPTION FOR EDIT
 // ======================================================
-// กรณี Inspection เก่าใช้ Location ที่ถูก inactive
-// หรือไม่มีอยู่ใน LocationMaster ปัจจุบัน
+// รองรับทั้งข้อมูล Inspection รุ่นใหม่และ Legacy
 //
-// ระบบยังต้องสามารถเปิดดู / แก้ไขข้อมูลเดิมได้
+// New:
+//   location
+//   pointId
+//
+// Legacy:
+//   locationName
+//   ไม่มี pointId
+//
+// กรณี Location ถูก inactive หรือไม่มีอยู่ใน
+// LocationMaster ปัจจุบัน ระบบยังต้องเปิดดู / แก้ไขได้
 // ======================================================
 
 function ensureInspectionEditLocationOption(
@@ -3104,6 +3339,10 @@ function ensureInspectionEditLocationOption(
     }
 
 
+    // ----------------------------------------
+    // NORMALIZE LOCATION DATA
+    // ----------------------------------------
+
     const pointId =
         String(
             inspection.pointId ||
@@ -3113,13 +3352,22 @@ function ensureInspectionEditLocationOption(
 
     const locationName =
         String(
+            inspection.location ||
             inspection.locationName ||
             ""
         ).trim();
 
 
+    const zone =
+        String(
+            inspection.zone ||
+            ""
+        ).trim();
+
+
     // ----------------------------------------
-    // ถ้ามี Point ID
+    // CASE 1:
+    // มี Point ID
     // ----------------------------------------
 
     if (pointId) {
@@ -3133,7 +3381,10 @@ function ensureInspectionEditLocationOption(
                 ) {
 
                     return (
-                        option.value ===
+                        String(
+                            option.value ||
+                            ""
+                        ).trim() ===
                         pointId
                     );
 
@@ -3163,17 +3414,30 @@ function ensureInspectionEditLocationOption(
 
 
             option.dataset.zone =
-                inspection.zone ||
-                "";
+                zone;
 
 
             option.dataset.location =
-                locationName ||
-                "";
+                locationName;
 
 
             select.appendChild(
                 option
+            );
+
+
+            console.log(
+                "เพิ่ม Location เดิมสำหรับ Edit:",
+                {
+                    pointId:
+                        pointId,
+
+                    location:
+                        locationName,
+
+                    zone:
+                        zone
+                }
             );
 
         }
@@ -3185,65 +3449,82 @@ function ensureInspectionEditLocationOption(
 
 
     // ----------------------------------------
-    // Legacy Inspection
+    // CASE 2:
+    // LEGACY INSPECTION
     // ไม่มี Point ID
     // ----------------------------------------
 
-    if (
-        locationName
-    ) {
+    if (!locationName) {
 
-        const existingLegacy =
-            Array.from(
-                select.options
-            ).find(
-                function (
-                    option
-                ) {
+        return;
 
-                    return (
-                        option.textContent.trim() ===
-                        locationName
-                    );
-
-                }
-            );
+    }
 
 
-        if (!existingLegacy) {
+    const existingLegacy =
+        Array.from(
+            select.options
+        ).find(
+            function (
+                option
+            ) {
 
-            const option =
-                document.createElement(
-                    "option"
+                return (
+                    String(
+                        option.textContent ||
+                        ""
+                    ).trim() ===
+                    locationName
                 );
 
-
-            option.value =
-                "";
-
-
-            option.textContent =
-                locationName;
+            }
+        );
 
 
-            option.dataset.pointId =
-                "";
+    if (!existingLegacy) {
 
-
-            option.dataset.zone =
-                inspection.zone ||
-                "";
-
-
-            option.dataset.location =
-                locationName;
-
-
-            select.appendChild(
-                option
+        const option =
+            document.createElement(
+                "option"
             );
 
-        }
+
+        // Legacy ไม่มี pointId
+        option.value =
+            "";
+
+
+        option.textContent =
+            locationName;
+
+
+        option.dataset.pointId =
+            "";
+
+
+        option.dataset.zone =
+            zone;
+
+
+        option.dataset.location =
+            locationName;
+
+
+        select.appendChild(
+            option
+        );
+
+
+        console.log(
+            "เพิ่ม Legacy Location สำหรับ Edit:",
+            {
+                location:
+                    locationName,
+
+                zone:
+                    zone
+            }
+        );
 
     }
 
@@ -3253,14 +3534,64 @@ function ensureInspectionEditLocationOption(
 // ======================================================
 // POPULATE INSPECTION FORM
 // ======================================================
+// รองรับข้อมูล Inspection:
+//
+// New:
+//   date
+//   time
+//   location
+//   inspector
+//
+// Legacy:
+//   inspectionDate
+//   inspectionTime
+//   locationName
+//   inspectorName
+// ======================================================
 
 function populateInspectionForm(
     inspection
 ) {
 
     if (!inspection) {
+
         return;
+
     }
+
+
+    console.log(
+        "กำลังเติมข้อมูล Inspection ลงใน Form:",
+        inspection
+    );
+
+
+    // ----------------------------------------
+    // NORMALIZE DATA
+    // ----------------------------------------
+
+    const inspectionDate =
+        inspection.date ||
+        inspection.inspectionDate ||
+        "";
+
+
+    const inspectionTime =
+        inspection.time ||
+        inspection.inspectionTime ||
+        "";
+
+
+    const inspectionLocation =
+        inspection.location ||
+        inspection.locationName ||
+        "";
+
+
+    const inspectionInspector =
+        inspection.inspector ||
+        inspection.inspectorName ||
+        "";
 
 
     // ----------------------------------------
@@ -3277,7 +3608,7 @@ function populateInspectionForm(
 
         dateInput.value =
             normalizeDateForInput(
-                inspection.inspectionDate
+                inspectionDate
             );
 
     }
@@ -3296,8 +3627,10 @@ function populateInspectionForm(
     if (timeInput) {
 
         timeInput.value =
-            inspection.inspectionTime ||
-            "";
+            String(
+                inspectionTime ||
+                ""
+            ).trim();
 
     }
 
@@ -3343,6 +3676,10 @@ function populateInspectionForm(
             inspection.zone ||
             "";
 
+
+        zoneInput.disabled =
+            true;
+
     }
 
 
@@ -3363,14 +3700,32 @@ function populateInspectionForm(
 
     if (locationInput) {
 
+        // ------------------------------------
+        // HAS POINT ID
+        // ------------------------------------
+
         if (
             inspection.pointId
         ) {
 
             locationInput.value =
-                inspection.pointId;
+                String(
+                    inspection.pointId
+                ).trim();
+
 
         } else {
+
+            // --------------------------------
+            // LEGACY
+            // --------------------------------
+
+            const targetLocation =
+                String(
+                    inspectionLocation ||
+                    ""
+                ).trim();
+
 
             const legacyOption =
                 Array.from(
@@ -3381,11 +3736,11 @@ function populateInspectionForm(
                     ) {
 
                         return (
-                            option.textContent.trim() ===
                             String(
-                                inspection.locationName ||
+                                option.textContent ||
                                 ""
-                            ).trim()
+                            ).trim() ===
+                            targetLocation
                         );
 
                     }
@@ -3427,12 +3782,11 @@ function populateInspectionForm(
 
 
         option.value =
-            inspection.inspectorName ||
-            "";
+            inspectionInspector;
 
 
         option.textContent =
-            inspection.inspectorName ||
+            inspectionInspector ||
             "-";
 
 
@@ -3442,8 +3796,11 @@ function populateInspectionForm(
 
 
         inspectorInput.value =
-            inspection.inspectorName ||
-            "";
+            inspectionInspector;
+
+
+        inspectorInput.disabled =
+            true;
 
     }
 
@@ -3473,7 +3830,8 @@ function populateInspectionForm(
 
             const itemNo =
                 String(
-                    row.dataset.itemNo
+                    row.dataset.itemNo ||
+                    ""
                 );
 
 
@@ -3485,7 +3843,8 @@ function populateInspectionForm(
 
                         return (
                             String(
-                                item.itemNo
+                                item.itemNo ||
+                                ""
                             ) ===
                             itemNo
                         );
@@ -3495,7 +3854,9 @@ function populateInspectionForm(
 
 
             if (!savedItem) {
+
                 return;
+
             }
 
 
@@ -3511,8 +3872,13 @@ function populateInspectionForm(
                 ) {
 
                     radio.checked =
-                        radio.value ===
-                        savedItem.result;
+                        String(
+                            radio.value
+                        ) ===
+                        String(
+                            savedItem.result ||
+                            ""
+                        );
 
                 }
             );
@@ -3560,14 +3926,35 @@ function populateInspectionForm(
 
 
     // ----------------------------------------
-    // UPDATE MODE
+    // UPDATE FORM MODE
     // ----------------------------------------
 
     updateInspectionFormMode();
 
 
     console.log(
-        "เติมข้อมูลรายการตรวจลงในฟอร์มเรียบร้อย"
+        "เติมข้อมูลรายการตรวจลงในฟอร์มเรียบร้อย:",
+        {
+            date:
+                inspectionDate,
+
+            time:
+                inspectionTime,
+
+            zone:
+                inspection.zone ||
+                "",
+
+            location:
+                inspectionLocation,
+
+            pointId:
+                inspection.pointId ||
+                "",
+
+            inspector:
+                inspectionInspector
+        }
     );
 
 }
@@ -3637,6 +4024,48 @@ function showInspectionSuccessModal(
 
 
     // ----------------------------------------
+    // SAFETY
+    // ----------------------------------------
+
+    inspection =
+        inspection ||
+        {};
+
+
+    // ----------------------------------------
+    // NORMALIZE DATA
+    // ----------------------------------------
+
+    const inspectionDate =
+        inspection.date ||
+        inspection.inspectionDate ||
+        "";
+
+
+    const inspectionTime =
+        inspection.time ||
+        inspection.inspectionTime ||
+        "";
+
+
+    const inspectionLocation =
+        inspection.location ||
+        inspection.locationName ||
+        "";
+
+
+    const inspectionInspector =
+        inspection.inspector ||
+        inspection.inspectorName ||
+        "";
+
+
+    const inspectionZone =
+        inspection.zone ||
+        "";
+
+
+    // ----------------------------------------
     // TITLE / MESSAGE
     // ----------------------------------------
 
@@ -3686,7 +4115,6 @@ function showInspectionSuccessModal(
     if (summary) {
 
         const items =
-            inspection &&
             Array.isArray(
                 inspection.items
             )
@@ -3701,7 +4129,10 @@ function showInspectionSuccessModal(
                 ) {
 
                     return (
-                        item.result ===
+                        String(
+                            item.result ||
+                            ""
+                        ).trim() ===
                         "ผ่าน"
                     );
 
@@ -3716,7 +4147,10 @@ function showInspectionSuccessModal(
                 ) {
 
                     return (
-                        item.result ===
+                        String(
+                            item.result ||
+                            ""
+                        ).trim() ===
                         "ไม่ผ่าน"
                     );
 
@@ -3733,14 +4167,13 @@ function showInspectionSuccessModal(
 
                 <span class="inspection-success-summary-value">
                     ${escapeHTML(
-                        inspection &&
-                        inspection.inspectionDate
-                            ? inspection.inspectionDate
-                            : "-"
+                        inspectionDate ||
+                        "-"
                     )}
                 </span>
 
             </div>
+
 
             <div class="inspection-success-summary-row">
 
@@ -3750,14 +4183,13 @@ function showInspectionSuccessModal(
 
                 <span class="inspection-success-summary-value">
                     ${escapeHTML(
-                        inspection &&
-                        inspection.inspectionTime
-                            ? inspection.inspectionTime
-                            : "-"
+                        inspectionTime ||
+                        "-"
                     )}
                 </span>
 
             </div>
+
 
             <div class="inspection-success-summary-row">
 
@@ -3767,14 +4199,13 @@ function showInspectionSuccessModal(
 
                 <span class="inspection-success-summary-value">
                     ${escapeHTML(
-                        inspection &&
-                        inspection.zone
-                            ? inspection.zone
-                            : "-"
+                        inspectionZone ||
+                        "-"
                     )}
                 </span>
 
             </div>
+
 
             <div class="inspection-success-summary-row">
 
@@ -3784,14 +4215,13 @@ function showInspectionSuccessModal(
 
                 <span class="inspection-success-summary-value">
                     ${escapeHTML(
-                        inspection &&
-                        inspection.locationName
-                            ? inspection.locationName
-                            : "-"
+                        inspectionLocation ||
+                        "-"
                     )}
                 </span>
 
             </div>
+
 
             <div class="inspection-success-summary-row">
 
@@ -3801,14 +4231,13 @@ function showInspectionSuccessModal(
 
                 <span class="inspection-success-summary-value">
                     ${escapeHTML(
-                        inspection &&
-                        inspection.inspectorName
-                            ? inspection.inspectorName
-                            : "-"
+                        inspectionInspector ||
+                        "-"
                     )}
                 </span>
 
             </div>
+
 
             <div class="inspection-success-result">
 
@@ -3839,6 +4268,7 @@ function showInspectionSuccessModal(
             viewButton.textContent =
                 "📋 กลับรายการตรวจ";
 
+
             viewButton.style.display =
                 "block";
 
@@ -3867,6 +4297,7 @@ function showInspectionSuccessModal(
             viewButton.textContent =
                 "📋 ดูรายการตรวจ";
 
+
             viewButton.style.display =
                 "block";
 
@@ -3877,6 +4308,7 @@ function showInspectionSuccessModal(
 
             nextButton.textContent =
                 "➕ ตรวจรายการถัดไป";
+
 
             nextButton.style.display =
                 "block";
@@ -3967,7 +4399,31 @@ function showInspectionSuccessModal(
 
     console.log(
         "เปิด Inspection Success Modal:",
-        mode
+        {
+            mode:
+                mode,
+
+            date:
+                inspectionDate,
+
+            time:
+                inspectionTime,
+
+            zone:
+                inspectionZone,
+
+            location:
+                inspectionLocation,
+
+            inspector:
+                inspectionInspector,
+
+            pass:
+                passCount,
+
+            fail:
+                failCount
+        }
     );
 
 }
@@ -4217,12 +4673,9 @@ function resetInspectionForm() {
 
     renderInspectionUser();
 
-
     renderInspectionZones();
 
-
     renderInspectionLocations();
-
 
     renderInspectionInspectors();
 
