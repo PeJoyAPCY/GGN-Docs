@@ -4066,6 +4066,54 @@ function showInspectionSuccessModal(
 
 
     // ----------------------------------------
+    // INSPECTION ITEMS SUMMARY
+    // ----------------------------------------
+
+    const items =
+        Array.isArray(
+            inspection.items
+        )
+            ? inspection.items
+            : [];
+
+
+    const passCount =
+        items.filter(
+            function (
+                item
+            ) {
+
+                return (
+                    String(
+                        item.result ||
+                        ""
+                    ).trim() ===
+                    "ผ่าน"
+                );
+
+            }
+        ).length;
+
+
+    const failCount =
+        items.filter(
+            function (
+                item
+            ) {
+
+                return (
+                    String(
+                        item.result ||
+                        ""
+                    ).trim() ===
+                    "ไม่ผ่าน"
+                );
+
+            }
+        ).length;
+
+
+    // ----------------------------------------
     // TITLE / MESSAGE
     // ----------------------------------------
 
@@ -4113,50 +4161,6 @@ function showInspectionSuccessModal(
     // ----------------------------------------
 
     if (summary) {
-
-        const items =
-            Array.isArray(
-                inspection.items
-            )
-                ? inspection.items
-                : [];
-
-
-        const passCount =
-            items.filter(
-                function (
-                    item
-                ) {
-
-                    return (
-                        String(
-                            item.result ||
-                            ""
-                        ).trim() ===
-                        "ผ่าน"
-                    );
-
-                }
-            ).length;
-
-
-        const failCount =
-            items.filter(
-                function (
-                    item
-                ) {
-
-                    return (
-                        String(
-                            item.result ||
-                            ""
-                        ).trim() ===
-                        "ไม่ผ่าน"
-                    );
-
-                }
-            ).length;
-
 
         summary.innerHTML = `
             <div class="inspection-success-summary-row">
