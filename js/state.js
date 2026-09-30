@@ -38,6 +38,8 @@ let inspectionLocationsLoaded = false;
 // ป้องกันการ initialize หน้า Inspection ซ้ำ
 let inspectionPageInitialized = false;
 
+// ป้องกันการ initialize Inspection ซ้อนกัน
+let inspectionInitializationPromise = null;
 
 // ========================================
 // INSPECTION EDIT STATE

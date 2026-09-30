@@ -116,212 +116,436 @@ function setupInspections() {
 
 // ======================================================
 // GGN DOCS - INSPECTION PAGE INITIALIZATION
-// VERSION: 2.3.0
+// VERSION: 2.4.0
 //
 // CHANGE:
-// - ใช้ข้อมูล Session User ทันที
-// - โหลด Inspection Settings เพียงครั้งเดียว
-// - โหลด LocationMaster เพียงครั้งเดียวต่อ Session
-// - ไม่เรียก API ซ้ำเมื่อเปลี่ยนเมนู
-// - Render จาก Memory Cache ได้ทันที
-// - Permission จริงยังคงตรวจสอบที่ Backend ตอนทำรายการ
+// - ป้องกัน initialize ซ้อนกัน
+// - ไม่ mark page ready ถ้าข้อมูลไม่ครบ
+// - Retry ได้เมื่อ Location / Settings โหลดไม่สำเร็จ
+// - ใช้ Memory Cache เมื่อข้อมูลโหลดสำเร็จแล้ว
 // ======================================================
 
 async function initializeInspectionPage() {
 
-    console.log(
-        "เตรียมหน้า การตรวจ ISO..."
-    );
-
-
     // ----------------------------------------
-    // CURRENT USER
+    // PREVENT DUPLICATE INITIALIZATION
     // ----------------------------------------
 
-    const user =
-        getCurrentUser();
+    if (inspectionInitializationPromise) {
 
-
-    if (!user) {
-
-        console.warn(
-            "ไม่พบ Current User ขณะเปิดหน้า Inspection"
+        console.log(
+            "Inspection กำลัง Initialize อยู่แล้ว → รอ Request เดิม"
         );
 
-        return;
+        return inspectionInitializationPromise;
 
     }
 
 
-    console.log(
-        "Current Inspection User:",
-        user
-    );
+    inspectionInitializationPromise =
+        (async function () {
+
+            console.log(
+                "เตรียมหน้า การตรวจ ISO..."
+            );
 
 
-    // ----------------------------------------
-    // DEFAULT DATE / TIME
-    // ----------------------------------------
+            // ----------------------------------------
+            // CURRENT USER
+            // ----------------------------------------
 
-    setDefaultInspectionDateTime();
-
-
-    // ----------------------------------------
-    // FIRST LOAD
-    // ----------------------------------------
-    //
-    // ถ้าโหลดข้อมูลพื้นฐานสำเร็จแล้ว
-    // ไม่ต้องเรียก API ซ้ำ
-    // ----------------------------------------
-
-    if (
-        inspectionPageInitialized
-    ) {
-
-        console.log(
-            "Inspection Page ใช้ข้อมูลจาก Memory Cache"
-        );
+            const user =
+                getCurrentUser();
 
 
-        renderInspectionUser();
+            if (
+                !user ||
+                !user.email
+            ) {
 
-        renderInspectionZones();
+                console.warn(
+                    "ไม่พบ Current User ขณะเปิดหน้า Inspection"
+                );
 
-        renderInspectionInspectors();
+                inspectionPageInitialized =
+                    false;
 
-        renderInspectionLocations();
+                return false;
 
-        renderInspectionItems();
-
-        updateInspectionFormMode();
-
-
-        console.log(
-            "เปิดหน้า Inspection จาก Cache สำเร็จ"
-        );
-
-
-        return;
-
-    }
+            }
 
 
-    // ----------------------------------------
-    // FIRST LOAD
-    // ----------------------------------------
-
-    console.log(
-        "กำลังโหลดข้อมูลพื้นฐาน Inspection ครั้งแรก..."
-    );
+            console.log(
+                "Current Inspection User:",
+                user
+            );
 
 
-    const loadTasks = [];
+            // ----------------------------------------
+            // DEFAULT DATE / TIME
+            // ----------------------------------------
+
+            setDefaultInspectionDateTime();
 
 
-    // ----------------------------------------
-    // INSPECTION SETTINGS
-    // ----------------------------------------
+            // ----------------------------------------
+            // CACHE READY
+            // ----------------------------------------
 
-    if (
-        !inspectionSettingsLoaded
-    ) {
+            if (
+                inspectionSettingsLoaded &&
+                inspectionLocationsLoaded &&
+                Array.isArray(inspectionItems) &&
+                inspectionItems.length > 0 &&
+                Array.isArray(inspectionMasterLocations)
+            ) {
 
-        console.log(
-            "กำลังโหลด Inspection Items..."
-        );
+                console.log(
+                    "Inspection ใช้ข้อมูลจาก Memory Cache"
+                );
 
 
-        loadTasks.push(
+                inspectionPageInitialized =
+                    true;
 
-            loadInspectionSettings()
-                .then(
-                    function () {
 
-                        inspectionSettingsLoaded =
-                            true;
+                renderInspectionUser();
 
-                    }
+                renderInspectionZones();
+
+                renderInspectionInspectors();
+
+                renderInspectionLocations();
+
+                renderInspectionItems();
+
+                updateInspectionFormMode();
+
+
+                console.log(
+                    "เปิดหน้า Inspection จาก Cache สำเร็จ"
+                );
+
+
+                return true;
+
+            }
+
+
+            // ----------------------------------------
+            // CACHE NOT READY
+            // ----------------------------------------
+
+            inspectionPageInitialized =
+                false;
+
+
+            console.log(
+                "Inspection Cache ยังไม่พร้อม → ตรวจสอบข้อมูลพื้นฐาน"
+            );
+
+
+            const loadTasks = [];
+
+
+            // ----------------------------------------
+            // LOAD INSPECTION SETTINGS
+            // ----------------------------------------
+
+            if (
+                !inspectionSettingsLoaded ||
+                !Array.isArray(inspectionItems) ||
+                inspectionItems.length === 0
+            ) {
+
+                console.log(
+                    "กำลังโหลด Inspection Items..."
+                );
+
+
+                loadTasks.push(
+
+                    loadInspectionSettings()
+
+                        .then(
+                            function () {
+
+                                const success =
+                                    Array.isArray(
+                                        inspectionItems
+                                    ) &&
+                                    inspectionItems.length > 0;
+
+
+                                inspectionSettingsLoaded =
+                                    success;
+
+
+                                if (success) {
+
+                                    console.log(
+                                        "Inspection Items พร้อม:",
+                                        inspectionItems.length,
+                                        "รายการ"
+                                    );
+
+                                } else {
+
+                                    console.error(
+                                        "Inspection Items โหลดแล้วแต่ไม่มีข้อมูล"
+                                    );
+
+                                }
+
+
+                                return success;
+
+                            }
+                        )
+
+                        .catch(
+                            function (error) {
+
+                                inspectionSettingsLoaded =
+                                    false;
+
+
+                                console.error(
+                                    "โหลด Inspection Items ไม่สำเร็จ:",
+                                    error
+                                );
+
+
+                                return false;
+
+                            }
+                        )
+
+                );
+
+            }
+
+
+            // ----------------------------------------
+            // LOAD LOCATION MASTER
+            // ----------------------------------------
+
+            if (
+                !inspectionLocationsLoaded ||
+                !Array.isArray(
+                    inspectionMasterLocations
                 )
+            ) {
 
-        );
+                console.log(
+                    "กำลังโหลด LocationMaster..."
+                );
+
+
+                loadTasks.push(
+
+                    loadInspectionMasterLocations()
+
+                        .then(
+                            function () {
+
+                                return (
+                                    inspectionLocationsLoaded &&
+                                    Array.isArray(
+                                        inspectionMasterLocations
+                                    )
+                                );
+
+                            }
+                        )
+
+                        .catch(
+                            function (error) {
+
+                                inspectionLocationsLoaded =
+                                    false;
+
+
+                                console.error(
+                                    "โหลด LocationMaster ไม่สำเร็จ:",
+                                    error
+                                );
+
+
+                                return false;
+
+                            }
+                        )
+
+                );
+
+            }
+
+
+            // ----------------------------------------
+            // WAIT FOR ALL REQUIRED DATA
+            // ----------------------------------------
+
+            const results =
+                await Promise.all(
+                    loadTasks
+                );
+
+
+            console.log(
+                "ผลการโหลดข้อมูลพื้นฐาน Inspection:",
+                results
+            );
+
+
+            // ----------------------------------------
+            // FINAL VALIDATION
+            // ----------------------------------------
+
+            const settingsReady =
+                inspectionSettingsLoaded &&
+                Array.isArray(
+                    inspectionItems
+                ) &&
+                inspectionItems.length > 0;
+
+
+            const locationsReady =
+                inspectionLocationsLoaded &&
+                Array.isArray(
+                    inspectionMasterLocations
+                );
+
+
+            // ----------------------------------------
+            // NOT READY
+            // ----------------------------------------
+
+            if (
+                !settingsReady ||
+                !locationsReady
+            ) {
+
+                inspectionPageInitialized =
+                    false;
+
+
+                console.error(
+                    "Inspection ยังไม่พร้อม:",
+                    {
+                        settingsReady:
+                            settingsReady,
+
+                        settingsCount:
+                            Array.isArray(
+                                inspectionItems
+                            )
+                                ? inspectionItems.length
+                                : 0,
+
+                        locationsReady:
+                            locationsReady,
+
+                        locationsCount:
+                            Array.isArray(
+                                inspectionMasterLocations
+                            )
+                                ? inspectionMasterLocations.length
+                                : 0
+                    }
+                );
+
+
+                // ----------------------------------------
+                // USER MESSAGE
+                // ----------------------------------------
+
+                const missing = [];
+
+
+                if (!settingsReady) {
+
+                    missing.push(
+                        "รายการตรวจ 7 รายการ"
+                    );
+
+                }
+
+
+                if (!locationsReady) {
+
+                    missing.push(
+                        "จุดตรวจ"
+                    );
+
+                }
+
+
+                alert(
+                    "ไม่สามารถเตรียมหน้าบันทึกตรวจได้\n\n" +
+                    "ข้อมูลที่ยังโหลดไม่สำเร็จ:\n" +
+                    missing.join("\n") +
+                    "\n\nกรุณาลองเปิดหน้านี้อีกครั้ง"
+                );
+
+
+                return false;
+
+            }
+
+
+            // ----------------------------------------
+            // PAGE READY
+            // ----------------------------------------
+
+            inspectionPageInitialized =
+                true;
+
+
+            // ----------------------------------------
+            // RENDER
+            // ----------------------------------------
+
+            renderInspectionUser();
+
+            renderInspectionZones();
+
+            renderInspectionInspectors();
+
+            renderInspectionLocations();
+
+            renderInspectionItems();
+
+            updateInspectionFormMode();
+
+
+            console.log(
+                "เตรียมหน้า Inspection สำเร็จ:",
+                {
+                    items:
+                        inspectionItems.length,
+
+                    locations:
+                        inspectionMasterLocations.length
+                }
+            );
+
+
+            return true;
+
+        })();
+
+
+    try {
+
+        return await inspectionInitializationPromise;
+
+    } finally {
+
+        inspectionInitializationPromise =
+            null;
 
     }
-
-
-    // ----------------------------------------
-    // LOCATION MASTER
-    // ----------------------------------------
-
-    if (
-        !inspectionLocationsLoaded
-    ) {
-
-        console.log(
-            "กำลังโหลด LocationMaster ครั้งแรก..."
-        );
-
-
-        loadTasks.push(
-
-            loadInspectionMasterLocations()
-
-        );
-
-    }
-
-
-    // ----------------------------------------
-    // WAIT FOR REQUIRED DATA
-    // ----------------------------------------
-
-    await Promise.all(
-        loadTasks
-    );
-
-
-    // ----------------------------------------
-    // MARK PAGE INITIALIZED
-    // ----------------------------------------
-
-    inspectionPageInitialized =
-        true;
-
-
-    // ----------------------------------------
-    // RENDER USER CONTEXT
-    // ----------------------------------------
-
-    renderInspectionUser();
-
-    renderInspectionZones();
-
-    renderInspectionInspectors();
-
-
-    // ----------------------------------------
-    // RENDER LOCATION
-    // ----------------------------------------
-
-    renderInspectionLocations();
-
-
-    // ----------------------------------------
-    // RENDER ITEMS
-    // ----------------------------------------
-
-    renderInspectionItems();
-
-
-    // ----------------------------------------
-    // UPDATE FORM MODE
-    // ----------------------------------------
-
-    updateInspectionFormMode();
-
-
-    console.log(
-        "เตรียมหน้า Inspection ครั้งแรกเรียบร้อย"
-    );
 
 }
 
@@ -335,7 +559,10 @@ async function loadInspectionMasterLocations() {
         getCurrentUser();
 
 
-    if (!user || !user.email) {
+    if (
+        !user ||
+        !user.email
+    ) {
 
         inspectionMasterLocations =
             [];
@@ -349,7 +576,7 @@ async function loadInspectionMasterLocations() {
         );
 
 
-        return;
+        return false;
 
     }
 
@@ -359,7 +586,10 @@ async function loadInspectionMasterLocations() {
     // ----------------------------------------
 
     if (
-        inspectionLocationsLoaded
+        inspectionLocationsLoaded &&
+        Array.isArray(
+            inspectionMasterLocations
+        )
     ) {
 
         console.log(
@@ -369,7 +599,7 @@ async function loadInspectionMasterLocations() {
         );
 
 
-        return;
+        return true;
 
     }
 
@@ -402,7 +632,6 @@ async function loadInspectionMasterLocations() {
             inspectionMasterLocations =
                 [];
 
-
             inspectionLocationsLoaded =
                 false;
 
@@ -415,12 +644,12 @@ async function loadInspectionMasterLocations() {
             );
 
 
-            return;
+            return false;
 
         }
 
 
-        inspectionMasterLocations =
+        const locations =
             Array.isArray(
                 data.locations
             )
@@ -429,8 +658,36 @@ async function loadInspectionMasterLocations() {
 
 
         // ----------------------------------------
-        // MARK CACHE READY
+        // IMPORTANT
         // ----------------------------------------
+        // success แต่ไม่มี locations
+        // ถือว่ายังไม่พร้อม
+        // ----------------------------------------
+
+        if (
+            locations.length === 0
+        ) {
+
+            inspectionMasterLocations =
+                [];
+
+            inspectionLocationsLoaded =
+                false;
+
+
+            console.error(
+                "LocationMaster API สำเร็จ แต่ไม่พบจุดตรวจ"
+            );
+
+
+            return false;
+
+        }
+
+
+        inspectionMasterLocations =
+            locations;
+
 
         inspectionLocationsLoaded =
             true;
@@ -443,10 +700,7 @@ async function loadInspectionMasterLocations() {
         );
 
 
-        console.log(
-            "จำนวนจุดตรวจที่มีสิทธิ์:",
-            inspectionMasterLocations.length
-        );
+        return true;
 
 
     } catch (error) {
@@ -460,9 +714,11 @@ async function loadInspectionMasterLocations() {
         inspectionMasterLocations =
             [];
 
-
         inspectionLocationsLoaded =
             false;
+
+
+        return false;
 
     }
 
@@ -2168,554 +2424,456 @@ function updateInspectionFormMode() {
 
 
 // ======================================================
-// SAVE / UPDATE INSPECTION
+// SAVE INSPECTION
 // ======================================================
 
 async function saveInspection() {
 
-    // ----------------------------------------
-    // CURRENT USER
-    // ----------------------------------------
-
-    const user =
-        getCurrentUser();
-
-
-    if (!user) {
-
-        alert(
-            "ไม่พบข้อมูลผู้ใช้งาน กรุณาเข้าสู่ระบบใหม่"
-        );
-
-
-        return;
-
-    }
-
-
-    // ----------------------------------------
-    // VALIDATE
-    // ----------------------------------------
-
-    if (
-        !validateInspectionForm()
-    ) {
-
-        return;
-
-    }
-
-
-    // ----------------------------------------
-    // FORM INPUTS
-    // ----------------------------------------
-
-    const dateInput =
-        document.getElementById(
-            "inspection-date"
-        );
-
-
-    const timeInput =
-        document.getElementById(
-            "inspection-time"
-        );
-
-
-    const saveButton =
-        document.getElementById(
-            "save-inspection-button"
-        );
-
-
-    // ----------------------------------------
-    // RECORD ID
-    // ----------------------------------------
-
-    let recordId;
-
-
-    if (
-        inspectionMode ===
-        "edit" &&
-        editingInspectionRecordId
-    ) {
-
-        recordId =
-            editingInspectionRecordId;
-
-    } else {
-
-        recordId =
-            generateRecordId();
-
-    }
-
-
-    // ----------------------------------------
-    // COLLECT DATA
-    // ----------------------------------------
-
-    const items =
-        collectInspectionItems();
-
-
-    const remark =
-        collectInspectionRemark();
-
-
-    const solution =
-        collectInspectionSolution();
-
-
-    // ----------------------------------------
-    // PRESERVE ORIGINAL DATA
-    // ----------------------------------------
-
-    const original =
-        editingInspectionData ||
-        {};
-
-
-    // ----------------------------------------
-    // LOCATION MASTER DATA
-    // ----------------------------------------
-
-    let selectedLocation =
-        null;
-
-
-    if (
-        inspectionMode ===
-        "edit"
-    ) {
-
-        selectedLocation = {
-
-            pointId:
-                original.pointId ||
-                "",
-
-            location:
-                original.locationName ||
-                "",
-
-            zone:
-                original.zone ||
-                ""
-
-        };
-
-    } else {
-
-        selectedLocation =
-            getSelectedInspectionLocation();
-
-    }
-
-
-    // ----------------------------------------
-    // VALIDATE POINT ID
-    // ----------------------------------------
-
-    if (
-        inspectionMode !== "edit" &&
-        (
-            !selectedLocation ||
-            !selectedLocation.pointId
-        )
-    ) {
-
-        alert(
-            "ไม่พบ Point ID ของจุดตรวจ กรุณาเลือกจุดตรวจใหม่"
-        );
-
-
-        return;
-
-    }
-
-
-    // ----------------------------------------
-    // IMMUTABLE DATA
-    // ----------------------------------------
-
-    const inspectionDate =
-        inspectionMode === "edit"
-            ? (
-                normalizeDateForInput(
-                    original.inspectionDate
-                ) ||
-                dateInput.value
-            )
-            : dateInput.value;
-
-
-    const inspectionTime =
-        inspectionMode === "edit"
-            ? (
-                original.inspectionTime ||
-                timeInput.value
-            )
-            : timeInput.value;
-
-
-    // ----------------------------------------
-    // ZONE
-    // ----------------------------------------
-    //
-    // CREATE:
-    // Zone ต้องมาจาก LocationMaster
-    //
-    // ห้ามใช้ user.zone เป็น fallback
-    // เพราะ Admin มี user.zone = "All"
-    //
-    // EDIT:
-    // ใช้ Zone เดิมของ Inspection
-    // ----------------------------------------
-
-    const zone =
-        inspectionMode === "edit"
-            ? (
-                original.zone ||
-                ""
-            )
-            : (
-                selectedLocation.zone ||
-                ""
-            );
-
-
-    // ----------------------------------------
-    // LOCATION NAME
-    // ----------------------------------------
-
-    const locationName =
-        inspectionMode === "edit"
-            ? (
-                original.locationName ||
-                ""
-            )
-            : (
-                selectedLocation.location ||
-                ""
-            );
-
-
-    // ----------------------------------------
-    // INSPECTOR
-    // ----------------------------------------
-    //
-    // CREATE:
-    // ใช้ User ที่ Login
-    //
-    // EDIT:
-    // รักษา Inspector เดิม
-    // ----------------------------------------
-
-    const inspectorName =
-        inspectionMode === "edit"
-            ? (
-                original.inspectorName ||
-                ""
-            )
-            : (
-                user.name ||
-                ""
-            );
-
-
-    // ----------------------------------------
-    // POINT ID
-    // ----------------------------------------
-
-    const pointId =
-        inspectionMode === "edit"
-            ? (
-                original.pointId ||
-                ""
-            )
-            : (
-                selectedLocation.pointId ||
-                ""
-            );
-
-
-    // ----------------------------------------
-    // INSPECTION DATA
-    // ----------------------------------------
-
-    const inspectionData = {
-
-        recordId:
-            recordId,
-
-        inspectionDate:
-            inspectionDate,
-
-        inspectionTime:
-            inspectionTime,
-
-        zone:
-            zone,
-
-        locationName:
-            locationName,
-
-        inspectorName:
-            inspectorName,
-
-        pointId:
-            pointId,
-
-        remark:
-            remark,
-
-        solution:
-            solution,
-
-        documentCode:
-            original.documentCode ||
-            "FM-OP-11",
-
-        documentName:
-            original.documentName ||
-            "รายงานการตรวจจุดพนักงานรักษาความปลอดภัย",
-
-        documentNo:
-            original.documentNo ||
-            "",
-
-        items:
-            items,
-
-        // ----------------------------------------
-        // CREATE DATA
-        // ----------------------------------------
-
-        createdBy:
-            original.createdBy ||
-            user.name ||
-            "",
-
-        createdByEmail:
-            original.createdByEmail ||
-            user.email ||
-            "",
-
-        // ----------------------------------------
-        // UPDATE DATA
-        // ----------------------------------------
-
-        updatedBy:
-            user.name ||
-            "",
-
-        updatedByEmail:
-            user.email ||
-            ""
-
-    };
-
-
-    console.log(
-        "ข้อมูลการตรวจที่จะบันทึก:",
-        inspectionData
-    );
-
-
-    // ----------------------------------------
-    // SAFETY CHECK
-    // ----------------------------------------
-    // ป้องกันกรณี Admin Zone = All
-    // หลุดเข้ามาในข้อมูล Inspection ใหม่
-    // ----------------------------------------
-
-    if (
-        inspectionMode === "create" &&
-        String(
-            inspectionData.zone ||
-            ""
-        ).trim().toLowerCase() === "all"
-    ) {
-
-        console.error(
-            "ไม่อนุญาตให้บันทึก Inspection ด้วย Zone = All:",
-            inspectionData
-        );
-
-
-        alert(
-            "ไม่สามารถบันทึก Inspection ด้วย Zone = All ได้ กรุณาเลือกจุดตรวจใหม่"
-        );
-
-
-        return;
-
-    }
-
-
-    // ----------------------------------------
-    // DISABLE SAVE BUTTON
-    // ----------------------------------------
-
-    if (saveButton) {
-
-        saveButton.disabled =
-            true;
-
-
-        saveButton.textContent =
-            inspectionMode === "edit"
-                ? "กำลังบันทึกการแก้ไข..."
-                : "กำลังบันทึก...";
-
-    }
-
-
-    // ----------------------------------------
-    // SAVE TO DATABASE
-    // ----------------------------------------
+    console.log("========== SAVE INSPECTION ==========");
 
     try {
 
-        let data;
+        // --------------------------------------------------
+        // 1. Current User
+        // --------------------------------------------------
 
+        const user = getCurrentGGNUser();
 
-        // ========================================
-        // EDIT
-        // ========================================
+        if (!user || !user.email) {
 
-        if (
-            inspectionMode ===
-            "edit"
-        ) {
-
-            console.log(
-                "กำลังอัปเดตรายการตรวจ:",
-                recordId
+            showInspectionMessage(
+                "ไม่พบข้อมูลผู้ใช้งาน กรุณาเข้าสู่ระบบใหม่",
+                "error"
             );
 
+            return;
+        }
 
-            data =
-                await apiUpdateInspection(
-                    inspectionData
-                );
+        console.log("Current User:", user);
+
+
+        // --------------------------------------------------
+        // 2. Validate Form
+        // --------------------------------------------------
+
+        const validation = validateInspectionForm();
+
+        if (!validation.valid) {
+
+            showInspectionMessage(
+                validation.message || "กรุณากรอกข้อมูลให้ครบถ้วน",
+                "warning"
+            );
+
+            return;
+        }
+
+
+        // --------------------------------------------------
+        // 3. Collect Form Data
+        // --------------------------------------------------
+
+        const selectedLocation =
+            getSelectedInspectionLocation();
+
+        if (!selectedLocation) {
+
+            showInspectionMessage(
+                "ไม่พบข้อมูลจุดตรวจที่เลือก",
+                "warning"
+            );
+
+            return;
+        }
+
+
+        // --------------------------------------------------
+        // 4. Inspection Items
+        // --------------------------------------------------
+
+        const items =
+            collectInspectionItems();
+
+        if (!Array.isArray(items) || items.length === 0) {
+
+            showInspectionMessage(
+                "ไม่พบรายการตรวจสอบ",
+                "warning"
+            );
+
+            return;
+        }
+
+
+        // ตรวจสอบว่าครบทุกข้อ
+        const incompleteItem =
+            items.find(item =>
+                !item.result ||
+                String(item.result).trim() === ""
+            );
+
+        if (incompleteItem) {
+
+            showInspectionMessage(
+                "กรุณาระบุผลการตรวจสอบให้ครบทุกข้อ",
+                "warning"
+            );
+
+            return;
+        }
+
+
+        // --------------------------------------------------
+        // 5. Record ID
+        // --------------------------------------------------
+
+        let recordId =
+            editingInspectionRecordId;
+
+        if (!recordId) {
+            recordId = generateRecordId();
+        }
+
+
+        // --------------------------------------------------
+        // 6. Date / Time
+        // --------------------------------------------------
+
+        const date =
+            document.getElementById("inspection-date")?.value || "";
+
+        const time =
+            document.getElementById("inspection-time")?.value || "";
+
+
+        // --------------------------------------------------
+        // 7. Remark / Solution
+        // --------------------------------------------------
+
+        const remark =
+            getInspectionRemark();
+
+        const solution =
+            getInspectionSolution();
+
+
+        // --------------------------------------------------
+        // 8. Zone
+        // --------------------------------------------------
+        //
+        // สำคัญ:
+        // ตอน Create ให้ใช้ Zone จาก LocationMaster
+        // ไม่ใช้ user.zone โดยตรง
+        //
+        // ตอน Edit ให้รักษาข้อมูลเดิม
+        //
+
+        let zone = "";
+
+        if (inspectionMode === "edit" && editingInspectionData) {
+
+            zone =
+                editingInspectionData.zone ||
+                selectedLocation.zone ||
+                "";
+
+        } else {
+
+            zone =
+                selectedLocation.zone ||
+                "";
 
         }
 
 
-        // ========================================
-        // CREATE
-        // ========================================
+        // --------------------------------------------------
+        // 9. Location
+        // --------------------------------------------------
 
-        else {
+        const location =
+            selectedLocation.location ||
+            selectedLocation.name ||
+            "";
+
+        const pointId =
+            selectedLocation.pointId ||
+            "";
+
+
+        // --------------------------------------------------
+        // 10. Inspector
+        // --------------------------------------------------
+
+        let inspector =
+            user.name || "";
+
+        if (
+            inspectionMode === "edit" &&
+            editingInspectionData &&
+            editingInspectionData.inspector
+        ) {
+
+            inspector =
+                editingInspectionData.inspector;
+
+        }
+
+
+        // --------------------------------------------------
+        // 11. Document Information
+        // --------------------------------------------------
+
+        const documentCode =
+            editingInspectionData?.documentCode ||
+            "FM-OP-11";
+
+        const documentName =
+            editingInspectionData?.documentName ||
+            "รายงานการตรวจจุดพนักงานรักษาความปลอดภัย";
+
+        const documentNo =
+            editingInspectionData?.documentNo ||
+            "";
+
+
+        // --------------------------------------------------
+        // 12. Build Inspection Data
+        // --------------------------------------------------
+
+        const inspectionData = {
+
+            recordId: recordId,
+
+            date: date,
+
+            time: time,
+
+            zone: zone,
+
+            location: location,
+
+            pointId: pointId,
+
+            inspector: inspector,
+
+            remark: remark,
+
+            solution: solution,
+
+            documentCode: documentCode,
+
+            documentName: documentName,
+
+            documentNo: documentNo,
+
+            createdBy: user.email,
+
+            createdByEmail: user.email,
+
+            documentStatus:
+                editingInspectionData?.documentStatus ||
+                "Draft",
+
+            items: items
+
+        };
+
+
+        console.log(
+            "Inspection Data:",
+            inspectionData
+        );
+
+
+        // --------------------------------------------------
+        // 13. Double Check Create Zone
+        // --------------------------------------------------
+
+        if (
+            inspectionMode !== "edit" &&
+            (!zone || zone === "All")
+        ) {
+
+            showInspectionMessage(
+                "ไม่สามารถบันทึกได้ เนื่องจากไม่พบ Zone ของจุดตรวจ",
+                "error"
+            );
+
+            return;
+        }
+
+
+        // --------------------------------------------------
+        // 14. Disable Save Button
+        // --------------------------------------------------
+
+        const saveButton =
+            document.getElementById(
+                "btn-save-inspection"
+            );
+
+        const originalText =
+            saveButton?.textContent || "บันทึก";
+
+        if (saveButton) {
+
+            saveButton.disabled = true;
+
+            saveButton.textContent =
+                inspectionMode === "edit"
+                    ? "กำลังบันทึกการแก้ไข..."
+                    : "กำลังบันทึก...";
+
+        }
+
+
+        // --------------------------------------------------
+        // 15. Call Backend
+        // --------------------------------------------------
+
+        let result;
+
+        if (inspectionMode === "edit") {
 
             console.log(
-                "กำลังสร้างรายการตรวจใหม่:",
+                "Updating Inspection:",
+                recordId
+            );
+
+            result =
+                await apiUpdateInspection(
+                    inspectionData
+                );
+
+        } else {
+
+            console.log(
+                "Creating Inspection:",
                 recordId
             );
 
 
-            const response =
-                await fetch(
-                    API_URL,
-                    {
-                        method:
-                            "POST",
+            // ใช้ API wrapper กลาง
+            // แทน fetch() ตรงจากหน้านี้
 
-                        headers: {
-                            "Content-Type":
-                                "text/plain;charset=utf-8"
-                        },
+            if (typeof apiSaveInspection === "function") {
 
-                        body:
-                            JSON.stringify({
+                result =
+                    await apiSaveInspection(
+                        inspectionData
+                    );
+
+            } else {
+
+                // fallback กรณี apiSaveInspection
+                // ยังไม่มีใน api.js
+
+                const response =
+                    await fetch(
+                        API_URL,
+                        {
+                            method: "POST",
+
+                            headers: {
+                                "Content-Type":
+                                    "text/plain;charset=utf-8"
+                            },
+
+                            body: JSON.stringify({
 
                                 action:
                                     "saveInspection",
+
+                                email:
+                                    user.email,
+
+                                requesterEmail:
+                                    user.email,
 
                                 inspection:
                                     inspectionData
 
                             })
+                        }
+                    );
 
-                    }
-                );
 
+                result =
+                    await response.json();
 
-            data =
-                await response.json();
+            }
 
         }
 
 
         console.log(
-            "ผลการบันทึกการตรวจ:",
-            data
+            "Save Inspection Result:",
+            result
         );
 
 
-        // ----------------------------------------
-        // SAVE SUCCESS
-        // ----------------------------------------
+        // --------------------------------------------------
+        // 16. Check Result
+        // --------------------------------------------------
 
-        if (
-            data.success
-        ) {
+        if (!result || !result.success) {
 
-            // ----------------------------------------
-            // EDIT SUCCESS
-            // ----------------------------------------
+            throw new Error(
+                result?.message ||
+                "ไม่สามารถบันทึกข้อมูลได้"
+            );
+
+        }
+
+
+        // --------------------------------------------------
+        // 17. Success
+        // --------------------------------------------------
+
+        console.log(
+            "Inspection saved successfully:",
+            recordId
+        );
+
+
+        const successMessage =
+            inspectionMode === "edit"
+                ? "แก้ไขบันทึกการตรวจเรียบร้อยแล้ว"
+                : "บันทึกการตรวจเรียบร้อยแล้ว";
+
+
+        showInspectionMessage(
+            successMessage,
+            "success"
+        );
+
+
+        // --------------------------------------------------
+        // 18. Reset Form
+        // --------------------------------------------------
+
+        resetInspectionForm();
+
+
+        // --------------------------------------------------
+        // 19. Refresh Inspection Records
+        // --------------------------------------------------
+
+        try {
 
             if (
-                inspectionMode ===
-                "edit"
+                typeof loadInspections === "function"
             ) {
 
-                console.log(
-                    "แก้ไขรายการตรวจสำเร็จ"
-                );
-
-
-                showInspectionSuccessModal(
-                    inspectionData,
-                    "edit"
-                );
-
-
-                resetInspectionForm();
+                await loadInspections();
 
             }
 
+        } catch (refreshError) {
 
-            // ----------------------------------------
-            // CREATE SUCCESS
-            // ----------------------------------------
-
-            else {
-
-                console.log(
-                    "บันทึกการตรวจสำเร็จ"
-                );
-
-
-                showInspectionSuccessModal(
-                    inspectionData,
-                    "create"
-                );
-
-
-                resetInspectionForm();
-
-            }
-
-
-        } else {
-
-            alert(
-                data.message ||
-                "ไม่สามารถบันทึกการตรวจได้"
+            console.warn(
+                "Refresh inspection records failed:",
+                refreshError
             );
 
         }
@@ -2724,29 +2882,41 @@ async function saveInspection() {
     } catch (error) {
 
         console.error(
-            "บันทึกการตรวจไม่สำเร็จ:",
+            "saveInspection Error:",
             error
         );
 
 
-        alert(
-            "ไม่สามารถเชื่อมต่อฐานข้อมูลได้"
+        // --------------------------------------------------
+        // Error Message
+        // --------------------------------------------------
+
+        showInspectionMessage(
+            error.message ||
+            "เกิดข้อผิดพลาดในการบันทึกข้อมูล",
+            "error"
         );
 
 
     } finally {
 
-        // ----------------------------------------
-        // RESTORE SAVE BUTTON
-        // ----------------------------------------
+        // --------------------------------------------------
+        // 20. Restore Save Button
+        // --------------------------------------------------
+
+        const saveButton =
+            document.getElementById(
+                "btn-save-inspection"
+            );
 
         if (saveButton) {
 
-            saveButton.disabled =
-                false;
+            saveButton.disabled = false;
 
-
-            updateInspectionFormMode();
+            saveButton.textContent =
+                inspectionMode === "edit"
+                    ? "บันทึกการแก้ไข"
+                    : "บันทึก";
 
         }
 
@@ -2784,9 +2954,7 @@ async function loadInspectionForEdit(
 
 
         // ----------------------------------------
-        // api.js v2.2.0
-        // จะส่ง Current User Email
-        // ไป Backend ให้ตรวจสอบสิทธิ์
+        // LOAD INSPECTION DATA
         // ----------------------------------------
 
         const data =
@@ -2850,10 +3018,30 @@ async function loadInspectionForEdit(
 
 
         // ----------------------------------------
-        // INITIALIZE FORM
+        // WAIT FOR INSPECTION PAGE
+        // ----------------------------------------
+        //
+        // showPage() เรียก initializeInspectionPage()
+        // อยู่แล้ว
+        //
+        // เราเรียกซ้ำได้อย่างปลอดภัยเพราะ
+        // initializeInspectionPage() มี Promise Lock
         // ----------------------------------------
 
-        await initializeInspectionPage();
+        const pageReady =
+            await initializeInspectionPage();
+
+
+        if (!pageReady) {
+
+            console.error(
+                "ไม่สามารถเตรียมหน้า Inspection สำหรับ Edit ได้"
+            );
+
+
+            return false;
+
+        }
 
 
         // ----------------------------------------
@@ -2886,7 +3074,6 @@ async function loadInspectionForEdit(
     }
 
 }
-
 
 // ======================================================
 // ENSURE OLD LOCATION OPTION FOR EDIT
