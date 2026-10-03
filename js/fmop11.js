@@ -1,7 +1,8 @@
+
 // ======================================================
 // GGN Docs
 // FM-OP-11 GENERATOR
-// VERSION: 2.3.0
+// VERSION: 2.3.1
 // DATE: 2026-10-03
 //
 // หน้าที่:
@@ -16,14 +17,45 @@
 // - ดาวน์โหลด PDF ลงเครื่องอัตโนมัติ
 // - แสดงข้อความผิดพลาดแยกตามสาเหตุ
 //
-// CHANGE
-// - ใช้ getCurrentGGNUser() แทน getCurrentUser()
-// - apiGenerateFMOP11() รับเฉพาะ records
-// - ไม่ส่ง user.name / user.email เข้า Generate API
-// - ใช้ Inspection User API แทน Settings inspector
-// - คง FM-OP-11 สูงสุด 14 จุด
-// - คงการส่งเฉพาะ recordId ไป Backend
+// CHANGE v2.3.1
+// - แก้ fmop11SelectedRecords is not defined
+// - Initialize FM-OP-11 state อย่างปลอดภัย
+// - User ใช้ชื่อ Current User เป็น Inspector
+// - Admin จึงเรียก API เพื่อโหลด Inspector ทั้งหมด
+// - ไม่เปิดสิทธิ์ Backend ให้ User ดู Inspector ทั้งหมด
 // ======================================================
+
+
+// ======================================================
+// FM-OP-11 STATE
+// ======================================================
+//
+// ใช้ window เพื่อป้องกันปัญหา ReferenceError
+// และป้องกันการชนกับ state.js หากมีตัวแปรนี้อยู่แล้ว
+//
+// เก็บเฉพาะ recordId สำหรับรายการที่เลือก
+// ======================================================
+
+if (
+    !Array.isArray(
+        window.fmop11SelectedRecords
+    )
+) {
+
+    window.fmop11SelectedRecords = [];
+
+}
+
+
+if (
+    !Array.isArray(
+        window.fmop11Records
+    )
+) {
+
+    window.fmop11Records = [];
+
+}
 
 
 // ======================================================
@@ -146,15 +178,23 @@ function setupFMOP11Events() {
 // LOAD FM-OP-11 INSPECTORS
 // ======================================================
 //
+// Permission:
+//
+// Admin
+// - โหลดรายชื่อ Inspector ทั้งหมดจาก Backend
+//
+// User
+// - ใช้ชื่อของ Current User โดยตรง
+// - ไม่เรียก getInspectionUsers()
+// - ไม่ต้องมีสิทธิ์ดูรายชื่อผู้ตรวจทั้งหมด
+//
 // Inspector ไม่ใช้ Settings แล้ว
 //
 // Settings ปัจจุบันใช้สำหรับ:
 // inspectionItem
 //
 // Inspector ใช้ Users Sheet ผ่าน:
-// apiGetInspectionUsers()
-//
-// Backend จะเป็นผู้ตรวจสอบสิทธิ์
+// Current User / Inspection User API
 // ======================================================
 
 async function loadFMOP11Inspectors() {
@@ -186,7 +226,125 @@ async function loadFMOP11Inspectors() {
 
 
     // ==================================================
-    // LOAD INSPECTORS
+    // CURRENT USER
+    // ==================================================
+
+    const currentUser =
+        typeof getCurrentGGNUser === "function"
+            ? getCurrentGGNUser()
+            : null;
+
+
+    if (
+        !currentUser ||
+        !currentUser.email
+    ) {
+
+        select.innerHTML = `
+
+            <option value="">
+                -- ไม่พบข้อมูลผู้ใช้งาน --
+            </option>
+
+        `;
+
+        return;
+
+    }
+
+
+    // ==================================================
+    // CHECK ROLE
+    // ==================================================
+
+    const role =
+        String(
+            currentUser.role ||
+            ""
+        )
+            .trim()
+            .toLowerCase();
+
+
+    const isAdmin =
+        role === "admin";
+
+
+    // ==================================================
+    // USER
+    // ==================================================
+    //
+    // User ไม่สามารถดูรายชื่อ Inspector ทั้งหมด
+    // ดังนั้นใช้ชื่อของตัวเอง
+    // ==================================================
+
+    if (
+        !isAdmin
+    ) {
+
+        const currentName =
+            currentUser.name ||
+            "";
+
+
+        if (!currentName) {
+
+            select.innerHTML = `
+
+                <option value="">
+                    -- ไม่พบชื่อผู้ตรวจ --
+                </option>
+
+            `;
+
+            return;
+
+        }
+
+
+        const option =
+            document.createElement(
+                "option"
+            );
+
+
+        option.value =
+            currentName;
+
+
+        option.textContent =
+            currentName;
+
+
+        select.appendChild(
+            option
+        );
+
+
+        // ------------------------------------------------
+        // เลือกตัวเองอัตโนมัติ
+        // ------------------------------------------------
+
+        select.value =
+            currentName;
+
+
+        console.log(
+            "FM-OP-11 User ใช้ Current User เป็น Inspector:",
+            currentName
+        );
+
+
+        return;
+
+    }
+
+
+    // ==================================================
+    // ADMIN
+    // ==================================================
+    //
+    // Admin สามารถดู Inspector ทั้งหมด
     // ==================================================
 
     try {
@@ -450,7 +608,7 @@ async function searchFMOP11Records() {
     // CLEAR PREVIOUS SELECTION
     // ==================================================
 
-    fmop11SelectedRecords = [];
+    window.fmop11SelectedRecords = [];
 
 
     updateFMOP11SelectedCount();
@@ -525,7 +683,7 @@ async function searchFMOP11Records() {
             !data
         ) {
 
-            fmop11Records = [];
+            window.fmop11Records = [];
 
 
             renderFMOP11Records();
@@ -555,7 +713,7 @@ async function searchFMOP11Records() {
             !data.success
         ) {
 
-            fmop11Records = [];
+            window.fmop11Records = [];
 
 
             renderFMOP11Records();
@@ -597,7 +755,7 @@ async function searchFMOP11Records() {
             )
         ) {
 
-            fmop11Records =
+            window.fmop11Records =
                 data.inspections;
 
         } else if (
@@ -606,19 +764,19 @@ async function searchFMOP11Records() {
             )
         ) {
 
-            fmop11Records =
+            window.fmop11Records =
                 data.data;
 
         } else {
 
-            fmop11Records = [];
+            window.fmop11Records = [];
 
         }
 
 
         console.log(
             "จำนวนรายการตรวจ:",
-            fmop11Records.length
+            window.fmop11Records.length
         );
 
 
@@ -640,10 +798,10 @@ async function searchFMOP11Records() {
         );
 
 
-        fmop11Records = [];
+        window.fmop11Records = [];
 
 
-        fmop11SelectedRecords = [];
+        window.fmop11SelectedRecords = [];
 
 
         renderFMOP11Records();
@@ -688,9 +846,9 @@ function renderFMOP11Records() {
 
     if (
         !Array.isArray(
-            fmop11Records
+            window.fmop11Records
         ) ||
-        fmop11Records.length === 0
+        window.fmop11Records.length === 0
     ) {
 
         list.innerHTML = `
@@ -729,7 +887,7 @@ function renderFMOP11Records() {
     // RENDER
     // ==================================================
 
-    fmop11Records.forEach(
+    window.fmop11Records.forEach(
         function (
             record,
             index
@@ -903,7 +1061,7 @@ function handleFMOP11RecordSelection(
 
 
     const record =
-        fmop11Records[index];
+        window.fmop11Records[index];
 
 
     if (!record) {
@@ -969,7 +1127,7 @@ function handleFMOP11RecordSelection(
         // ----------------------------------------------
 
         if (
-            fmop11SelectedRecords.length >=
+            window.fmop11SelectedRecords.length >=
             14
         ) {
 
@@ -993,7 +1151,7 @@ function handleFMOP11RecordSelection(
         // ----------------------------------------------
 
         const alreadySelected =
-            fmop11SelectedRecords.some(
+            window.fmop11SelectedRecords.some(
                 function (
                     item
                 ) {
@@ -1032,7 +1190,7 @@ function handleFMOP11RecordSelection(
         // เก็บเฉพาะ recordId
         // ----------------------------------------------
 
-        fmop11SelectedRecords.push({
+        window.fmop11SelectedRecords.push({
 
             recordId:
                 recordId
@@ -1048,8 +1206,8 @@ function handleFMOP11RecordSelection(
 
     else {
 
-        fmop11SelectedRecords =
-            fmop11SelectedRecords.filter(
+        window.fmop11SelectedRecords =
+            window.fmop11SelectedRecords.filter(
                 function (
                     item
                 ) {
@@ -1100,9 +1258,9 @@ function updateFMOP11SelectedCount() {
 
     const count =
         Array.isArray(
-            fmop11SelectedRecords
+            window.fmop11SelectedRecords
         )
-            ? fmop11SelectedRecords.length
+            ? window.fmop11SelectedRecords.length
             : 0;
 
 
@@ -1138,7 +1296,7 @@ function updateFMOP11SelectedCount() {
 
 function clearFMOP11Selection() {
 
-    fmop11SelectedRecords = [];
+    window.fmop11SelectedRecords = [];
 
 
     const checkboxes =
@@ -1420,9 +1578,9 @@ async function generateFMOP11() {
 
     if (
         !Array.isArray(
-            fmop11SelectedRecords
+            window.fmop11SelectedRecords
         ) ||
-        fmop11SelectedRecords.length === 0
+        window.fmop11SelectedRecords.length === 0
     ) {
 
         alert(
@@ -1441,7 +1599,7 @@ async function generateFMOP11() {
     // ==================================================
 
     if (
-        fmop11SelectedRecords.length > 14
+        window.fmop11SelectedRecords.length > 14
     ) {
 
         alert(
@@ -1494,7 +1652,7 @@ async function generateFMOP11() {
     // ==================================================
 
     const invalidRecord =
-        fmop11SelectedRecords.find(
+        window.fmop11SelectedRecords.find(
             function (
                 item
             ) {
@@ -1582,7 +1740,7 @@ async function generateFMOP11() {
 
         console.log(
             "กำลังสร้าง FM-OP-11 จาก recordId:",
-            fmop11SelectedRecords
+            window.fmop11SelectedRecords
         );
 
 
@@ -1602,7 +1760,7 @@ async function generateFMOP11() {
 
         const data =
             await apiGenerateFMOP11(
-                fmop11SelectedRecords
+                window.fmop11SelectedRecords
             );
 
 
@@ -1839,9 +1997,9 @@ async function generateFMOP11() {
 
             generateButton.disabled =
                 !Array.isArray(
-                    fmop11SelectedRecords
+                    window.fmop11SelectedRecords
                 ) ||
-                fmop11SelectedRecords.length ===
+                window.fmop11SelectedRecords.length ===
                     0;
 
 
