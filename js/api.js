@@ -1,26 +1,16 @@
 //
 // ======================================================
 // GGN DOCS - API
-// VERSION: 2.5.0
+// VERSION: 2.5.1
 // DATE: 2026-10-03
 //
 // CHANGE
-// - เพิ่ม Document API
-// - เพิ่ม apiGetDocuments()
-// - เพิ่ม apiAddDocument()
-// - ส่ง requesterEmail จาก Current User ไป Backend
-// - Document Permission ให้ Backend เป็นผู้ตรวจสอบสิทธิ์
-// - ปรับ FM-OP-11 ให้ใช้ Current User เป็น requester
-// - คง Inspection API Contract เดิม
+// - ลบการประกาศ API_URL ซ้ำออกจาก api.js
+// - ใช้ API_URL จาก app.js
+// - คง Document API Contract
+// - คง Inspection API Contract
+// - คง FM-OP-11 API Contract
 // ======================================================
-
-
-// ======================================================
-// CONFIG
-// ======================================================
-
-const API_URL =
-    "https://script.google.com/macros/s/AKfycbxYOUR_API_ID/exec";
 
 
 // ======================================================
@@ -346,7 +336,7 @@ async function apiGetUserInfo(
 // GET DOCUMENTS
 // ========================================
 //
-// Backend จะเป็นผู้ตรวจสอบสิทธิ์
+// Backend เป็นผู้ตรวจสอบสิทธิ์
 //
 // User  -> เอกสารของตัวเอง
 // Admin -> เอกสารทั้งหมด
