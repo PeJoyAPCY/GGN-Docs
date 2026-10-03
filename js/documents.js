@@ -1,22 +1,24 @@
 // ======================================================
 // GGN DOCS - DOCUMENT SYSTEM
-// VERSION: 2.5.0
+// VERSION: 2.6.0
 // DATE: 2026-10-03
 //
 // CHANGE
-// - ปรับ Document System ให้ใช้ API wrapper กลาง
-// - ส่ง requesterEmail ให้ Backend ตรวจสอบสิทธิ์
+// - ใช้ API wrapper กลางสำหรับ Document System
+// - apiGetDocuments() เป็นผู้ส่ง requesterEmail
+// - apiAddDocument() เป็นผู้ส่ง requesterEmail
+// - ไม่ส่ง createdByName / createdByEmail จาก Frontend
+// - Backend เป็น Source of Truth สำหรับผู้สร้างเอกสาร
+// - Backend เป็นผู้ตรวจสอบ Document Permission
 // - User ปกติเห็นเฉพาะเอกสารของตัวเอง
 // - Admin เห็นเอกสารทั้งหมด
-// - การสร้างเอกสารใช้ Current User จาก Session
-// - ไม่เชื่อ createdByEmail / createdByName จาก Frontend
-//   เป็นแหล่งยืนยันสิทธิ์
+// - ใช้ Current User จาก Session สำหรับตรวจสถานะการใช้งาน
 // ======================================================
 
 
-// ========================================
+// ======================================================
 // SETUP DOCUMENTS
-// ========================================
+// ======================================================
 
 function setupDocuments() {
 
@@ -109,9 +111,9 @@ function setupDocuments() {
 }
 
 
-// ========================================
+// ======================================================
 // LOAD DOCUMENTS
-// ========================================
+// ======================================================
 
 async function loadDocuments() {
 
@@ -130,7 +132,10 @@ async function loadDocuments() {
             getCurrentGGNUser();
 
 
-        if (!user || !user.email) {
+        if (
+            !user ||
+            !user.email
+        ) {
 
             console.warn(
                 "ไม่พบ Current User สำหรับโหลดเอกสาร"
@@ -149,6 +154,10 @@ async function loadDocuments() {
 
         // --------------------------------
         // เรียก API กลาง
+        //
+        // apiGetDocuments()
+        // จะส่ง requesterEmail
+        // จาก Current User ไป Backend
         // --------------------------------
 
         const data =
@@ -212,9 +221,9 @@ async function loadDocuments() {
 }
 
 
-// ========================================
+// ======================================================
 // OPEN DOCUMENT FORM
-// ========================================
+// ======================================================
 
 function openDocumentForm() {
 
@@ -273,9 +282,9 @@ function openDocumentForm() {
 }
 
 
-// ========================================
+// ======================================================
 // CLOSE DOCUMENT FORM
-// ========================================
+// ======================================================
 
 function closeDocumentForm() {
 
@@ -295,9 +304,9 @@ function closeDocumentForm() {
 }
 
 
-// ========================================
+// ======================================================
 // ADD DOCUMENT
-// ========================================
+// ======================================================
 
 async function handleDocumentSubmit(
     event
@@ -380,6 +389,11 @@ async function handleDocumentSubmit(
 
     // ------------------------------------
     // Current User
+    //
+    // ใช้สำหรับตรวจว่ามี Session อยู่หรือไม่
+    //
+    // ไม่ใช้ข้อมูลนี้เพื่อกำหนด
+    // createdBy ใน Backend
     // ------------------------------------
 
     const user =
@@ -432,10 +446,16 @@ async function handleDocumentSubmit(
         // --------------------------------
         // Document Data
         //
-        // createdByName / createdByEmail
-        // จะถูกส่งเพื่อ compatibility
-        // แต่ Backend ต้องใช้ requesterEmail
-        // เป็นตัวตรวจสอบสิทธิ์จริง
+        // สำคัญ:
+        //
+        // ไม่ส่ง
+        // createdByName
+        // createdByEmail
+        //
+        // เพราะ Backend จะใช้
+        // requesterEmail
+        // เป็นตัวตรวจสอบ User
+        // และสร้างข้อมูลผู้สร้างเอง
         // --------------------------------
 
         const documentData = {
@@ -450,13 +470,7 @@ async function handleDocumentSubmit(
                 operator,
 
             department:
-                department,
-
-            createdByName:
-                user.name || "",
-
-            createdByEmail:
-                user.email || ""
+                department
 
         };
 
@@ -469,6 +483,10 @@ async function handleDocumentSubmit(
 
         // --------------------------------
         // เรียก API กลาง
+        //
+        // apiAddDocument()
+        // จะเพิ่ม requesterEmail
+        // จาก Current User ให้อัตโนมัติ
         // --------------------------------
 
         const data =
@@ -578,9 +596,9 @@ async function handleDocumentSubmit(
 }
 
 
-// ========================================
+// ======================================================
 // RENDER DOCUMENTS
-// ========================================
+// ======================================================
 
 function renderDocuments() {
 
@@ -719,9 +737,9 @@ function renderDocuments() {
 }
 
 
-// ========================================
+// ======================================================
 // DASHBOARD COUNTS
-// ========================================
+// ======================================================
 
 function updateDashboardCounts() {
 
@@ -751,7 +769,10 @@ function updateDashboardCounts() {
     // ------------------------------------
     // Total
     //
-    // Backend ส่งข้อมูลตามสิทธิ์แล้ว
+    // สำคัญ:
+    //
+    // documents ที่ได้รับจาก Backend
+    // ถูกกรองตามสิทธิ์มาแล้ว
     //
     // User  = เอกสารของตัวเอง
     // Admin = เอกสารทั้งหมด

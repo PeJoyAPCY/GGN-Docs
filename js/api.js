@@ -1,193 +1,139 @@
+//
 // ======================================================
 // GGN DOCS - API
 // VERSION: 2.5.0
 // DATE: 2026-10-03
 //
-// CHANGE:
+// CHANGE
 // - เพิ่ม Document API
 // - เพิ่ม apiGetDocuments()
 // - เพิ่ม apiAddDocument()
-// - Document ใช้ requesterEmail จาก Current User
-// - ไม่ส่ง createdByEmail / createdByName จาก Frontend
-// - ปรับ FM-OP-11 ให้ใช้ requesterEmail จาก Current User
-// - คง Google Login
-// - คง Inspection Permission
-// - คง LocationMaster / pointId Flow
-// - คง Settings API
-// - คง API POST Helper เดิม
+// - ส่ง requesterEmail จาก Current User ไป Backend
+// - Document Permission ให้ Backend เป็นผู้ตรวจสอบสิทธิ์
+// - ปรับ FM-OP-11 ให้ใช้ Current User เป็น requester
+// - คง Inspection API Contract เดิม
 // ======================================================
 
 
-// ========================================
-// API POST HELPER
-// ========================================
-//
-// Backend:
-//   doPost(e)
-//
-// Payload:
-//   {
-//      action: "...",
-//      ...
-//   }
-//
-// Content-Type:
-//   text/plain
-//
-// เหตุผล:
-//   หลีกเลี่ยง CORS preflight
-//   และให้ทำงานกับ Google Apps Script Web App
-//
-// Google Apps Script Content Service
-// สามารถ redirect response ไปยัง
-// script.googleusercontent.com
-//
-// จึงใช้ redirect: "follow"
-// ========================================
+// ======================================================
+// CONFIG
+// ======================================================
 
-async function postGGNAPI(
-    payload
-) {
+const API_URL =
+    "https://script.google.com/macros/s/AKfycbxYOUR_API_ID/exec";
+
+
+// ======================================================
+// COMMON API REQUEST
+// ======================================================
+
+async function postGGNAPI(payload) {
+
+    console.log(
+        "GGN API Request:",
+        payload
+    );
+
+
+    const response =
+        await fetch(
+
+            API_URL,
+
+            {
+
+                method:
+                    "POST",
+
+                headers: {
+
+                    "Content-Type":
+                        "text/plain;charset=utf-8"
+
+                },
+
+                redirect:
+                    "follow",
+
+                body:
+                    JSON.stringify(
+                        payload
+                    )
+
+            }
+
+        );
+
+
+    const text =
+        await response.text();
+
+
+    console.log(
+        "GGN API Raw Response:",
+        text
+    );
+
+
+    let data;
+
 
     try {
 
-        const response =
-            await fetch(
-                API_URL,
-                {
-                    method: "POST",
-
-                    headers: {
-                        "Content-Type":
-                            "text/plain;charset=utf-8"
-                    },
-
-                    body:
-                        JSON.stringify(
-                            payload
-                        ),
-
-                    redirect:
-                        "follow"
-                }
-            );
-
-
-        const responseText =
-            await response.text();
-
-
-        console.log(
-            "GGN API HTTP Status:",
-            response.status
-        );
-
-
-        console.log(
-            "GGN API Response:",
-            responseText
-        );
-
-
-        if (!response.ok) {
-
-            throw new Error(
-                "GGN API HTTP Error: " +
-                response.status +
-                " " +
-                response.statusText
-            );
-
-        }
-
-
-        if (!responseText) {
-
-            throw new Error(
-                "GGN API ไม่ส่งข้อมูลกลับมา"
-            );
-
-        }
-
-
-        let data;
-
-
-        try {
-
-            data =
-                JSON.parse(
-                    responseText
-                );
-
-        } catch (error) {
-
-            console.error(
-                "GGN API Response ไม่ใช่ JSON:",
-                responseText
-            );
-
-
-            throw new Error(
-                "ข้อมูลตอบกลับจาก GGN API ไม่ใช่ JSON"
-            );
-
-        }
-
-
-        return data;
+        data =
+            JSON.parse(text);
 
     } catch (error) {
 
         console.error(
-            "postGGNAPI Error:",
+            "GGN API JSON Parse Error:",
             error
         );
 
-
-        throw error;
+        throw new Error(
+            "API ไม่ได้ส่งข้อมูล JSON ที่ถูกต้อง"
+        );
 
     }
+
+
+    return data;
 
 }
 
 
-// ========================================
-// GET CURRENT GGN USER
-// ========================================
-//
-// อ่านข้อมูล User จาก localStorage
-//
-// Key:
-//   ggnDocsUser
-//
-// ========================================
+// ======================================================
+// CURRENT USER
+// ======================================================
 
 function getCurrentGGNUser() {
 
     try {
 
-        const storedUser =
+        const raw =
             localStorage.getItem(
                 "ggnDocsUser"
             );
 
 
-        if (!storedUser) {
+        if (!raw) {
 
             return null;
 
         }
 
 
-        return JSON.parse(
-            storedUser
-        );
+        const user =
+            JSON.parse(raw);
+
+
+        return user || null;
+
 
     } catch (error) {
 
         console.error(
-            "getCurrentGGNUser Error:",
+            "อ่าน Current User ไม่สำเร็จ:",
             error
         );
 
@@ -199,9 +145,9 @@ function getCurrentGGNUser() {
 }
 
 
-// ========================================
-// GET CURRENT GGN USER EMAIL
-// ========================================
+// ======================================================
+// CURRENT USER EMAIL
+// ======================================================
 
 function getCurrentGGNUserEmail() {
 
@@ -222,153 +168,90 @@ function getCurrentGGNUserEmail() {
     return String(
         user.email
     )
-    .trim();
+        .trim()
+        .toLowerCase();
 
 }
 
 
-// ========================================
-// TEST GOOGLE APPS SCRIPT API
-// ========================================
+// ======================================================
+// TEST API
+// ======================================================
 
 async function testAPI() {
 
     try {
 
-        const response =
-            await fetch(
-                API_URL,
-                {
-                    method: "GET",
-
-                    redirect:
-                        "follow"
-                }
-            );
-
-
-        const responseText =
-            await response.text();
-
-
         console.log(
-            "Test API HTTP Status:",
-            response.status
+            "กำลังทดสอบ GGN API..."
         );
 
 
-        console.log(
-            "Test API Response:",
-            responseText
-        );
+        const data =
+            await postGGNAPI({
 
+                action:
+                    "test"
 
-        if (!response.ok) {
-
-            throw new Error(
-                "HTTP " +
-                response.status +
-                " " +
-                response.statusText
-            );
-
-        }
-
-
-        if (!responseText) {
-
-            throw new Error(
-                "Google Apps Script ไม่ส่งข้อมูลกลับมา"
-            );
-
-        }
-
-
-        let data;
-
-
-        try {
-
-            data =
-                JSON.parse(
-                    responseText
-                );
-
-        } catch (error) {
-
-            console.error(
-                "Test API Response ไม่ใช่ JSON:",
-                responseText
-            );
-
-
-            throw new Error(
-                "ข้อมูลจาก Google Apps Script ไม่ใช่ JSON"
-            );
-
-        }
+            });
 
 
         console.log(
-            "ข้อมูลจาก Google Apps Script:",
+            "GGN API Test Result:",
             data
         );
 
 
-        const apiStatus =
-            document.getElementById(
-                "api-status"
-            );
+        return data;
 
-
-        if (apiStatus) {
-
-            apiStatus.textContent =
-                data.message ||
-                "เชื่อมต่อระบบสำเร็จ";
-
-        }
 
     } catch (error) {
 
         console.error(
-            "เชื่อมต่อ API ไม่สำเร็จ:",
+            "GGN API Test Failed:",
             error
         );
 
 
-        const apiStatus =
-            document.getElementById(
-                "api-status"
-            );
+        return {
 
+            success:
+                false,
 
-        if (apiStatus) {
+            message:
+                error.message
 
-            apiStatus.textContent =
-                "ไม่สามารถเชื่อมต่อ Google Apps Script ได้";
-
-        }
+        };
 
     }
 
 }
 
 
-// ========================================
-// LOGIN TO GGN
-// ========================================
+// ======================================================
+// GOOGLE LOGIN
+// ======================================================
 
 async function loginToGGN(
-    credential
+    idToken
 ) {
 
+    if (!idToken) {
+
+        return {
+
+            success:
+                false,
+
+            message:
+                "ไม่พบ Google ID Token"
+
+        };
+
+    }
+
+
     try {
-
-        showLoginMessage(
-            "กำลังตรวจสอบผู้ใช้งาน..."
-        );
-
 
         const data =
             await postGGNAPI({
@@ -376,49 +259,32 @@ async function loginToGGN(
                 action:
                     "googleLogin",
 
-                credential:
-                    credential
+                idToken:
+                    idToken
 
             });
 
 
-        console.log(
-            "ผลการตรวจสอบ:",
-            data
-        );
+        return data;
 
-
-        if (
-            data.success &&
-            data.found
-        ) {
-
-            showUserInfo(
-                data.user
-            );
-
-        } else {
-
-            showLoginMessage(
-
-                data.message ||
-                "ไม่พบผู้ใช้งานในระบบ"
-
-            );
-
-        }
 
     } catch (error) {
 
         console.error(
-            "Login Error:",
+            "Google Login API Error:",
             error
         );
 
 
-        showLoginMessage(
-            "เกิดข้อผิดพลาดในการตรวจสอบผู้ใช้งาน"
-        );
+        return {
+
+            success:
+                false,
+
+            message:
+                error.message
+
+        };
 
     }
 
@@ -426,7 +292,53 @@ async function loginToGGN(
 
 
 // ======================================================
-// DOCUMENT SYSTEM API
+// USER INFO
+// ======================================================
+
+async function apiGetUserInfo(
+    email
+) {
+
+    const requesterEmail =
+        String(
+            email ||
+            getCurrentGGNUserEmail() ||
+            ""
+        )
+            .trim()
+            .toLowerCase();
+
+
+    if (!requesterEmail) {
+
+        return {
+
+            success:
+                false,
+
+            message:
+                "ไม่พบ Email ผู้ใช้งาน"
+
+        };
+
+    }
+
+
+    return await postGGNAPI({
+
+        action:
+            "getUserInfo",
+
+        email:
+            requesterEmail
+
+    });
+
+}
+
+
+// ======================================================
+// DOCUMENT SYSTEM
 // ======================================================
 
 
@@ -434,88 +346,53 @@ async function loginToGGN(
 // GET DOCUMENTS
 // ========================================
 //
-// Backend Permission:
+// Backend จะเป็นผู้ตรวจสอบสิทธิ์
 //
-// Admin:
-//   เห็นเอกสารทั้งหมด
+// User  -> เอกสารของตัวเอง
+// Admin -> เอกสารทั้งหมด
 //
-// User:
-//   เห็นเฉพาะเอกสารของตัวเอง
-//
-// Current User:
-//   อ่านจาก ggnDocsUser
-//
-// Backend:
-//   ตรวจ Role / Status อีกครั้ง
-//
+// Frontend ไม่เป็นผู้ตัดสินสิทธิ์
 // ========================================
 
 async function apiGetDocuments() {
 
-    try {
-
-        const requesterEmail =
-            getCurrentGGNUserEmail();
+    const requesterEmail =
+        getCurrentGGNUserEmail();
 
 
-        if (!requesterEmail) {
-
-            return {
-
-                success: false,
-
-                message:
-                    "ไม่พบ Email ผู้ใช้งาน",
-
-                documents:
-                    []
-
-            };
-
-        }
-
-
-        const data =
-            await postGGNAPI({
-
-                action:
-                    "getDocuments",
-
-                requesterEmail:
-                    requesterEmail
-
-            });
-
-
-        console.log(
-            "ผลการดึง Documents:",
-            data
-        );
-
-
-        return data;
-
-    } catch (error) {
-
-        console.error(
-            "apiGetDocuments Error:",
-            error
-        );
-
+    if (!requesterEmail) {
 
         return {
 
-            success: false,
-
-            message:
-                "ไม่สามารถดึงรายการเอกสารได้",
+            success:
+                false,
 
             documents:
-                []
+                [],
+
+            message:
+                "ไม่พบ Email ผู้ใช้งาน กรุณาเข้าสู่ระบบใหม่"
 
         };
 
     }
+
+
+    console.log(
+        "apiGetDocuments requester:",
+        requesterEmail
+    );
+
+
+    return await postGGNAPI({
+
+        action:
+            "getDocuments",
+
+        requesterEmail:
+            requesterEmail
+
+    });
 
 }
 
@@ -524,186 +401,115 @@ async function apiGetDocuments() {
 // ADD DOCUMENT
 // ========================================
 //
-// ส่งเฉพาะข้อมูลเอกสาร
+// requesterEmail = ผู้ใช้งานจาก Session
 //
-// ไม่ส่ง:
-//   createdByName
-//   createdByEmail
-//
-// Backend จะใช้:
-//   requesterEmail
-//
-// แล้วอ่านตัวจริงจาก Users Sheet
-//
+// Backend จะตรวจสอบกับ Users Sheet
+// และใช้ข้อมูล User ฝั่ง Backend
+// เป็น Source of Truth
 // ========================================
 
 async function apiAddDocument(
     documentData
 ) {
 
-    try {
-
-        if (!documentData) {
-
-            return {
-
-                success: false,
-
-                message:
-                    "ไม่พบข้อมูลเอกสาร"
-
-            };
-
-        }
+    const requesterEmail =
+        getCurrentGGNUserEmail();
 
 
-        const requesterEmail =
-            getCurrentGGNUserEmail();
-
-
-        if (!requesterEmail) {
-
-            return {
-
-                success: false,
-
-                message:
-                    "ไม่พบ Email ผู้ใช้งาน"
-
-            };
-
-        }
-
-
-        const data =
-            await postGGNAPI({
-
-                action:
-                    "addDocument",
-
-                document:
-                    documentData,
-
-                requesterEmail:
-                    requesterEmail
-
-            });
-
-
-        console.log(
-            "ผลการเพิ่มเอกสาร:",
-            data
-        );
-
-
-        return data;
-
-    } catch (error) {
-
-        console.error(
-            "apiAddDocument Error:",
-            error
-        );
-
+    if (!requesterEmail) {
 
         return {
 
-            success: false,
+            success:
+                false,
 
             message:
-                "ไม่สามารถเพิ่มเอกสารได้"
+                "ไม่พบ Email ผู้ใช้งาน กรุณาเข้าสู่ระบบใหม่"
 
         };
 
     }
 
+
+    if (
+        !documentData ||
+        typeof documentData !== "object"
+    ) {
+
+        return {
+
+            success:
+                false,
+
+            message:
+                "ไม่พบข้อมูลเอกสาร"
+
+        };
+
+    }
+
+
+    console.log(
+        "apiAddDocument requester:",
+        requesterEmail
+    );
+
+
+    return await postGGNAPI({
+
+        action:
+            "addDocument",
+
+        document:
+            documentData,
+
+        requesterEmail:
+            requesterEmail
+
+    });
+
 }
+
+
+// ======================================================
+// INSPECTION SYSTEM
+// ======================================================
 
 
 // ========================================
 // GET INSPECTIONS
-// ========================================
-//
-// Backend Permission:
-//
-// Admin:
-//   เห็นรายการทั้งหมด
-//
-// User:
-//   เห็นเฉพาะรายการของตัวเอง
-//
 // ========================================
 
 async function apiGetInspections(
     filters = {}
 ) {
 
-    try {
-
-        const email =
-            getCurrentGGNUserEmail();
+    const email =
+        getCurrentGGNUserEmail();
 
 
-        if (!email) {
+    const payload = {
 
-            return {
+        action:
+            "getInspections",
 
-                success: false,
+        ...filters,
 
-                message:
-                    "ไม่พบ Email ผู้ใช้งาน",
+        email:
+            email
 
-                inspections:
-                    []
-
-            };
-
-        }
+    };
 
 
-        const data =
-            await postGGNAPI({
-
-                action:
-                    "getInspections",
-
-                ...filters,
-
-                email:
-                    email
-
-            });
+    console.log(
+        "apiGetInspections:",
+        payload
+    );
 
 
-        console.log(
-            "ผลการดึงรายการ Inspection:",
-            data
-        );
-
-
-        return data;
-
-    } catch (error) {
-
-        console.error(
-            "apiGetInspections Error:",
-            error
-        );
-
-
-        return {
-
-            success: false,
-
-            message:
-                "ไม่สามารถดึงรายการตรวจได้",
-
-            inspections:
-                []
-
-        };
-
-    }
+    return await postGGNAPI(
+        payload
+    );
 
 }
 
@@ -711,86 +517,40 @@ async function apiGetInspections(
 // ========================================
 // GET INSPECTION USERS
 // ========================================
-//
-// ใช้สำหรับ Admin Filter
-//
-// Source:
-//   Users Sheet
-//
-// Backend ตรวจสอบ:
-//   Admin เท่านั้น
-//
-// Response:
-//   users[]
-//
-// ========================================
 
 async function apiGetInspectionUsers() {
 
-    try {
-
-        const email =
-            getCurrentGGNUserEmail();
+    const email =
+        getCurrentGGNUserEmail();
 
 
-        if (!email) {
-
-            return {
-
-                success: false,
-
-                message:
-                    "ไม่พบ Email ผู้ใช้งาน",
-
-                users:
-                    []
-
-            };
-
-        }
-
-
-        const data =
-            await postGGNAPI({
-
-                action:
-                    "getInspectionUsers",
-
-                email:
-                    email
-
-            });
-
-
-        console.log(
-            "ผลการดึง Inspection Users:",
-            data
-        );
-
-
-        return data;
-
-    } catch (error) {
-
-        console.error(
-            "apiGetInspectionUsers Error:",
-            error
-        );
-
+    if (!email) {
 
         return {
 
-            success: false,
-
-            message:
-                "ไม่สามารถดึงรายชื่อผู้ตรวจได้",
+            success:
+                false,
 
             users:
-                []
+                [],
+
+            message:
+                "ไม่พบ Email ผู้ใช้งาน"
 
         };
 
     }
+
+
+    return await postGGNAPI({
+
+        action:
+            "getInspectionUsers",
+
+        email:
+            email
+
+    });
 
 }
 
@@ -798,205 +558,48 @@ async function apiGetInspectionUsers() {
 // ========================================
 // GET INSPECTION LOCATIONS
 // ========================================
-//
-// ใช้สำหรับระบบบันทึก Inspection ใหม่
-//
-// Google Account
-//      ↓
-// User Email
-//      ↓
-// Backend ตรวจ User / Zone
-//      ↓
-// LocationMaster
-//      ↓
-// Active Locations
-//
-// Admin = เห็นทุก Zone
-// User  = เห็นเฉพาะ Zone ของตนเอง
-//
-// ใช้ POST ผ่าน postGGNAPI()
-// เพื่อหลีกเลี่ยงปัญหา GET Redirect
-// ไปยัง script.googleusercontent.com
-//
-// ========================================
 
 async function apiGetInspectionLocations(
     email = ""
 ) {
 
-    try {
-
-        const requesterEmail =
+    const requesterEmail =
+        String(
             email ||
-            getCurrentGGNUserEmail();
+            getCurrentGGNUserEmail() ||
+            ""
+        )
+            .trim()
+            .toLowerCase();
 
 
-        // ========================================
-        // CHECK EMAIL
-        // ========================================
-
-        if (!requesterEmail) {
-
-            console.error(
-                "apiGetInspectionLocations: ไม่พบ Email ผู้ใช้งาน"
-            );
-
-
-            return {
-
-                success: false,
-
-                message:
-                    "ไม่พบ Email ผู้ใช้งาน",
-
-                locations:
-                    []
-
-            };
-
-        }
-
-
-        console.log(
-            "กำลังดึง Inspection Locations สำหรับ:",
-            requesterEmail
-        );
-
-
-        // ========================================
-        // CALL GGN API
-        // ========================================
-
-        const data =
-            await postGGNAPI({
-
-                action:
-                    "getInspectionLocations",
-
-                email:
-                    requesterEmail
-
-            });
-
-
-        // ========================================
-        // LOG RESPONSE
-        // ========================================
-
-        console.log(
-            "ผลการดึง Inspection Locations:",
-            data
-        );
-
-
-        // ========================================
-        // CHECK RESPONSE
-        // ========================================
-
-        if (!data) {
-
-            console.error(
-                "Inspection Locations API ไม่ส่งข้อมูลกลับมา"
-            );
-
-
-            return {
-
-                success: false,
-
-                message:
-                    "ไม่พบข้อมูลจุดตรวจ",
-
-                locations:
-                    []
-
-            };
-
-        }
-
-
-        if (!data.success) {
-
-            console.error(
-                "Inspection Locations API Error:",
-                data.message
-            );
-
-
-            return {
-
-                success: false,
-
-                message:
-                    data.message ||
-                    "ไม่สามารถดึงรายการจุดตรวจได้",
-
-                locations:
-                    Array.isArray(
-                        data.locations
-                    )
-                        ? data.locations
-                        : []
-
-            };
-
-        }
-
-
-        // ========================================
-        // NORMALIZE LOCATIONS
-        // ========================================
-
-        const locations =
-            Array.isArray(
-                data.locations
-            )
-                ? data.locations
-                : [];
-
-
-        console.log(
-            "Inspection Locations สำเร็จ:",
-            locations.length,
-            "จุด"
-        );
-
-
-        // ========================================
-        // RETURN
-        // ========================================
+    if (!requesterEmail) {
 
         return {
 
-            success: true,
+            success:
+                false,
 
             locations:
-                locations
-
-        };
-
-    } catch (error) {
-
-        console.error(
-            "apiGetInspectionLocations Error:",
-            error
-        );
-
-
-        return {
-
-            success: false,
+                [],
 
             message:
-                error.message ||
-                "ไม่สามารถดึงรายการจุดตรวจได้",
-
-            locations:
-                []
+                "ไม่พบ Email ผู้ใช้งาน"
 
         };
 
     }
+
+
+    return await postGGNAPI({
+
+        action:
+            "getInspectionLocations",
+
+        email:
+            requesterEmail
+
+    });
 
 }
 
@@ -1004,190 +607,118 @@ async function apiGetInspectionLocations(
 // ========================================
 // SAVE INSPECTION
 // ========================================
-//
-// ส่ง Inspection พร้อม Email ของ User ที่ Login
-// ไปให้ Backend ตรวจ Permission
-//
-// Backend จะใช้ requesterEmail เป็นตัวตัดสินสิทธิ์
-// ไม่ใช้ createdByEmail จาก inspection เป็นหลัก
-//
-// ========================================
 
 async function apiSaveInspection(
     inspection
 ) {
 
-    try {
-
-        if (
-            !inspection ||
-            !inspection.recordId
-        ) {
-
-            return {
-
-                success: false,
-
-                message:
-                    "ไม่พบข้อมูลการตรวจ"
-
-            };
-
-        }
+    const email =
+        getCurrentGGNUserEmail();
 
 
-        const requesterEmail =
-            getCurrentGGNUserEmail();
-
-
-        if (!requesterEmail) {
-
-            return {
-
-                success: false,
-
-                message:
-                    "ไม่พบ Email ผู้ใช้งาน"
-
-            };
-
-        }
-
-
-        const data =
-            await postGGNAPI({
-
-                action:
-                    "saveInspection",
-
-                inspection:
-                    inspection,
-
-                requesterEmail:
-                    requesterEmail
-
-            });
-
-
-        console.log(
-            "ผลการบันทึก Inspection:",
-            data
-        );
-
-
-        return data;
-
-    } catch (error) {
-
-        console.error(
-            "apiSaveInspection Error:",
-            error
-        );
-
+    if (!email) {
 
         return {
 
-            success: false,
+            success:
+                false,
 
             message:
-                "ไม่สามารถบันทึกข้อมูลการตรวจได้"
+                "ไม่พบ Email ผู้ใช้งาน กรุณาเข้าสู่ระบบใหม่"
 
         };
 
     }
 
+
+    if (
+        !inspection ||
+        typeof inspection !== "object"
+    ) {
+
+        return {
+
+            success:
+                false,
+
+            message:
+                "ไม่พบข้อมูล Inspection"
+
+        };
+
+    }
+
+
+    return await postGGNAPI({
+
+        action:
+            "saveInspection",
+
+        inspection:
+            inspection,
+
+        requesterEmail:
+            email
+
+    });
+
 }
 
 
 // ========================================
-// GET ONE INSPECTION
-// ========================================
-//
-// Backend Permission:
-//   Admin → ได้ทั้งหมด
-//   User  → ได้เฉพาะรายการของตัวเอง
-//
+// GET SINGLE INSPECTION
 // ========================================
 
 async function apiGetInspection(
     recordId
 ) {
 
-    try {
-
-        if (!recordId) {
-
-            return {
-
-                success: false,
-
-                message:
-                    "ไม่พบ Record ID"
-
-            };
-
-        }
+    const email =
+        getCurrentGGNUserEmail();
 
 
-        const email =
-            getCurrentGGNUserEmail();
-
-
-        if (!email) {
-
-            return {
-
-                success: false,
-
-                message:
-                    "ไม่พบ Email ผู้ใช้งาน"
-
-            };
-
-        }
-
-
-        const data =
-            await postGGNAPI({
-
-                action:
-                    "getInspection",
-
-                recordId:
-                    recordId,
-
-                email:
-                    email
-
-            });
-
-
-        console.log(
-            "ผลการดึง Inspection:",
-            data
-        );
-
-
-        return data;
-
-    } catch (error) {
-
-        console.error(
-            "apiGetInspection Error:",
-            error
-        );
-
+    if (!email) {
 
         return {
 
-            success: false,
+            success:
+                false,
 
             message:
-                "ไม่สามารถดึงรายละเอียดรายการตรวจได้"
+                "ไม่พบ Email ผู้ใช้งาน"
 
         };
 
     }
+
+
+    if (!recordId) {
+
+        return {
+
+            success:
+                false,
+
+            message:
+                "ไม่พบ Record ID"
+
+        };
+
+    }
+
+
+    return await postGGNAPI({
+
+        action:
+            "getInspection",
+
+        recordId:
+            recordId,
+
+        email:
+            email
+
+    });
 
 }
 
@@ -1195,98 +726,67 @@ async function apiGetInspection(
 // ========================================
 // UPDATE INSPECTION
 // ========================================
-//
-// Backend Permission:
-//   User  → แก้เฉพาะรายการตัวเอง
-//   Admin → แก้ได้ทั้งหมด
-//
-// ========================================
 
 async function apiUpdateInspection(
     inspection
 ) {
 
-    try {
-
-        if (
-            !inspection ||
-            !inspection.recordId
-        ) {
-
-            return {
-
-                success: false,
-
-                message:
-                    "ไม่พบ Record ID สำหรับแก้ไข"
-
-            };
-
-        }
+    const email =
+        getCurrentGGNUserEmail();
 
 
-        const email =
-            getCurrentGGNUserEmail();
-
-
-        if (!email) {
-
-            return {
-
-                success: false,
-
-                message:
-                    "ไม่พบ Email ผู้ใช้งาน"
-
-            };
-
-        }
-
-
-        const data =
-            await postGGNAPI({
-
-                action:
-                    "updateInspection",
-
-                inspection: {
-
-                    ...inspection,
-
-                    updatedByEmail:
-                        email
-
-                }
-
-            });
-
-
-        console.log(
-            "ผลการแก้ไข Inspection:",
-            data
-        );
-
-
-        return data;
-
-    } catch (error) {
-
-        console.error(
-            "apiUpdateInspection Error:",
-            error
-        );
-
+    if (!email) {
 
         return {
 
-            success: false,
+            success:
+                false,
 
             message:
-                "ไม่สามารถแก้ไขรายการตรวจได้"
+                "ไม่พบ Email ผู้ใช้งาน"
 
         };
 
     }
+
+
+    if (
+        !inspection ||
+        typeof inspection !== "object"
+    ) {
+
+        return {
+
+            success:
+                false,
+
+            message:
+                "ไม่พบข้อมูล Inspection"
+
+        };
+
+    }
+
+
+    const updatedInspection = {
+
+        ...inspection,
+
+        updatedByEmail:
+            email
+
+    };
+
+
+    return await postGGNAPI({
+
+        action:
+            "updateInspection",
+
+        inspection:
+            updatedInspection
+
+    });
 
 }
 
@@ -1294,264 +794,167 @@ async function apiUpdateInspection(
 // ========================================
 // DELETE INSPECTION
 // ========================================
-//
-// Backend Permission:
-//   User  → ลบเฉพาะรายการตัวเอง
-//   Admin → ลบได้ทั้งหมด
-//
-// Business Rule:
-//   ถ้ามี fileId หรือ fileUrl
-//   จะไม่สามารถลบได้
-//
-// ========================================
 
 async function apiDeleteInspection(
     recordId,
     deletedBy = ""
 ) {
 
-    try {
-
-        if (!recordId) {
-
-            return {
-
-                success: false,
-
-                message:
-                    "ไม่พบ Record ID สำหรับลบ"
-
-            };
-
-        }
+    const email =
+        getCurrentGGNUserEmail();
 
 
-        const email =
-            getCurrentGGNUserEmail();
-
-
-        if (!email) {
-
-            return {
-
-                success: false,
-
-                message:
-                    "ไม่พบ Email ผู้ใช้งาน"
-
-            };
-
-        }
-
-
-        const data =
-            await postGGNAPI({
-
-                action:
-                    "deleteInspection",
-
-                recordId:
-                    recordId,
-
-                deletedByEmail:
-                    email
-
-            });
-
-
-        console.log(
-            "ผลการลบ Inspection:",
-            data
-        );
-
-
-        return data;
-
-    } catch (error) {
-
-        console.error(
-            "apiDeleteInspection Error:",
-            error
-        );
-
+    if (!email) {
 
         return {
 
-            success: false,
+            success:
+                false,
 
             message:
-                "ไม่สามารถลบรายการตรวจได้"
+                "ไม่พบ Email ผู้ใช้งาน"
 
         };
 
     }
 
+
+    if (!recordId) {
+
+        return {
+
+            success:
+                false,
+
+            message:
+                "ไม่พบ Record ID"
+
+        };
+
+    }
+
+
+    return await postGGNAPI({
+
+        action:
+            "deleteInspection",
+
+        recordId:
+            recordId,
+
+        deletedByEmail:
+            email
+
+    });
+
 }
+
+
+// ======================================================
+// SETTINGS SYSTEM
+// ======================================================
 
 
 // ========================================
 // GET SETTINGS
-// ========================================
-//
-// ปัจจุบัน Settings ใช้สำหรับ:
-//   inspectionItem
-//
-// Zone / Location / Inspector
-// จะไม่ใช้จาก Settings แล้ว
-//
 // ========================================
 
 async function apiGetSettings(
     settingType = ""
 ) {
 
-    try {
+    return await postGGNAPI({
 
-        const data =
-            await postGGNAPI({
+        action:
+            "getSettings",
 
-                action:
-                    "getSettings",
+        settingType:
+            settingType
 
-                settingType:
-                    settingType
-
-            });
-
-
-        console.log(
-            "ผลการดึง Settings:",
-            settingType,
-            data
-        );
-
-
-        return data;
-
-    } catch (error) {
-
-        console.error(
-            "apiGetSettings Error:",
-            error
-        );
-
-
-        return {
-
-            success: false,
-
-            message:
-                "ไม่สามารถดึงข้อมูล Settings ได้",
-
-            settings:
-                []
-
-        };
-
-    }
+    });
 
 }
+
+
+// ======================================================
+// FM-OP-11
+// ======================================================
 
 
 // ========================================
 // GENERATE FM-OP-11
 // ========================================
 //
-// ใช้ Current User จาก ggnDocsUser
+// ใช้ Current User จาก Session
 //
-// ไม่ส่ง:
-//   createdBy
-//   createdByEmail
-//
-// Backend จะตรวจสอบ:
-//   requesterEmail
-//   Role
-//   Status
-//
+// Backend จะเป็นผู้ตรวจสอบว่า
+// requester มีสิทธิ์เข้าถึง Inspection
+// ที่เลือกหรือไม่
 // ========================================
 
 async function apiGenerateFMOP11(
     records
 ) {
 
-    try {
-
-        if (
-            !records ||
-            !Array.isArray(records) ||
-            records.length === 0
-        ) {
-
-            return {
-
-                success: false,
-
-                message:
-                    "กรุณาเลือกรายการตรวจ"
-
-            };
-
-        }
+    const requesterEmail =
+        getCurrentGGNUserEmail();
 
 
-        const requesterEmail =
-            getCurrentGGNUserEmail();
-
-
-        if (!requesterEmail) {
-
-            return {
-
-                success: false,
-
-                message:
-                    "ไม่พบ Email ผู้ใช้งาน"
-
-            };
-
-        }
-
-
-        const data =
-            await postGGNAPI({
-
-                action:
-                    "generateFMOP11",
-
-                records:
-                    records,
-
-                requesterEmail:
-                    requesterEmail
-
-            });
-
-
-        console.log(
-            "ผลการสร้าง FM-OP-11:",
-            data
-        );
-
-
-        return data;
-
-    } catch (error) {
-
-        console.error(
-            "apiGenerateFMOP11 Error:",
-            error
-        );
-
+    if (!requesterEmail) {
 
         return {
 
-            success: false,
+            success:
+                false,
 
             message:
-                "ไม่สามารถสร้างเอกสาร FM-OP-11 ได้"
+                "ไม่พบ Email ผู้ใช้งาน กรุณาเข้าสู่ระบบใหม่"
 
         };
 
     }
 
+
+    if (
+        !Array.isArray(records) ||
+        records.length === 0
+    ) {
+
+        return {
+
+            success:
+                false,
+
+            message:
+                "ไม่พบรายการ Inspection ที่เลือก"
+
+        };
+
+    }
+
+
+    console.log(
+        "apiGenerateFMOP11 requester:",
+        requesterEmail
+    );
+
+
+    return await postGGNAPI({
+
+        action:
+            "generateFMOP11",
+
+        records:
+            records,
+
+        requesterEmail:
+            requesterEmail
+
+    });
+
 }
+
+
+// ======================================================
+// END OF API
+// ======================================================

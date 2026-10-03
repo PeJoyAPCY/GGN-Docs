@@ -1,17 +1,28 @@
 // ======================================================
 // GGN Docs
 // FM-OP-11 GENERATOR
-// ======================================================
+// VERSION: 2.3.0
+// DATE: 2026-10-03
+//
 // หน้าที่:
 // - ค้นหารายการตรวจสำหรับ FM-OP-11
 // - เลือกรายการตรวจ
 // - จำกัดจำนวนสูงสุด 14 จุดต่อเอกสาร
 // - ส่งเฉพาะ recordId ไป Backend
 // - Backend เป็นผู้ดึงข้อมูล Inspection + 7 Items
+// - Backend เป็นผู้ตรวจสอบสิทธิ์
 // - สร้างเอกสาร FM-OP-11
 // - รับ PDF จาก Backend
 // - ดาวน์โหลด PDF ลงเครื่องอัตโนมัติ
 // - แสดงข้อความผิดพลาดแยกตามสาเหตุ
+//
+// CHANGE
+// - ใช้ getCurrentGGNUser() แทน getCurrentUser()
+// - apiGenerateFMOP11() รับเฉพาะ records
+// - ไม่ส่ง user.name / user.email เข้า Generate API
+// - ใช้ Inspection User API แทน Settings inspector
+// - คง FM-OP-11 สูงสุด 14 จุด
+// - คงการส่งเฉพาะ recordId ไป Backend
 // ======================================================
 
 
@@ -134,6 +145,17 @@ function setupFMOP11Events() {
 // ======================================================
 // LOAD FM-OP-11 INSPECTORS
 // ======================================================
+//
+// Inspector ไม่ใช้ Settings แล้ว
+//
+// Settings ปัจจุบันใช้สำหรับ:
+// inspectionItem
+//
+// Inspector ใช้ Users Sheet ผ่าน:
+// apiGetInspectionUsers()
+//
+// Backend จะเป็นผู้ตรวจสอบสิทธิ์
+// ======================================================
 
 async function loadFMOP11Inspectors() {
 
@@ -169,6 +191,11 @@ async function loadFMOP11Inspectors() {
 
     try {
 
+        // ------------------------------------------------
+        // ถ้ามีข้อมูล Inspector อยู่แล้ว
+        // ให้ใช้ข้อมูลเดิม
+        // ------------------------------------------------
+
         if (
             !Array.isArray(
                 inspectionInspectors
@@ -177,21 +204,19 @@ async function loadFMOP11Inspectors() {
         ) {
 
             const data =
-                await apiGetSettings(
-                    "inspector"
-                );
+                await apiGetInspectionUsers();
 
 
             if (
                 data &&
                 data.success &&
                 Array.isArray(
-                    data.settings
+                    data.users
                 )
             ) {
 
                 inspectionInspectors =
-                    data.settings;
+                    data.users;
 
             }
 
@@ -234,7 +259,9 @@ async function loadFMOP11Inspectors() {
                     inspector.status &&
                     String(
                         inspector.status
-                    ).toLowerCase()
+                    )
+                        .trim()
+                        .toLowerCase()
                     !==
                     "active"
                 ) {
@@ -249,10 +276,10 @@ async function loadFMOP11Inspectors() {
                 // ------------------------------------------
 
                 const name =
-                    inspector.settingName ||
                     inspector.name ||
-                    inspector.settingValue ||
                     inspector.inspectorName ||
+                    inspector.settingName ||
+                    inspector.settingValue ||
                     "";
 
 
@@ -262,6 +289,40 @@ async function loadFMOP11Inspectors() {
 
                 }
 
+
+                // ------------------------------------------
+                // DUPLICATE
+                // ------------------------------------------
+
+                const existing =
+                    Array.from(
+                        select.options
+                    ).some(
+                        function (
+                            option
+                        ) {
+
+                            return (
+                                option.value ===
+                                name
+                            );
+
+                        }
+                    );
+
+
+                if (
+                    existing
+                ) {
+
+                    return;
+
+                }
+
+
+                // ------------------------------------------
+                // OPTION
+                // ------------------------------------------
 
                 const option =
                     document.createElement(
@@ -285,6 +346,25 @@ async function loadFMOP11Inspectors() {
         );
 
 
+        // ==================================================
+        // NO INSPECTOR
+        // ==================================================
+
+        if (
+            select.options.length === 1
+        ) {
+
+            select.innerHTML = `
+
+                <option value="">
+                    -- ไม่พบรายชื่อผู้ตรวจ --
+                </option>
+
+            `;
+
+        }
+
+
     } catch (error) {
 
         console.error(
@@ -292,10 +372,6 @@ async function loadFMOP11Inspectors() {
             error
         );
 
-
-        // ----------------------------------------------
-        // แสดงข้อความเฉพาะกรณีโหลดผู้ตรวจล้มเหลว
-        // ----------------------------------------------
 
         select.innerHTML = `
 
@@ -515,16 +591,6 @@ async function searchFMOP11Records() {
         // GET RECORDS
         // ==================================================
 
-        /*
-         * Backend อาจส่งข้อมูลมาในชื่อ
-         * inspections หรือ data
-         * เพื่อรองรับทั้งสองรูปแบบ
-         *
-         * getInspections() ตั้งใจส่งเฉพาะ
-         * ข้อมูลหลักของ Inspections
-         * ไม่โหลด InspectionItems มาพร้อมกัน
-         */
-
         if (
             Array.isArray(
                 data.inspections
@@ -684,25 +750,27 @@ function renderFMOP11Records() {
 
             const location =
                 record.locationName ||
+                record.location ||
                 "-";
 
 
             const time =
                 record.inspectionTime ||
+                record.time ||
                 "-";
 
 
             const inspector =
                 record.inspectorName ||
+                record.inspector ||
                 "";
 
 
             // ==================================================
             // FM-OP-11 มีรายการตรวจมาตรฐาน 7 ข้อ
             //
-            // ไม่ดึง items จาก Backend ในรายการค้นหา
-            // เพราะ Items จะถูกดึงตาม recordId
-            // ตอนสร้างเอกสาร
+            // ไม่ดึง Items ในรายการค้นหา
+            // Backend จะดึง Items ตอน Generate
             // ==================================================
 
             const itemCount =
@@ -843,10 +911,12 @@ function handleFMOP11RecordSelection(
         checkbox.checked =
             false;
 
+
         alert(
             "ไม่สามารถเลือกรายการนี้ได้\n\n" +
             "สาเหตุ: ไม่พบข้อมูลรายการตรวจ"
         );
+
 
         return;
 
@@ -958,10 +1028,9 @@ function handleFMOP11RecordSelection(
 
         // ----------------------------------------------
         // ADD
-        // ----------------------------------------------
+        //
         // เก็บเฉพาะ recordId
-        // เพื่อลดข้อมูลที่เก็บใน Frontend
-        // และลดข้อมูลที่ส่งไป Backend
+        // ----------------------------------------------
 
         fmop11SelectedRecords.push({
 
@@ -1103,9 +1172,10 @@ function clearFMOP11Selection() {
 // ======================================================
 // DOWNLOAD PDF FROM BASE64
 // ======================================================
+//
 // Backend จะส่ง PDF กลับมาเป็น Base64
 // Frontend แปลง Base64 เป็น Blob
-// แล้วสั่ง Browser ดาวน์โหลดไฟล์ลงเครื่อง
+// แล้วสั่ง Browser ดาวน์โหลดไฟล์
 // ======================================================
 
 function downloadFMOP11PDF(
@@ -1156,7 +1226,7 @@ function downloadFMOP11PDF(
 
     base64Data =
         base64Data.replace(
-           (/\s/g),
+            (/\s/g),
             ""
         );
 
@@ -1166,6 +1236,7 @@ function downloadFMOP11PDF(
     // ==================================================
 
     let binaryString;
+
 
     try {
 
@@ -1245,9 +1316,11 @@ function downloadFMOP11PDF(
     if (
         !String(
             downloadName
-        ).toLowerCase().endsWith(
-            ".pdf"
         )
+            .toLowerCase()
+            .endsWith(
+                ".pdf"
+            )
     ) {
 
         downloadName +=
@@ -1357,6 +1430,7 @@ async function generateFMOP11() {
             "สาเหตุ: ยังไม่ได้เลือกรายการตรวจ"
         );
 
+
         return;
 
     }
@@ -1375,6 +1449,7 @@ async function generateFMOP11() {
             "สาเหตุ: เลือกรายการตรวจเกิน 14 จุด"
         );
 
+
         return;
 
     }
@@ -1383,18 +1458,31 @@ async function generateFMOP11() {
     // ==================================================
     // CURRENT USER
     // ==================================================
+    //
+    // ตรวจเฉพาะว่ามี Session อยู่หรือไม่
+    //
+    // ไม่ส่งชื่อหรือ Email เข้า Generate API
+    //
+    // apiGenerateFMOP11()
+    // จะอ่าน Current User จาก api.js
+    // และส่ง requesterEmail ให้ Backend
+    // ==================================================
 
     const user =
-        getCurrentUser();
+        getCurrentGGNUser();
 
 
-    if (!user) {
+    if (
+        !user ||
+        !user.email
+    ) {
 
         alert(
             "ไม่สามารถสร้างเอกสารได้\n\n" +
             "สาเหตุ: ไม่พบข้อมูลผู้ใช้งาน\n\n" +
             "กรุณาเข้าสู่ระบบใหม่"
         );
+
 
         return;
 
@@ -1467,6 +1555,7 @@ async function generateFMOP11() {
         generateButton.disabled =
             true;
 
+
         generateButton.textContent =
             "กำลังสร้าง...";
 
@@ -1481,6 +1570,7 @@ async function generateFMOP11() {
 
         status.style.display =
             "block";
+
 
         status.textContent =
             "กำลังสร้างเอกสาร FM-OP-11...";
@@ -1499,18 +1589,20 @@ async function generateFMOP11() {
         // ==================================================
         // API
         // ==================================================
+        //
+        // สำคัญ:
+        //
+        // ส่งเฉพาะ records
+        //
+        // requesterEmail จะถูกเติมใน api.js
+        // จาก Current User
+        //
+        // Backend จะเป็นผู้ตรวจสอบสิทธิ์
+        // ==================================================
 
         const data =
             await apiGenerateFMOP11(
-
-                fmop11SelectedRecords,
-
-                user.name ||
-                    "",
-
-                user.email ||
-                    ""
-
+                fmop11SelectedRecords
             );
 
 
