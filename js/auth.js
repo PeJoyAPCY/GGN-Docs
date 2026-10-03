@@ -1,3 +1,8 @@
+// ========================================
+// GGN Docs
+// AUTH.JS
+// ========================================
+
 
 // ========================================
 // GOOGLE IDENTITY SERVICES
@@ -95,6 +100,7 @@ async function handleGoogleLogin(
 
 
     const credential =
+        response &&
         response.credential;
 
 
@@ -109,9 +115,122 @@ async function handleGoogleLogin(
     }
 
 
-    await loginToGGN(
-        credential
-    );
+    try {
+
+        // ------------------------------------
+        // Send Google Token to Backend
+        // ------------------------------------
+
+        const result =
+            await loginToGGN(
+                credential
+            );
+
+
+        console.log(
+            "GGN Login Result:",
+            result
+        );
+
+
+        // ------------------------------------
+        // Login Failed
+        // ------------------------------------
+
+        if (
+            !result ||
+            result.success !== true
+        ) {
+
+            showLoginMessage(
+
+                result &&
+                result.message
+
+                    ? result.message
+
+                    : "ไม่สามารถเข้าสู่ระบบ GGN ได้"
+
+            );
+
+            return;
+
+        }
+
+
+        // ------------------------------------
+        // User Not Found
+        // ------------------------------------
+
+        if (
+            result.found !== true ||
+            !result.user
+        ) {
+
+            showLoginMessage(
+                "ไม่พบข้อมูลผู้ใช้งานในระบบ"
+            );
+
+            return;
+
+        }
+
+
+        // ------------------------------------
+        // Login Success
+        // ------------------------------------
+
+        showUserInfo(
+            result.user
+        );
+
+
+        console.log(
+            "GGN Session พร้อมใช้งาน:",
+            result.user
+        );
+
+
+        // ------------------------------------
+        // Reload Documents
+        // ------------------------------------
+        //
+        // ตอน setupDocuments() ถูกเรียก
+        // หน้าเว็บอาจยังไม่มี Current User
+        //
+        // หลัง Login สำเร็จจึงโหลดอีกครั้ง
+        // ------------------------------------
+
+        if (
+            typeof loadDocuments ===
+            "function"
+        ) {
+
+            loadDocuments();
+
+        }
+
+
+    } catch (error) {
+
+        console.error(
+            "GGN Login Error:",
+            error
+        );
+
+
+        showLoginMessage(
+
+            error &&
+            error.message
+
+                ? error.message
+
+                : "เกิดข้อผิดพลาดในการเข้าสู่ระบบ"
+
+        );
+
+    }
 
 }
 
@@ -460,4 +579,6 @@ function logout() {
 }
 
 
+// ========================================
+// END AUTH.JS
 // ========================================
