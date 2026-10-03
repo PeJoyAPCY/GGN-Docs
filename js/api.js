@@ -1,21 +1,20 @@
 // ======================================================
 // GGN DOCS - API
-// VERSION: 2.4.0
-// DATE: 2026-09-29
+// VERSION: 2.5.0
+// DATE: 2026-10-03
 //
 // CHANGE:
-// - ปรับการเรียก Google Apps Script Web App ให้เรียบง่าย
-// - ยกเลิก cache-busting query parameter
-// - ยกเลิก cache: no-store
-// - คง redirect: follow
-// - ใช้ response.text() ก่อน JSON.parse()
-//   เพื่อรองรับ Content Service redirect ของ Apps Script
+// - เพิ่ม Document API
+// - เพิ่ม apiGetDocuments()
+// - เพิ่ม apiAddDocument()
+// - Document ใช้ requesterEmail จาก Current User
+// - ไม่ส่ง createdByEmail / createdByName จาก Frontend
+// - ปรับ FM-OP-11 ให้ใช้ requesterEmail จาก Current User
 // - คง Google Login
 // - คง Inspection Permission
 // - คง LocationMaster / pointId Flow
 // - คง Settings API
-// - คง FM-OP-11 API
-// - ไม่เปลี่ยน Backend API Contract
+// - คง API POST Helper เดิม
 // ======================================================
 
 
@@ -426,6 +425,201 @@ async function loginToGGN(
 }
 
 
+// ======================================================
+// DOCUMENT SYSTEM API
+// ======================================================
+
+
+// ========================================
+// GET DOCUMENTS
+// ========================================
+//
+// Backend Permission:
+//
+// Admin:
+//   เห็นเอกสารทั้งหมด
+//
+// User:
+//   เห็นเฉพาะเอกสารของตัวเอง
+//
+// Current User:
+//   อ่านจาก ggnDocsUser
+//
+// Backend:
+//   ตรวจ Role / Status อีกครั้ง
+//
+// ========================================
+
+async function apiGetDocuments() {
+
+    try {
+
+        const requesterEmail =
+            getCurrentGGNUserEmail();
+
+
+        if (!requesterEmail) {
+
+            return {
+
+                success: false,
+
+                message:
+                    "ไม่พบ Email ผู้ใช้งาน",
+
+                documents:
+                    []
+
+            };
+
+        }
+
+
+        const data =
+            await postGGNAPI({
+
+                action:
+                    "getDocuments",
+
+                requesterEmail:
+                    requesterEmail
+
+            });
+
+
+        console.log(
+            "ผลการดึง Documents:",
+            data
+        );
+
+
+        return data;
+
+    } catch (error) {
+
+        console.error(
+            "apiGetDocuments Error:",
+            error
+        );
+
+
+        return {
+
+            success: false,
+
+            message:
+                "ไม่สามารถดึงรายการเอกสารได้",
+
+            documents:
+                []
+
+        };
+
+    }
+
+}
+
+
+// ========================================
+// ADD DOCUMENT
+// ========================================
+//
+// ส่งเฉพาะข้อมูลเอกสาร
+//
+// ไม่ส่ง:
+//   createdByName
+//   createdByEmail
+//
+// Backend จะใช้:
+//   requesterEmail
+//
+// แล้วอ่านตัวจริงจาก Users Sheet
+//
+// ========================================
+
+async function apiAddDocument(
+    documentData
+) {
+
+    try {
+
+        if (!documentData) {
+
+            return {
+
+                success: false,
+
+                message:
+                    "ไม่พบข้อมูลเอกสาร"
+
+            };
+
+        }
+
+
+        const requesterEmail =
+            getCurrentGGNUserEmail();
+
+
+        if (!requesterEmail) {
+
+            return {
+
+                success: false,
+
+                message:
+                    "ไม่พบ Email ผู้ใช้งาน"
+
+            };
+
+        }
+
+
+        const data =
+            await postGGNAPI({
+
+                action:
+                    "addDocument",
+
+                document:
+                    documentData,
+
+                requesterEmail:
+                    requesterEmail
+
+            });
+
+
+        console.log(
+            "ผลการเพิ่มเอกสาร:",
+            data
+        );
+
+
+        return data;
+
+    } catch (error) {
+
+        console.error(
+            "apiAddDocument Error:",
+            error
+        );
+
+
+        return {
+
+            success: false,
+
+            message:
+                "ไม่สามารถเพิ่มเอกสารได้"
+
+        };
+
+    }
+
+}
+
+
 // ========================================
 // GET INSPECTIONS
 // ========================================
@@ -594,7 +788,7 @@ async function apiGetInspectionUsers() {
             users:
                 []
 
-            };
+        };
 
     }
 
@@ -1263,15 +1457,21 @@ async function apiGetSettings(
 // GENERATE FM-OP-11
 // ========================================
 //
-// คง Flow เดิม
-// ไม่เปลี่ยน PDF Generation
+// ใช้ Current User จาก ggnDocsUser
+//
+// ไม่ส่ง:
+//   createdBy
+//   createdByEmail
+//
+// Backend จะตรวจสอบ:
+//   requesterEmail
+//   Role
+//   Status
 //
 // ========================================
 
 async function apiGenerateFMOP11(
-    records,
-    createdBy = "",
-    createdByEmail = ""
+    records
 ) {
 
     try {
@@ -1294,6 +1494,24 @@ async function apiGenerateFMOP11(
         }
 
 
+        const requesterEmail =
+            getCurrentGGNUserEmail();
+
+
+        if (!requesterEmail) {
+
+            return {
+
+                success: false,
+
+                message:
+                    "ไม่พบ Email ผู้ใช้งาน"
+
+            };
+
+        }
+
+
         const data =
             await postGGNAPI({
 
@@ -1303,11 +1521,8 @@ async function apiGenerateFMOP11(
                 records:
                     records,
 
-                createdBy:
-                    createdBy,
-
-                createdByEmail:
-                    createdByEmail
+                requesterEmail:
+                    requesterEmail
 
             });
 

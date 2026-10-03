@@ -1,4 +1,16 @@
-// DOCUMENT SYSTEM
+// ======================================================
+// GGN DOCS - DOCUMENT SYSTEM
+// VERSION: 2.5.0
+// DATE: 2026-10-03
+//
+// CHANGE
+// - ปรับ Document System ให้ใช้ API wrapper กลาง
+// - ส่ง requesterEmail ให้ Backend ตรวจสอบสิทธิ์
+// - User ปกติเห็นเฉพาะเอกสารของตัวเอง
+// - Admin เห็นเอกสารทั้งหมด
+// - การสร้างเอกสารใช้ Current User จาก Session
+// - ไม่เชื่อ createdByEmail / createdByName จาก Frontend
+//   เป็นแหล่งยืนยันสิทธิ์
 // ======================================================
 
 
@@ -32,6 +44,10 @@ function setupDocuments() {
         );
 
 
+    // ------------------------------------
+    // ADD BUTTON
+    // ------------------------------------
+
     if (addButton) {
 
         addButton.addEventListener(
@@ -41,6 +57,10 @@ function setupDocuments() {
 
     }
 
+
+    // ------------------------------------
+    // CLOSE BUTTON
+    // ------------------------------------
 
     if (closeButton) {
 
@@ -52,6 +72,10 @@ function setupDocuments() {
     }
 
 
+    // ------------------------------------
+    // CANCEL BUTTON
+    // ------------------------------------
+
     if (cancelButton) {
 
         cancelButton.addEventListener(
@@ -62,6 +86,10 @@ function setupDocuments() {
     }
 
 
+    // ------------------------------------
+    // FORM SUBMIT
+    // ------------------------------------
+
     if (documentForm) {
 
         documentForm.addEventListener(
@@ -71,6 +99,10 @@ function setupDocuments() {
 
     }
 
+
+    // ------------------------------------
+    // LOAD DOCUMENTS
+    // ------------------------------------
 
     loadDocuments();
 
@@ -90,38 +122,37 @@ async function loadDocuments() {
         );
 
 
-        const response =
-            await fetch(
+        // --------------------------------
+        // ตรวจสอบ Current User
+        // --------------------------------
 
-                API_URL,
+        const user =
+            getCurrentGGNUser();
 
-                {
 
-                    method:
-                        "POST",
+        if (!user || !user.email) {
 
-                    headers: {
-
-                        "Content-Type":
-                            "text/plain;charset=utf-8"
-
-                    },
-
-                    body:
-                        JSON.stringify({
-
-                            action:
-                                "getDocuments"
-
-                        })
-
-                }
-
+            console.warn(
+                "ไม่พบ Current User สำหรับโหลดเอกสาร"
             );
 
+            return;
+
+        }
+
+
+        console.log(
+            "Document requester:",
+            user.email
+        );
+
+
+        // --------------------------------
+        // เรียก API กลาง
+        // --------------------------------
 
         const data =
-            await response.json();
+            await apiGetDocuments();
 
 
         console.log(
@@ -130,7 +161,12 @@ async function loadDocuments() {
         );
 
 
+        // --------------------------------
+        // ตรวจสอบผลลัพธ์
+        // --------------------------------
+
         if (
+            !data ||
             !data.success ||
             !Array.isArray(
                 data.documents
@@ -147,13 +183,22 @@ async function loadDocuments() {
         }
 
 
+        // --------------------------------
+        // เก็บข้อมูล
+        // --------------------------------
+
         documents =
             data.documents;
 
 
+        // --------------------------------
+        // Render
+        // --------------------------------
+
         renderDocuments();
 
         updateDashboardCounts();
+
 
     } catch (error) {
 
@@ -186,9 +231,17 @@ function openDocumentForm() {
     }
 
 
+    // --------------------------------
+    // เปิด Form
+    // --------------------------------
+
     formContainer.style.display =
         "block";
 
+
+    // --------------------------------
+    // Scroll ไปยัง Form
+    // --------------------------------
 
     formContainer.scrollIntoView({
 
@@ -200,6 +253,10 @@ function openDocumentForm() {
 
     });
 
+
+    // --------------------------------
+    // Focus Document Code
+    // --------------------------------
 
     const documentCode =
         document.getElementById(
@@ -249,29 +306,61 @@ async function handleDocumentSubmit(
     event.preventDefault();
 
 
-    const documentCode =
+    // ------------------------------------
+    // อ่านข้อมูลจาก Form
+    // ------------------------------------
+
+    const documentCodeElement =
         document.getElementById(
             "document-code"
-        ).value.trim();
+        );
+
+
+    const documentNameElement =
+        document.getElementById(
+            "document-name"
+        );
+
+
+    const operatorElement =
+        document.getElementById(
+            "document-operator"
+        );
+
+
+    const departmentElement =
+        document.getElementById(
+            "document-department"
+        );
+
+
+    const documentCode =
+        documentCodeElement
+            ? documentCodeElement.value.trim()
+            : "";
 
 
     const documentName =
-        document.getElementById(
-            "document-name"
-        ).value.trim();
+        documentNameElement
+            ? documentNameElement.value.trim()
+            : "";
 
 
     const operator =
-        document.getElementById(
-            "document-operator"
-        ).value.trim();
+        operatorElement
+            ? operatorElement.value.trim()
+            : "";
 
 
     const department =
-        document.getElementById(
-            "document-department"
-        ).value.trim();
+        departmentElement
+            ? departmentElement.value.trim()
+            : "";
 
+
+    // ------------------------------------
+    // Validate Form
+    // ------------------------------------
 
     if (
         !documentCode ||
@@ -289,11 +378,18 @@ async function handleDocumentSubmit(
     }
 
 
+    // ------------------------------------
+    // Current User
+    // ------------------------------------
+
     const user =
-        getCurrentUser();
+        getCurrentGGNUser();
 
 
-    if (!user) {
+    if (
+        !user ||
+        !user.email
+    ) {
 
         alert(
             "ไม่พบข้อมูลผู้ใช้งาน กรุณาเข้าสู่ระบบใหม่"
@@ -303,6 +399,16 @@ async function handleDocumentSubmit(
 
     }
 
+
+    console.log(
+        "Current Document User:",
+        user
+    );
+
+
+    // ------------------------------------
+    // Submit Button
+    // ------------------------------------
 
     const submitButton =
         event.target.querySelector(
@@ -322,6 +428,15 @@ async function handleDocumentSubmit(
 
 
     try {
+
+        // --------------------------------
+        // Document Data
+        //
+        // createdByName / createdByEmail
+        // จะถูกส่งเพื่อ compatibility
+        // แต่ Backend ต้องใช้ requesterEmail
+        // เป็นตัวตรวจสอบสิทธิ์จริง
+        // --------------------------------
 
         const documentData = {
 
@@ -352,41 +467,14 @@ async function handleDocumentSubmit(
         );
 
 
-        const response =
-            await fetch(
-
-                API_URL,
-
-                {
-
-                    method:
-                        "POST",
-
-                    headers: {
-
-                        "Content-Type":
-                            "text/plain;charset=utf-8"
-
-                    },
-
-                    body:
-                        JSON.stringify({
-
-                            action:
-                                "addDocument",
-
-                            document:
-                                documentData
-
-                        })
-
-                }
-
-            );
-
+        // --------------------------------
+        // เรียก API กลาง
+        // --------------------------------
 
         const data =
-            await response.json();
+            await apiAddDocument(
+                documentData
+            );
 
 
         console.log(
@@ -395,686 +483,30 @@ async function handleDocumentSubmit(
         );
 
 
-        if (data.success) {
-
-            alert(
-                "เพิ่มเอกสารสำเร็จ"
-            );
-
-
-            await loadDocuments();
-
-
-            const form =
-                document.getElementById(
-                    "document-form"
-                );
-
-
-            if (form) {
-
-                form.reset();
-
-            }
-
-
-            closeDocumentForm();
-
-        } else {
-
-            alert(
-
-                data.message ||
-                "ไม่สามารถเพิ่มเอกสารได้"
-
-            );
-
-        }
-
-    } catch (error) {
-
-        console.error(
-            "บันทึกเอกสารไม่สำเร็จ:",
-            error
-        );
-
-
-        alert(
-            "ไม่สามารถเชื่อมต่อฐานข้อมูลได้"
-        );
-
-    } finally {
-
-        if (submitButton) {
-
-            submitButton.disabled =
-                false;
-
-            submitButton.textContent =
-                "บันทึกเอกสาร";
-
-        }
-
-    }
-
-}
-
-
-// ========================================
-// RENDER DOCUMENTS
-// ========================================
-
-function renderDocuments() {
-
-    const tableBody =
-        document.getElementById(
-            "document-table-body"
-        );
-
-
-    const documentCount =
-        document.getElementById(
-            "document-count"
-        );
-
-
-    if (!tableBody) {
-
-        return;
-
-    }
-
-
-    if (documentCount) {
-
-        documentCount.textContent =
-            documents.length;
-
-    }
-
-
-    if (
-        documents.length === 0
-    ) {
-
-        tableBody.innerHTML = `
-
-            <tr>
-
-                <td
-                    colspan="5"
-                    class="document-empty"
-                >
-
-                    <div>
-                        📄
-                    </div>
-
-                    <strong>
-                        ยังไม่มีเอกสาร
-                    </strong>
-
-                    <span>
-                        กดปุ่ม “เพิ่มเอกสาร”
-                        เพื่อเพิ่มเอกสารรายการแรก
-                    </span>
-
-                </td>
-
-            </tr>
-
-        `;
-
-        return;
-
-    }
-
-
-    tableBody.innerHTML =
-
-        documents
-            .map(
-                function (
-                    documentItem
-                ) {
-
-                    return `
-
-                        <tr>
-
-                            <td>
-                                ${escapeHTML(
-                                    documentItem.documentCode
-                                )}
-                            </td>
-
-                            <td>
-                                ${escapeHTML(
-                                    documentItem.documentName
-                                )}
-                            </td>
-
-                            <td>
-                                ${escapeHTML(
-                                    documentItem.operator
-                                )}
-                            </td>
-
-                            <td>
-                                ${escapeHTML(
-                                    documentItem.department
-                                )}
-                            </td>
-
-                            <td>
-
-                                <button
-                                    type="button"
-                                    class="document-action-button"
-                                    disabled
-                                >
-                                    จัดการ
-                                </button>
-
-                            </td>
-
-                        </tr>
-
-                    `;
-
-                }
-            )
-            .join("");
-
-}
-
-
-// ========================================
-// DASHBOARD COUNTS
-// ========================================
-
-function updateDashboardCounts() {
-
-    const cards =
-        document.querySelectorAll(
-            ".dashboard-card"
-        );
-
-
-    if (
-        cards.length < 2
-    ) {
-
-        return;
-
-    }
-
-
-    const total =
-        documents.length;
-
-
-    const user =
-        getCurrentUser();
-
-
-    let myDocuments =
-        0;
-
-
-    if (user) {
-
-        myDocuments =
-            documents.filter(
-                function (
-                    item
-                ) {
-
-                    return (
-
-                        String(
-                            item.createdByEmail ||
-                            ""
-                        ).toLowerCase()
-                        ===
-                        String(
-                            user.email ||
-                            ""
-                        ).toLowerCase()
-
-                    );
-
-                }
-            ).length;
-
-    }
-
-
-    const totalStrong =
-        cards[0].querySelector(
-            "strong"
-        );
-
-
-    const myStrong =
-        cards[1].querySelector(
-            "strong"
-        );
-
-
-    if (totalStrong) {
-
-        totalStrong.textContent =
-            total;
-
-    }
-
-
-    if (myStrong) {
-
-        myStrong.textContent =
-            myDocuments;
-
-    }
-
-}
-
-
-// ======================================================
-// DOCUMENT SYSTEM
-// ======================================================
-
-
-// ========================================
-// SETUP DOCUMENTS
-// ========================================
-
-function setupDocuments() {
-
-    const addButton =
-        document.getElementById(
-            "add-document-button"
-        );
-
-
-    const closeButton =
-        document.getElementById(
-            "close-document-form"
-        );
-
-
-    const cancelButton =
-        document.getElementById(
-            "cancel-document-button"
-        );
-
-
-    const documentForm =
-        document.getElementById(
-            "document-form"
-        );
-
-
-    if (addButton) {
-
-        addButton.addEventListener(
-            "click",
-            openDocumentForm
-        );
-
-    }
-
-
-    if (closeButton) {
-
-        closeButton.addEventListener(
-            "click",
-            closeDocumentForm
-        );
-
-    }
-
-
-    if (cancelButton) {
-
-        cancelButton.addEventListener(
-            "click",
-            closeDocumentForm
-        );
-
-    }
-
-
-    if (documentForm) {
-
-        documentForm.addEventListener(
-            "submit",
-            handleDocumentSubmit
-        );
-
-    }
-
-
-    loadDocuments();
-
-}
-
-
-// ========================================
-// LOAD DOCUMENTS
-// ========================================
-
-async function loadDocuments() {
-
-    try {
-
-        console.log(
-            "กำลังโหลดเอกสาร..."
-        );
-
-
-        const response =
-            await fetch(
-
-                API_URL,
-
-                {
-
-                    method:
-                        "POST",
-
-                    headers: {
-
-                        "Content-Type":
-                            "text/plain;charset=utf-8"
-
-                    },
-
-                    body:
-                        JSON.stringify({
-
-                            action:
-                                "getDocuments"
-
-                        })
-
-                }
-
-            );
-
-
-        const data =
-            await response.json();
-
-
-        console.log(
-            "ข้อมูลเอกสารจาก API:",
-            data
-        );
-
+        // --------------------------------
+        // Success
+        // --------------------------------
 
         if (
-            !data.success ||
-            !Array.isArray(
-                data.documents
-            )
+            data &&
+            data.success
         ) {
-
-            console.error(
-                "ไม่สามารถโหลดเอกสารได้:",
-                data
-            );
-
-            return;
-
-        }
-
-
-        documents =
-            data.documents;
-
-
-        renderDocuments();
-
-        updateDashboardCounts();
-
-    } catch (error) {
-
-        console.error(
-            "โหลดเอกสารไม่สำเร็จ:",
-            error
-        );
-
-    }
-
-}
-
-
-// ========================================
-// OPEN DOCUMENT FORM
-// ========================================
-
-function openDocumentForm() {
-
-    const formContainer =
-        document.getElementById(
-            "document-form-container"
-        );
-
-
-    if (!formContainer) {
-
-        return;
-
-    }
-
-
-    formContainer.style.display =
-        "block";
-
-
-    formContainer.scrollIntoView({
-
-        behavior:
-            "smooth",
-
-        block:
-            "start"
-
-    });
-
-
-    const documentCode =
-        document.getElementById(
-            "document-code"
-        );
-
-
-    if (documentCode) {
-
-        documentCode.focus();
-
-    }
-
-}
-
-
-// ========================================
-// CLOSE DOCUMENT FORM
-// ========================================
-
-function closeDocumentForm() {
-
-    const formContainer =
-        document.getElementById(
-            "document-form-container"
-        );
-
-
-    if (formContainer) {
-
-        formContainer.style.display =
-            "none";
-
-    }
-
-}
-
-
-// ========================================
-// ADD DOCUMENT
-// ========================================
-
-async function handleDocumentSubmit(
-    event
-) {
-
-    event.preventDefault();
-
-
-    const documentCode =
-        document.getElementById(
-            "document-code"
-        ).value.trim();
-
-
-    const documentName =
-        document.getElementById(
-            "document-name"
-        ).value.trim();
-
-
-    const operator =
-        document.getElementById(
-            "document-operator"
-        ).value.trim();
-
-
-    const department =
-        document.getElementById(
-            "document-department"
-        ).value.trim();
-
-
-    if (
-        !documentCode ||
-        !documentName ||
-        !operator ||
-        !department
-    ) {
-
-        alert(
-            "กรุณากรอกข้อมูลให้ครบทุกช่อง"
-        );
-
-        return;
-
-    }
-
-
-    const user =
-        getCurrentUser();
-
-
-    if (!user) {
-
-        alert(
-            "ไม่พบข้อมูลผู้ใช้งาน กรุณาเข้าสู่ระบบใหม่"
-        );
-
-        return;
-
-    }
-
-
-    const submitButton =
-        event.target.querySelector(
-            'button[type="submit"]'
-        );
-
-
-    if (submitButton) {
-
-        submitButton.disabled =
-            true;
-
-        submitButton.textContent =
-            "กำลังบันทึก...";
-
-    }
-
-
-    try {
-
-        const documentData = {
-
-            documentCode:
-                documentCode,
-
-            documentName:
-                documentName,
-
-            operator:
-                operator,
-
-            department:
-                department,
-
-            createdByName:
-                user.name || "",
-
-            createdByEmail:
-                user.email || ""
-
-        };
-
-
-        const response =
-            await fetch(
-
-                API_URL,
-
-                {
-
-                    method:
-                        "POST",
-
-                    headers: {
-
-                        "Content-Type":
-                            "text/plain;charset=utf-8"
-
-                    },
-
-                    body:
-                        JSON.stringify({
-
-                            action:
-                                "addDocument",
-
-                            document:
-                                documentData
-
-                        })
-
-                }
-
-            );
-
-
-        const data =
-            await response.json();
-
-
-        if (data.success) {
 
             alert(
                 "เพิ่มเอกสารสำเร็จ"
             );
 
 
+            // ----------------------------
+            // โหลดรายการใหม่
+            // ----------------------------
+
             await loadDocuments();
 
+
+            // ----------------------------
+            // Reset Form
+            // ----------------------------
 
             const form =
                 document.getElementById(
@@ -1089,18 +521,28 @@ async function handleDocumentSubmit(
             }
 
 
+            // ----------------------------
+            // Close Form
+            // ----------------------------
+
             closeDocumentForm();
+
 
         } else {
 
             alert(
 
-                data.message ||
+                (
+                    data &&
+                    data.message
+                )
+                ||
                 "ไม่สามารถเพิ่มเอกสารได้"
 
             );
 
         }
+
 
     } catch (error) {
 
@@ -1114,7 +556,12 @@ async function handleDocumentSubmit(
             "ไม่สามารถเชื่อมต่อฐานข้อมูลได้"
         );
 
+
     } finally {
+
+        // --------------------------------
+        // Enable Submit Button
+        // --------------------------------
 
         if (submitButton) {
 
@@ -1156,6 +603,10 @@ function renderDocuments() {
     }
 
 
+    // ------------------------------------
+    // Document Count
+    // ------------------------------------
+
     if (documentCount) {
 
         documentCount.textContent =
@@ -1163,6 +614,10 @@ function renderDocuments() {
 
     }
 
+
+    // ------------------------------------
+    // Empty
+    // ------------------------------------
 
     if (
         documents.length === 0
@@ -1201,6 +656,10 @@ function renderDocuments() {
     }
 
 
+    // ------------------------------------
+    // Render Rows
+    // ------------------------------------
+
     tableBody.innerHTML =
 
         documents
@@ -1215,25 +674,25 @@ function renderDocuments() {
 
                             <td>
                                 ${escapeHTML(
-                                    documentItem.documentCode
+                                    documentItem.documentCode || ""
                                 )}
                             </td>
 
                             <td>
                                 ${escapeHTML(
-                                    documentItem.documentName
+                                    documentItem.documentName || ""
                                 )}
                             </td>
 
                             <td>
                                 ${escapeHTML(
-                                    documentItem.operator
+                                    documentItem.operator || ""
                                 )}
                             </td>
 
                             <td>
                                 ${escapeHTML(
-                                    documentItem.department
+                                    documentItem.department || ""
                                 )}
                             </td>
 
@@ -1281,21 +740,42 @@ function updateDashboardCounts() {
     }
 
 
+    // ------------------------------------
+    // Current User
+    // ------------------------------------
+
+    const user =
+        getCurrentGGNUser();
+
+
+    // ------------------------------------
+    // Total
+    //
+    // Backend ส่งข้อมูลตามสิทธิ์แล้ว
+    //
+    // User  = เอกสารของตัวเอง
+    // Admin = เอกสารทั้งหมด
+    // ------------------------------------
+
     const total =
         documents.length;
 
 
-    const user =
-        getCurrentUser();
-
+    // ------------------------------------
+    // My Documents
+    // ------------------------------------
 
     let myDocuments =
         0;
 
 
-    if (user) {
+    if (
+        user &&
+        user.email
+    ) {
 
         myDocuments =
+
             documents.filter(
                 function (
                     item
@@ -1306,12 +786,18 @@ function updateDashboardCounts() {
                         String(
                             item.createdByEmail ||
                             ""
-                        ).toLowerCase()
+                        )
+                        .trim()
+                        .toLowerCase()
+
                         ===
+
                         String(
                             user.email ||
                             ""
-                        ).toLowerCase()
+                        )
+                        .trim()
+                        .toLowerCase()
 
                     );
 
@@ -1320,6 +806,10 @@ function updateDashboardCounts() {
 
     }
 
+
+    // ------------------------------------
+    // Dashboard Elements
+    // ------------------------------------
 
     const totalStrong =
         cards[0].querySelector(
@@ -1333,6 +823,10 @@ function updateDashboardCounts() {
         );
 
 
+    // ------------------------------------
+    // Update Total
+    // ------------------------------------
+
     if (totalStrong) {
 
         totalStrong.textContent =
@@ -1340,6 +834,10 @@ function updateDashboardCounts() {
 
     }
 
+
+    // ------------------------------------
+    // Update My Documents
+    // ------------------------------------
 
     if (myStrong) {
 
@@ -1353,3 +851,4 @@ function updateDashboardCounts() {
 
 // ======================================================
 // INSPECTION SYSTEM
+// ======================================================
