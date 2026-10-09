@@ -1632,7 +1632,91 @@ function renderInspectionItems() {
                     </label>
 
                 </div>
+
+                <div class="inspection-item-photo">
+
+                    <label
+                        class="inspection-photo-label"
+                    >
+                        📷 แนบรูปประกอบ
+                    </label>
+
+                    <input
+                        type="file"
+                        class="inspection-photo-input"
+                        accept="image/*"
+                        multiple
+                        data-item-no="${escapeHTML(
+                            itemNumber
+                        )}"
+                    >
+
+                    <div
+                        class="inspection-photo-preview"
+                        data-photo-preview="${escapeHTML(
+                            itemNumber
+                        )}"
+                    ></div>
+
+                </div>
             `;
+
+            const photoInput =
+                row.querySelector(
+                    ".inspection-photo-input"
+                );
+
+
+            const photoPreview =
+                row.querySelector(
+                    ".inspection-photo-preview"
+                );
+
+
+                        if (
+                photoInput &&
+                photoPreview
+            ) {
+
+                photoInput.addEventListener(
+                    "change",
+                    function () {
+
+                        const validation =
+                            validateTelegramPhotoCount(
+                                photoInput.files
+                            );
+
+
+                        if (!validation.valid) {
+
+                            alert(
+                                validation.message
+                            );
+
+
+                            photoInput.value =
+                                "";
+
+
+                            photoPreview.innerHTML =
+                                "";
+
+
+                            return;
+
+                        }
+
+
+                        createTelegramPhotoPreview(
+                            photoInput.files,
+                            photoPreview
+                        );
+
+                    }
+                );
+
+            }
 
 
             container.appendChild(
@@ -1751,6 +1835,12 @@ function collectInspectionItems() {
                 );
 
 
+            const photoInput =
+                row.querySelector(
+                    ".inspection-photo-input"
+                );
+
+
             result.push({
 
                 itemNo:
@@ -1764,7 +1854,14 @@ function collectInspectionItems() {
                 result:
                     resultInput
                         ? resultInput.value
-                        : ""
+                        : "",
+
+                photoFiles:
+                    photoInput
+                        ? Array.from(
+                            photoInput.files || []
+                        )
+                        : []
 
             });
 
@@ -2644,6 +2741,44 @@ async function saveInspection() {
 
         }
 
+            // --------------------------------------------------
+            // 4.1 PREPARE TELEGRAM PHOTOS
+            // --------------------------------------------------
+
+            for (
+                const item of items
+            ) {
+
+                const photoFiles =
+                    Array.isArray(
+                        item.photoFiles
+                    )
+                        ? item.photoFiles
+                        : [];
+
+
+                if (
+                    photoFiles.length === 0
+                ) {
+
+                    item.photos =
+                        [];
+
+                    continue;
+
+                }
+
+
+                item.photos =
+                    await prepareTelegramPhotos(
+                        photoFiles
+                    );
+
+
+                // File object ไม่ควรส่งเข้า Backend
+                delete item.photoFiles;
+
+            }
 
         // --------------------------------------------------
         // 5. RECORD ID
@@ -4663,6 +4798,44 @@ function resetInspectionForm() {
 
     }
 
+    // ----------------------------------------
+    // RESET INSPECTION PHOTOS
+    // ----------------------------------------
+
+    const photoInputs =
+        document.querySelectorAll(
+            "#inspection-items .inspection-photo-input"
+        );
+
+
+    photoInputs.forEach(
+        function (
+            input
+        ) {
+
+            input.value =
+                "";
+
+        }
+    );
+
+
+    const photoPreviews =
+        document.querySelectorAll(
+            "#inspection-items .inspection-photo-preview"
+        );
+
+
+    photoPreviews.forEach(
+        function (
+            preview
+        ) {
+
+            preview.innerHTML =
+                "";
+
+        }
+    );
 
     // ----------------------------------------
     // SET DEFAULT DATE / TIME
