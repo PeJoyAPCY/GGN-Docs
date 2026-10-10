@@ -196,3 +196,59 @@
     }
 
 }
+
+
+/* ========================================
+   REPORT AND PHOTO ATTACHMENT
+======================================== */
+
+.inspection-report-section,
+.inspection-attachment-section {
+    margin-top: 20px;
+}
+
+.inspection-report-section textarea,
+.inspection-attachment-section input[type="file"] {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.inspection-report-section textarea {
+    resize: vertical;
+    min-height: 90px;
+}
+
+.inspection-solution-group {
+    margin-top: 16px;
+}
+
+.inspection-upload-help {
+    display: block;
+    margin-top: 8px;
+    line-height: 1.6;
+    opacity: 0.8;
+}
+
+.inspection-photo-preview {
+    display: grid;
+    grid-template-columns: repeat(
+        auto-fill,
+        minmax(100px, 1fr)
+    );
+    gap: 12px;
+    margin-top: 14px;
+}
+
+.inspection-photo-preview img {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    object-fit: cover;
+    border-radius: 8px;
+}
+
+@media (max-width: 600px) {
+    .inspection-photo-preview {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 8px;
+    }
+}

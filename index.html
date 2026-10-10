@@ -908,45 +908,92 @@
                         </div>
 
 
+                        
                         <!-- INSPECTION ITEMS -->
-
                         <div class="iso-section">
-
                             <div class="iso-section-title">
                                 รายการตรวจ
                             </div>
-
 
                             <div
                                 id="inspection-items"
                                 class="inspection-items"
                             >
-
                                 <div class="inspection-empty">
-
-                                    <div>
-                                        📋
-                                    </div>
-
-                                    <strong>
-                                        รายการตรวจ
-                                    </strong>
-
-                                    <span>
-                                        ระบบจะแสดงรายการตรวจที่นี่
-                                    </span>
-
+                                    <div>📋</div>
+                                    <strong>รายการตรวจ</strong>
+                                    <span>ระบบจะแสดงรายการตรวจที่นี่</span>
                                 </div>
-
                             </div>
-
                         </div>
 
+                        <!-- REPORT -->
+                        <div class="iso-section inspection-report-section">
+                            <div class="iso-section-title">
+                                Report / รายงานเพิ่มเติม
+                            </div>
+
+                            <div class="form-group">
+                                <label for="inspection-remark">
+                                    รายละเอียดรายงาน
+                                </label>
+
+                                <textarea
+                                    id="inspection-remark"
+                                    name="remark"
+                                    rows="4"
+                                    placeholder="ระบุรายละเอียดการตรวจ เหตุการณ์ที่พบ หรือรายงานเพิ่มเติม"
+                                ></textarea>
+                            </div>
+
+                            <div class="form-group inspection-solution-group">
+                                <label for="inspection-solution">
+                                    แนวทางแก้ไข
+                                </label>
+
+                                <textarea
+                                    id="inspection-solution"
+                                    name="solution"
+                                    rows="3"
+                                    placeholder="ระบุแนวทางแก้ไข (ถ้ามี)"
+                                ></textarea>
+                            </div>
+                        </div>
+
+                        <!-- ATTACH PHOTOS -->
+                        <div class="iso-section inspection-attachment-section">
+                            <div class="iso-section-title">
+                                📷 แนบรูปภาพ
+                            </div>
+
+                            <div class="form-group">
+                                <label for="inspection-photos">
+                                    เลือกรูปภาพสำหรับส่ง Telegram
+                                </label>
+
+                                <input
+                                    type="file"
+                                    id="inspection-photos"
+                                    name="inspectionPhotos"
+                                    accept="image/*"
+                                    multiple
+                                >
+
+                                <small class="inspection-upload-help">
+                                    เลือกได้หลายรูป ระบบจะเตรียมรูปก่อนส่งไป Telegram
+                                    และไม่จัดเก็บไฟล์รูปภาพไว้ใน Google Drive
+                                </small>
+                            </div>
+
+                            <div
+                                id="inspection-photo-preview"
+                                class="inspection-photo-preview"
+                                aria-live="polite"
+                            ></div>
+                        </div>
 
                         <!-- FORM ACTIONS -->
-
                         <div class="iso-form-actions">
-
                             <button
                                 id="reset-inspection-button"
                                 class="secondary-button"
@@ -955,7 +1002,6 @@
                                 ล้างข้อมูล
                             </button>
 
-
                             <button
                                 id="save-inspection-button"
                                 class="primary-button"
@@ -963,11 +1009,9 @@
                             >
                                 บันทึกการตรวจ
                             </button>
-
+                        </div>
                         </div>
 
-
-                    </div>
 
                 </section>
 
@@ -1609,6 +1653,7 @@
 <!-- GGN Docs JavaScript -->
 <!-- ======================================== -->
 
+
         <script src="js/config.js"></script>
         <script src="js/state.js"></script>
         <script src="js/utils.js"></script>
@@ -1617,12 +1662,17 @@
         <script src="js/navigation.js"></script>
         <script src="js/setting.js"></script>
         <script src="js/documents.js"></script>
+
+        <!-- Telegram photo preparation must load before inspections.js -->
+        <script src="js/telegram.js"></script>
         <script src="js/inspections.js"></script>
+
         <script src="js/inspection-list.js"></script>
         <script src="js/fmop11.js"></script>
         <script src="js/search.js"></script>
         <script src="js/popup.js"></script>
         <script src="js/app.js"></script>
+
 </body>
 
 </html>
