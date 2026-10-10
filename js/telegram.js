@@ -1,25 +1,34 @@
 // ======================================================
 // GGN DOCS - TELEGRAM FRONTEND
-// VERSION: 1.0.0
+// VERSION: 1.1.0
+// DATE: 2026-10-10
 //
 // PURPOSE:
-// - จัดการรูปภาพสำหรับ Telegram
-// - รองรับหลายรูปต่อ Inspection Item
-// - แปลง File -> Base64
-// - Resize / Compress รูปก่อนส่ง Backend
+// - เตรียมรูปภาพรวมท้ายรายงานสำหรับ Telegram
+// - อ่านรูปจาก #inspection-photos
+// - Resize / Compress รูปเป็น JPEG
+// - แปลงรูปเป็น Base64 เพื่อส่งผ่าน API
+// - ไม่เก็บรูปใน Google Drive
+// - ไม่ให้ Frontend ติดต่อ Telegram โดยตรง
 //
-// IMPORTANT:
-// - ไม่มี Telegram Bot Token ในไฟล์นี้
-// - Frontend ไม่ติดต่อ Telegram โดยตรง
-// - รูปจะถูกส่งไป Apps Script ผ่าน API
+// LIMIT:
+// - สูงสุด 10 รูปต่อรายงาน
+//
+// DATA CONTRACT:
+// {
+//   data: "...Base64...",
+//   mimeType: "image/jpeg",
+//   fileName: "inspection-1.jpg"
+// }
+//
 // ======================================================
 
 
-// ========================================
+// ======================================================
 // CONFIG
-// ========================================
+// ======================================================
 
-const TELEGRAM_MAX_PHOTOS_PER_ITEM = 10;
+const TELEGRAM_MAX_PHOTOS_PER_REPORT = 10;
 
 const TELEGRAM_IMAGE_MAX_WIDTH = 1600;
 
@@ -28,615 +37,502 @@ const TELEGRAM_IMAGE_MAX_HEIGHT = 1600;
 const TELEGRAM_IMAGE_QUALITY = 0.80;
 
 
-// ========================================
-// FILE -> BASE64
-// ========================================
-
-function fileToBase64(
-  file
-) {
-
-  return new Promise(
-    (
-      resolve,
-      reject
-    ) => {
-
-      const reader =
-        new FileReader();
+// ใช้ชื่อเดิมชั่วคราวเพื่อไม่ให้โค้ดเดิม
+// ที่อาจยังอ้างถึงชื่อนี้เกิด ReferenceError
+const TELEGRAM_MAX_PHOTOS_PER_ITEM =
+    TELEGRAM_MAX_PHOTOS_PER_REPORT;
 
 
-      reader.onload =
-        function () {
+// ======================================================
+// FILE / BLOB -> BASE64
+// ======================================================
 
-          const result =
-            String(
-              reader.result || ""
-            );
+function fileToBase64(file) {
 
+    return new Promise(function(resolve, reject) {
 
-          const commaIndex =
-            result.indexOf(",");
-
-
-          if (
-            commaIndex === -1
-          ) {
+        if (!file) {
 
             reject(
-              new Error(
-                "ไม่สามารถอ่านรูปภาพได้"
-              )
+                new Error("ไม่พบไฟล์รูปภาพ")
             );
 
             return;
 
-          }
+        }
 
+        const reader = new FileReader();
 
-          resolve(
-            result.substring(
-              commaIndex + 1
-            )
-          );
+        reader.onload = function() {
 
-        };
+            const result = String(
+                reader.result || ""
+            );
 
+            const commaIndex = result.indexOf(",");
 
-      reader.onerror =
-        function () {
+            if (commaIndex === -1) {
 
-          reject(
-            new Error(
-              "เกิดข้อผิดพลาดขณะอ่านรูปภาพ"
-            )
-          );
+                reject(
+                    new Error(
+                        "ไม่สามารถแปลงรูปภาพเป็น Base64 ได้"
+                    )
+                );
 
-        };
+                return;
 
+            }
 
-      reader.readAsDataURL(
-        file
-      );
-
-    }
-  );
-
-}
-
-
-// ========================================
-// LOAD IMAGE
-// ========================================
-
-function loadImageFromFile(
-  file
-) {
-
-  return new Promise(
-    (
-      resolve,
-      reject
-    ) => {
-
-      const url =
-        URL.createObjectURL(
-          file
-        );
-
-
-      const image =
-        new Image();
-
-
-      image.onload =
-        function () {
-
-          URL.revokeObjectURL(
-            url
-          );
-
-          resolve(
-            image
-          );
+            resolve(
+                result.substring(commaIndex + 1)
+            );
 
         };
 
+        reader.onerror = function() {
 
-      image.onerror =
-        function () {
-
-          URL.revokeObjectURL(
-            url
-          );
-
-          reject(
-            new Error(
-              "ไม่สามารถเปิดรูปภาพได้"
-            )
-          );
+            reject(
+                new Error(
+                    "เกิดข้อผิดพลาดขณะอ่านรูปภาพ"
+                )
+            );
 
         };
 
-
-      image.src =
-        url;
-
-    }
-  );
-
-}
-
-
-// ========================================
-// RESIZE IMAGE
-// ========================================
-
-async function resizeTelegramImage(
-  file
-) {
-
-  const image =
-    await loadImageFromFile(
-      file
-    );
-
-
-  let width =
-    image.naturalWidth;
-
-  let height =
-    image.naturalHeight;
-
-
-  const maxWidth =
-    TELEGRAM_IMAGE_MAX_WIDTH;
-
-  const maxHeight =
-    TELEGRAM_IMAGE_MAX_HEIGHT;
-
-
-  const ratio =
-    Math.min(
-
-      maxWidth /
-        width,
-
-      maxHeight /
-        height,
-
-      1
-
-    );
-
-
-  width =
-    Math.round(
-      width * ratio
-    );
-
-
-  height =
-    Math.round(
-      height * ratio
-    );
-
-
-  const canvas =
-    document.createElement(
-      "canvas"
-    );
-
-
-  canvas.width =
-    width;
-
-  canvas.height =
-    height;
-
-
-  const context =
-    canvas.getContext(
-      "2d"
-    );
-
-
-  context.drawImage(
-    image,
-    0,
-    0,
-    width,
-    height
-  );
-
-
-  const blob =
-    await new Promise(
-      resolve => {
-
-        canvas.toBlob(
-          resolve,
-          "image/jpeg",
-          TELEGRAM_IMAGE_QUALITY
-        );
-
-      }
-    );
-
-
-  if (!blob) {
-
-    throw new Error(
-      "ไม่สามารถประมวลผลรูปภาพได้"
-    );
-
-  }
-
-
-  return blob;
-
-}
-
-
-// ========================================
-// PREPARE ONE PHOTO
-// ========================================
-
-async function prepareTelegramPhoto(
-  file,
-  index
-) {
-
-  if (
-    !file
-  ) {
-
-    throw new Error(
-      "ไม่พบไฟล์รูปภาพ"
-    );
-
-  }
-
-
-  if (
-    !file.type.startsWith(
-      "image/"
-    )
-  ) {
-
-    throw new Error(
-      "ไฟล์ที่เลือกไม่ใช่รูปภาพ"
-    );
-
-  }
-
-
-  const resizedBlob =
-    await resizeTelegramImage(
-      file
-    );
-
-
-  const base64 =
-    await fileToBase64(
-      resizedBlob
-    );
-
-
-  return {
-
-    data:
-      base64,
-
-    mimeType:
-      "image/jpeg",
-
-    fileName:
-      "inspection-" +
-      String(
-        index + 1
-      ) +
-      ".jpg"
-
-  };
-
-}
-
-
-// ========================================
-// PREPARE MULTIPLE PHOTOS
-// ========================================
-
-async function prepareTelegramPhotos(
-  files
-) {
-
-  if (
-    !files ||
-    files.length === 0
-  ) {
-
-    return [];
-
-  }
-
-
-  if (
-    files.length >
-    TELEGRAM_MAX_PHOTOS_PER_ITEM
-  ) {
-
-    throw new Error(
-      "เลือกรูปได้สูงสุด " +
-      TELEGRAM_MAX_PHOTOS_PER_ITEM +
-      " รูปต่อรายการตรวจ"
-    );
-
-  }
-
-
-  const photos = [];
-
-
-  for (
-    let i = 0;
-    i < files.length;
-    i++
-  ) {
-
-    const photo =
-      await prepareTelegramPhoto(
-        files[i],
-        i
-      );
-
-
-    photos.push(
-      photo
-    );
-
-  }
-
-
-  return photos;
-
-}
-
-
-// ========================================
-// GET FILE INPUT FILES
-// ========================================
-
-async function getTelegramPhotosFromInput(
-  input
-) {
-
-  if (
-    !input
-  ) {
-
-    return [];
-
-  }
-
-
-  const files =
-    Array.from(
-      input.files || []
-    );
-
-
-  return prepareTelegramPhotos(
-    files
-  );
-
-}
-
-
-// ========================================
-// CREATE PHOTO INPUT
-// ========================================
-//
-// ใช้สำหรับสร้าง input
-// แบบหลายรูปด้วย JavaScript
-// ========================================
-
-function createTelegramPhotoInput(
-  itemNo
-) {
-
-  const input =
-    document.createElement(
-      "input"
-    );
-
-
-  input.type =
-    "file";
-
-  input.accept =
-    "image/*";
-
-  input.multiple =
-    true;
-
-  input.className =
-    "inspection-photo-input";
-
-
-  input.dataset.itemNo =
-    String(
-      itemNo
-    );
-
-
-  return input;
-
-}
-
-
-// ========================================
-// CREATE PHOTO PREVIEW
-// ========================================
-
-function createTelegramPhotoPreview(
-  files,
-  container
-) {
-
-  if (
-    !container
-  ) {
-
-    return;
-
-  }
-
-
-  container.innerHTML =
-    "";
-
-
-  Array.from(
-    files || []
-  ).forEach(
-    file => {
-
-      const url =
-        URL.createObjectURL(
-          file
-        );
-
-
-      const image =
-        document.createElement(
-          "img"
-        );
-
-
-      image.src =
-        url;
-
-
-      image.alt =
-        file.name ||
-        "Inspection photo";
-
-
-      image.className =
-        "inspection-photo-preview";
-
-
-      container.appendChild(
-        image
-      );
-
-    }
-  );
-
-}
-
-
-// ========================================
-// COLLECT PHOTOS FROM ITEM INPUTS
-// ========================================
-//
-// Return:
-//
-// [
-//   {
-//     itemNo: 1,
-//     photos: [...]
-//   }
-// ]
-//
-// ฟังก์ชันนี้จะถูกใช้โดย
-// inspections.js
-// ========================================
-
-async function collectTelegramPhotos(
-  itemInputs
-) {
-
-  const items = [];
-
-
-  for (
-    const input of itemInputs
-  ) {
-
-    const itemNo =
-      Number(
-        input.dataset.itemNo
-      );
-
-
-    const photos =
-      await getTelegramPhotosFromInput(
-        input
-      );
-
-
-    items.push({
-
-      itemNo:
-        itemNo,
-
-      photos:
-        photos
+        reader.readAsDataURL(file);
 
     });
 
-  }
+}
 
 
-  return items;
+// ======================================================
+// LOAD IMAGE FROM FILE
+// ======================================================
+
+function loadImageFromFile(file) {
+
+    return new Promise(function(resolve, reject) {
+
+        const objectUrl = URL.createObjectURL(file);
+
+        const image = new Image();
+
+        image.onload = function() {
+
+            URL.revokeObjectURL(objectUrl);
+
+            if (
+                !image.naturalWidth ||
+                !image.naturalHeight
+            ) {
+
+                reject(
+                    new Error(
+                        "รูปภาพไม่มีขนาดที่ถูกต้อง"
+                    )
+                );
+
+                return;
+
+            }
+
+            resolve(image);
+
+        };
+
+        image.onerror = function() {
+
+            URL.revokeObjectURL(objectUrl);
+
+            reject(
+                new Error(
+                    "ไม่สามารถเปิดรูปภาพได้"
+                )
+            );
+
+        };
+
+        image.src = objectUrl;
+
+    });
 
 }
 
 
-// ========================================
-// VALIDATE PHOTO COUNT
-// ========================================
+// ======================================================
+// RESIZE / COMPRESS IMAGE
+// ======================================================
 
-function validateTelegramPhotoCount(
-  files
-) {
+async function resizeTelegramImage(file) {
 
-  const count =
-    files
-      ? files.length
-      : 0;
+    const image = await loadImageFromFile(file);
+
+    const originalWidth = image.naturalWidth;
+
+    const originalHeight = image.naturalHeight;
+
+    const ratio = Math.min(
+        TELEGRAM_IMAGE_MAX_WIDTH / originalWidth,
+        TELEGRAM_IMAGE_MAX_HEIGHT / originalHeight,
+        1
+    );
+
+    const width = Math.max(
+        1,
+        Math.round(originalWidth * ratio)
+    );
+
+    const height = Math.max(
+        1,
+        Math.round(originalHeight * ratio)
+    );
+
+    const canvas = document.createElement("canvas");
+
+    canvas.width = width;
+
+    canvas.height = height;
+
+    const context = canvas.getContext("2d");
+
+    if (!context) {
+
+        throw new Error(
+            "ไม่สามารถเตรียมพื้นที่ประมวลผลรูปภาพได้"
+        );
+
+    }
+
+    context.drawImage(
+        image,
+        0,
+        0,
+        width,
+        height
+    );
+
+    const blob = await new Promise(function(resolve) {
+
+        canvas.toBlob(
+            resolve,
+            "image/jpeg",
+            TELEGRAM_IMAGE_QUALITY
+        );
+
+    });
+
+    if (!blob) {
+
+        throw new Error(
+            "ไม่สามารถบีบอัดรูปภาพได้"
+        );
+
+    }
+
+    return blob;
+
+}
 
 
-  if (
-    count >
-    TELEGRAM_MAX_PHOTOS_PER_ITEM
-  ) {
+// ======================================================
+// PREPARE ONE PHOTO
+// ======================================================
+
+async function prepareTelegramPhoto(file, index) {
+
+    if (!file) {
+
+        throw new Error(
+            "ไม่พบไฟล์รูปภาพ"
+        );
+
+    }
+
+    if (
+        !file.type ||
+        !file.type.startsWith("image/")
+    ) {
+
+        throw new Error(
+            "ไฟล์ที่เลือกไม่ใช่รูปภาพที่รองรับ"
+        );
+
+    }
+
+    const resizedBlob = await resizeTelegramImage(file);
+
+    const base64 = await fileToBase64(resizedBlob);
 
     return {
 
-      valid:
-        false,
+        data: base64,
 
-      message:
-        "แต่ละรายการตรวจสามารถแนบรูปได้สูงสุด " +
-        TELEGRAM_MAX_PHOTOS_PER_ITEM +
-        " รูป"
+        mimeType: "image/jpeg",
+
+        fileName:
+            "inspection-" +
+            String(index + 1) +
+            ".jpg"
 
     };
 
-  }
+}
 
 
-  return {
+// ======================================================
+// VALIDATE PHOTO COUNT
+// ======================================================
 
-    valid:
-      true,
+function validateTelegramPhotoCount(files) {
 
-    message:
-      ""
+    const count = files
+        ? files.length
+        : 0;
 
-  };
+    if (count > TELEGRAM_MAX_PHOTOS_PER_REPORT) {
+
+        return {
+
+            valid: false,
+
+            message:
+                "แนบรูปภาพรวมท้ายรายงานได้สูงสุด " +
+                TELEGRAM_MAX_PHOTOS_PER_REPORT +
+                " รูป"
+
+        };
+
+    }
+
+    return {
+
+        valid: true,
+
+        message: ""
+
+    };
+
+}
+
+
+// ======================================================
+// PREPARE MULTIPLE PHOTOS
+// ======================================================
+//
+// Return:
+// [
+//   {
+//     data: "...Base64...",
+//     mimeType: "image/jpeg",
+//     fileName: "inspection-1.jpg"
+//   }
+// ]
+//
+// ======================================================
+
+async function prepareTelegramPhotos(files) {
+
+    const selectedFiles = Array.from(files || []);
+
+    if (selectedFiles.length === 0) {
+
+        return [];
+
+    }
+
+    const validation = validateTelegramPhotoCount(
+        selectedFiles
+    );
+
+    if (!validation.valid) {
+
+        throw new Error(validation.message);
+
+    }
+
+    const photos = [];
+
+    for (
+        let index = 0;
+        index < selectedFiles.length;
+        index++
+    ) {
+
+        const photo = await prepareTelegramPhoto(
+            selectedFiles[index],
+            index
+        );
+
+        photos.push(photo);
+
+    }
+
+    return photos;
+
+}
+
+
+// ======================================================
+// GET PHOTOS FROM INPUT
+// ======================================================
+//
+// ใช้กับ:
+// <input
+//   type="file"
+//   id="inspection-photos"
+//   accept="image/*"
+//   multiple
+// >
+//
+// ======================================================
+
+async function getTelegramPhotosFromInput(input) {
+
+    if (!input) {
+
+        return [];
+
+    }
+
+    return await prepareTelegramPhotos(
+        input.files || []
+    );
+
+}
+
+
+// ======================================================
+// PREVIEW PHOTOS
+// ======================================================
+//
+// ใช้แสดงตัวอย่างรูปก่อนบันทึก
+// รองรับทั้ง FileList และ Array ของ File
+//
+// ======================================================
+
+function createTelegramPhotoPreview(files, container) {
+
+    if (!container) {
+
+        return;
+
+    }
+
+    // คืนหน่วยความจำของ Preview URL เดิม
+    container
+        .querySelectorAll("[data-preview-url]")
+        .forEach(function(image) {
+
+            const oldUrl = image.dataset.previewUrl;
+
+            if (oldUrl) {
+
+                URL.revokeObjectURL(oldUrl);
+
+            }
+
+        });
+
+    container.innerHTML = "";
+
+    const selectedFiles = Array.from(files || []);
+
+    selectedFiles.forEach(function(file) {
+
+        if (
+            !file ||
+            !file.type ||
+            !file.type.startsWith("image/")
+        ) {
+
+            return;
+
+        }
+
+        const objectUrl = URL.createObjectURL(file);
+
+        const image = document.createElement("img");
+
+        image.src = objectUrl;
+
+        image.alt = file.name || "Inspection photo";
+
+        image.className = "inspection-photo-preview";
+
+        image.dataset.previewUrl = objectUrl;
+
+        container.appendChild(image);
+
+    });
+
+}
+
+
+// ======================================================
+// LEGACY COMPATIBILITY
+// ======================================================
+//
+// เก็บฟังก์ชันนี้ไว้ชั่วคราวเพื่อไม่ให้โค้ดเดิม
+// ที่อาจเรียกใช้อยู่เกิด ReferenceError
+//
+// Workflow ใหม่จะใช้ #inspection-photos
+// ไม่ใช้การรวบรวมรูปแยกตามรายการตรวจ
+//
+// ======================================================
+
+function createTelegramPhotoInput(itemNo) {
+
+    const input = document.createElement("input");
+
+    input.type = "file";
+
+    input.accept = "image/*";
+
+    input.multiple = true;
+
+    input.className = "inspection-photo-input";
+
+    input.dataset.itemNo = String(itemNo);
+
+    return input;
+
+}
+
+
+// ======================================================
+// LEGACY COMPATIBILITY
+// ======================================================
+//
+// คงชื่อฟังก์ชันเดิมระหว่างปรับ inspections.js
+// ไม่ควรนำผลลัพธ์นี้ไปใช้กับ Workflow รูปภาพรวมท้ายรายงาน
+//
+// ======================================================
+
+async function collectTelegramPhotos(itemInputs) {
+
+    const items = [];
+
+    for (const input of Array.from(itemInputs || [])) {
+
+        const itemNo = Number(
+            input.dataset.itemNo
+        );
+
+        const photos = await getTelegramPhotosFromInput(
+            input
+        );
+
+        items.push({
+
+            itemNo: itemNo,
+
+            photos: photos
+
+        });
+
+    }
+
+    return items;
 
 }
