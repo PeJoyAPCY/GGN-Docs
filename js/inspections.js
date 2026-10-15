@@ -5,8 +5,15 @@
  * ======================================================
  *
  * File: inspections.js
- * Version: v2.4.1
- * Updated: 2026-09-28
+ * Version: v2.5.0
+ * Updated: 2026-10-15
+ *
+ * v2.5.0
+ * - ใช้ช่องรายงานการตรวจเพียงช่องเดียว (#inspection-remark)
+ * - ย้ายรูปภาพเป็นระดับรายงาน (#inspection-photos) สูงสุด 10 รูป
+ * - เตรียมรูปเป็น payload สำหรับ Telegram ไม่แยกรูปตามข้อ
+ * - ไม่ล้างค่า solution เก่าขณะแก้ไขข้อมูล Legacy
+ * - คง API save/update และโครงสร้างข้อมูลเดิม A:R
  *
  * Version History
  *
@@ -125,6 +132,14 @@ function setupInspections() {
         setupInspectionPageEvents();
 
     }
+
+
+    // ----------------------------------------
+    // REPORT-LEVEL TELEGRAM PHOTO INPUT
+    // รูปภาพแนบระดับรายงาน ไม่แยกตามรายการตรวจ
+    // ----------------------------------------
+
+    setupInspectionReportPhotoInput();
 
 }
 
@@ -1456,334 +1471,187 @@ function renderInspectionInspectors() {
 }
 
 
+
+// ======================================================
+// REPORT-LEVEL PHOTO INPUT
+// - ใช้ input เดียว #inspection-photos
+// - รองรับสูงสุด 10 รูปต่อรายงาน
+// - รูปส่งให้ Backend เพื่อส่ง Telegram เท่านั้น
+// - ไม่บันทึกรูปลง Drive หรือ Sheet จาก Frontend
+// ======================================================
+
+function setupInspectionReportPhotoInput() {
+
+    const input =
+        document.getElementById("inspection-photos");
+
+    const preview =
+        document.getElementById("inspection-photo-preview");
+
+    if (!input || input.dataset.inspectionPhotoBound === "true") {
+        return;
+    }
+
+    input.dataset.inspectionPhotoBound = "true";
+    input.multiple = true;
+    input.accept = "image/*";
+
+    input.addEventListener("change", function () {
+
+        const files = Array.from(input.files || []);
+
+        if (files.length > 10) {
+            alert("แนบรูปได้สูงสุด 10 รูปต่อรายงาน");
+            input.value = "";
+            if (preview) preview.innerHTML = "";
+            return;
+        }
+
+        if (preview) {
+            preview.innerHTML = "";
+
+            files.forEach(function (file) {
+                if (!file.type || !file.type.startsWith("image/")) {
+                    return;
+                }
+
+                const url = URL.createObjectURL(file);
+                const image = document.createElement("img");
+                image.src = url;
+                image.alt = file.name || "ภาพประกอบรายงาน";
+                image.className = "inspection-report-photo-preview-image";
+                image.style.maxWidth = "120px";
+                image.style.maxHeight = "120px";
+                image.style.objectFit = "cover";
+                image.style.margin = "4px";
+                image.onload = function () {
+                    URL.revokeObjectURL(url);
+                };
+                preview.appendChild(image);
+            });
+        }
+
+    });
+
+}
+
+
 // ======================================================
 // RENDER INSPECTION ITEMS
+// - แสดงรายการตรวจทั้ง 7 ข้อ
+// - ไม่มีช่องแนบรูปแยกตามรายการ
 // ======================================================
 
 function renderInspectionItems() {
 
     const container =
-        document.getElementById(
-            "inspection-items"
-        );
-
+        document.getElementById("inspection-items");
 
     if (!container) {
         return;
     }
 
-
     if (
-        !Array.isArray(
-            inspectionItems
-        ) ||
+        !Array.isArray(inspectionItems) ||
         inspectionItems.length === 0
     ) {
 
         container.innerHTML = `
             <div class="inspection-empty">
-                <div>
-                    📋
-                </div>
-
-                <strong>
-                    ยังไม่มีรายการตรวจ
-                </strong>
-
-                <span>
-                    ไม่พบรายการตรวจในระบบ
-                </span>
+                <div>📋</div>
+                <strong>ยังไม่มีรายการตรวจ</strong>
+                <span>ไม่พบรายการตรวจในระบบ</span>
             </div>
         `;
 
-
         return;
-
     }
 
-
     const sortedItems =
-        [...inspectionItems]
-            .sort(
-                function (
-                    a,
-                    b
-                ) {
+        [...inspectionItems].sort(function (a, b) {
 
-                    const aNo =
-                        Number(
-                            a.sortOrder ||
-                            a.itemNo ||
-                            a.no ||
-                            999
-                        );
-
-
-                    const bNo =
-                        Number(
-                            b.sortOrder ||
-                            b.itemNo ||
-                            b.no ||
-                            999
-                        );
-
-
-                    return (
-                        aNo -
-                        bNo
-                    );
-
-                }
-            );
-
-
-    container.innerHTML =
-        "";
-
-
-    sortedItems.forEach(
-        function (
-            item,
-            index
-        ) {
-
-            const itemNumber =
-                item.sortOrder ||
-                item.itemNo ||
-                item.no ||
-                index + 1;
-
-
-            const itemText =
-                item.settingName ||
-                item.name ||
-                item.item ||
-                item.description ||
-                "";
-
-
-            const row =
-                document.createElement(
-                    "div"
+            const aNo =
+                Number(
+                    a.sortOrder ||
+                    a.itemNo ||
+                    a.no ||
+                    999
                 );
 
+            const bNo =
+                Number(
+                    b.sortOrder ||
+                    b.itemNo ||
+                    b.no ||
+                    999
+                );
 
-            row.className =
-                "inspection-item";
+            return aNo - bNo;
 
+        });
 
-            row.dataset.itemNo =
-                itemNumber;
+    container.innerHTML = "";
 
+    sortedItems.forEach(function (item, index) {
 
-            row.innerHTML = `
-                <div class="inspection-item-header">
+        const itemNumber =
+            item.sortOrder ||
+            item.itemNo ||
+            item.no ||
+            index + 1;
 
-                    <div class="inspection-item-number">
-                        ${escapeHTML(
-                            itemNumber
-                        )}
-                    </div>
+        const itemText =
+            item.settingName ||
+            item.name ||
+            item.item ||
+            item.description ||
+            "";
 
-                    <div class="inspection-item-text">
-                        ${escapeHTML(
-                            itemText
-                        )}
-                    </div>
+        const row =
+            document.createElement("div");
 
+        row.className = "inspection-item";
+        row.dataset.itemNo = itemNumber;
+
+        row.innerHTML = `
+            <div class="inspection-item-header">
+                <div class="inspection-item-number">
+                    ${escapeHTML(itemNumber)}
                 </div>
 
-                <div class="inspection-result-group">
-
-                    <label
-                        class="inspection-result-option"
-                    >
-
-                        <input
-                            type="radio"
-                            name="inspection-result-${escapeHTML(
-                                itemNumber
-                            )}"
-                            value="ผ่าน"
-                        >
-
-                        <span>
-                            ผ่าน
-                        </span>
-
-                    </label>
-
-                    <label
-                        class="inspection-result-option"
-                    >
-
-                        <input
-                            type="radio"
-                            name="inspection-result-${escapeHTML(
-                                itemNumber
-                            )}"
-                            value="ไม่ผ่าน"
-                        >
-
-                        <span>
-                            ไม่ผ่าน
-                        </span>
-
-                    </label>
-
+                <div class="inspection-item-text">
+                    ${escapeHTML(itemText)}
                 </div>
+            </div>
 
-                <div class="inspection-item-photo">
+            <div class="inspection-result-group">
 
-                    <label
-                        class="inspection-photo-label"
-                    >
-                        📷 แนบรูปประกอบ
-                    </label>
-
+                <label class="inspection-result-option">
                     <input
-                        type="file"
-                        class="inspection-photo-input"
-                        accept="image/*"
-                        multiple
-                        data-item-no="${escapeHTML(
-                            itemNumber
-                        )}"
+                        type="radio"
+                        name="inspection-result-${escapeHTML(itemNumber)}"
+                        value="ผ่าน"
                     >
+                    <span>ผ่าน</span>
+                </label>
 
-                    <div
-                        class="inspection-photo-preview"
-                        data-photo-preview="${escapeHTML(
-                            itemNumber
-                        )}"
-                    ></div>
+                <label class="inspection-result-option">
+                    <input
+                        type="radio"
+                        name="inspection-result-${escapeHTML(itemNumber)}"
+                        value="ไม่ผ่าน"
+                    >
+                    <span>ไม่ผ่าน</span>
+                </label>
 
-                </div>
-            `;
+            </div>
+        `;
 
-            const photoInput =
-                row.querySelector(
-                    ".inspection-photo-input"
-                );
+        container.appendChild(row);
 
-
-            const photoPreview =
-                row.querySelector(
-                    ".inspection-photo-preview"
-                );
-
-
-                        if (
-                photoInput &&
-                photoPreview
-            ) {
-
-                photoInput.addEventListener(
-                    "change",
-                    function () {
-
-                        const validation =
-                            validateTelegramPhotoCount(
-                                photoInput.files
-                            );
-
-
-                        if (!validation.valid) {
-
-                            alert(
-                                validation.message
-                            );
-
-
-                            photoInput.value =
-                                "";
-
-
-                            photoPreview.innerHTML =
-                                "";
-
-
-                            return;
-
-                        }
-
-
-                        createTelegramPhotoPreview(
-                            photoInput.files,
-                            photoPreview
-                        );
-
-                    }
-                );
-
-            }
-
-
-            container.appendChild(
-                row
-            );
-
-        }
-    );
-
-
-    // ----------------------------------------
-    // REMARK + SOLUTION
-    // ----------------------------------------
-
-    const additionalSection =
-        document.createElement(
-            "div"
-        );
-
-
-    additionalSection.className =
-        "inspection-additional";
-
-
-    additionalSection.innerHTML = `
-        <div class="inspection-remark-group">
-
-            <label
-                for="inspection-remark"
-            >
-                หมายเหตุ
-            </label>
-
-            <textarea
-                id="inspection-remark"
-                class="inspection-remark"
-                rows="3"
-                placeholder="ระบุหมายเหตุ (ถ้ามี)"
-            ></textarea>
-
-        </div>
-
-        <div class="inspection-solution-group">
-
-            <label
-                for="inspection-solution"
-            >
-                แนวทางแก้ไข
-            </label>
-
-            <textarea
-                id="inspection-solution"
-                class="inspection-solution"
-                rows="3"
-                placeholder="ระบุแนวทางแก้ไข (ถ้ามี)"
-            ></textarea>
-
-        </div>
-    `;
-
-
-    container.appendChild(
-        additionalSection
-    );
+    });
 
 }
-
 
 // ======================================================
 // COLLECT INSPECTION ITEMS
@@ -1792,82 +1660,45 @@ function renderInspectionItems() {
 function collectInspectionItems() {
 
     const container =
-        document.getElementById(
-            "inspection-items"
-        );
-
+        document.getElementById("inspection-items");
 
     if (!container) {
-
         return [];
-
     }
 
-
     const rows =
-        container.querySelectorAll(
-            ".inspection-item"
-        );
+        container.querySelectorAll(".inspection-item");
 
+    const result = [];
 
-    const result =
-        [];
+    rows.forEach(function (row) {
 
+        const resultInput =
+            row.querySelector(
+                'input[type="radio"]:checked'
+            );
 
-    rows.forEach(
-        function (
-            row
-        ) {
+        const itemText =
+            row.querySelector(".inspection-item-text");
 
-            const itemNo =
-                row.dataset.itemNo;
+        result.push({
 
+            itemNo:
+                row.dataset.itemNo,
 
-            const resultInput =
-                row.querySelector(
-                    'input[type="radio"]:checked'
-                );
+            item:
+                itemText
+                    ? itemText.textContent.trim()
+                    : "",
 
+            result:
+                resultInput
+                    ? resultInput.value
+                    : ""
 
-            const itemText =
-                row.querySelector(
-                    ".inspection-item-text"
-                );
+        });
 
-
-            const photoInput =
-                row.querySelector(
-                    ".inspection-photo-input"
-                );
-
-
-            result.push({
-
-                itemNo:
-                    itemNo,
-
-                item:
-                    itemText
-                        ? itemText.textContent.trim()
-                        : "",
-
-                result:
-                    resultInput
-                        ? resultInput.value
-                        : "",
-
-                photoFiles:
-                    photoInput
-                        ? Array.from(
-                            photoInput.files || []
-                        )
-                        : []
-
-            });
-
-        }
-    );
-
+    });
 
     return result;
 
@@ -1883,30 +1714,6 @@ function collectInspectionRemark() {
     const input =
         document.getElementById(
             "inspection-remark"
-        );
-
-
-    if (!input) {
-
-        return "";
-
-    }
-
-
-    return input.value.trim();
-
-}
-
-
-// ======================================================
-// COLLECT SOLUTION
-// ======================================================
-
-function collectInspectionSolution() {
-
-    const input =
-        document.getElementById(
-            "inspection-solution"
         );
 
 
@@ -2741,44 +2548,43 @@ async function saveInspection() {
 
         }
 
-            // --------------------------------------------------
-            // 4.1 PREPARE TELEGRAM PHOTOS
-            // --------------------------------------------------
+        // --------------------------------------------------
+        // 4.1 PREPARE REPORT-LEVEL TELEGRAM PHOTOS
+        // --------------------------------------------------
 
-            for (
-                const item of items
-            ) {
+        const photoInput =
+            document.getElementById("inspection-photos");
 
-                const photoFiles =
-                    Array.isArray(
-                        item.photoFiles
-                    )
-                        ? item.photoFiles
-                        : [];
+        const selectedPhotoFiles =
+            photoInput && photoInput.files
+                ? Array.from(photoInput.files)
+                : [];
 
+        if (selectedPhotoFiles.length > 10) {
+            alert("แนบรูปได้สูงสุด 10 รูปต่อรายงาน");
+            return;
+        }
 
-                if (
-                    photoFiles.length === 0
-                ) {
+        let photos = [];
 
-                    item.photos =
-                        [];
+        if (selectedPhotoFiles.length > 0) {
 
-                    continue;
-
-                }
-
-
-                item.photos =
-                    await prepareTelegramPhotos(
-                        photoFiles
-                    );
-
-
-                // File object ไม่ควรส่งเข้า Backend
-                delete item.photoFiles;
-
+            if (typeof prepareTelegramPhotos !== "function") {
+                throw new Error(
+                    "ไม่พบฟังก์ชันเตรียมรูป Telegram กรุณาตรวจสอบว่าโหลด telegram.js แล้ว"
+                );
             }
+
+            photos = await prepareTelegramPhotos(selectedPhotoFiles);
+
+            if (!Array.isArray(photos)) {
+                throw new Error("ไม่สามารถเตรียมรูปภาพสำหรับ Telegram ได้");
+            }
+
+            if (photos.length > 10) {
+                throw new Error("แนบรูปได้สูงสุด 10 รูปต่อรายงาน");
+            }
+        }
 
         // --------------------------------------------------
         // 5. RECORD ID
@@ -2831,9 +2637,12 @@ async function saveInspection() {
         const remark =
             collectInspectionRemark();
 
-
+        // ฟอร์มใหม่ไม่มีช่อง Solution แล้ว แต่เก็บค่าเดิมไว้เมื่อแก้ไข
+        // เพื่อไม่ให้ข้อมูล Legacy ในคอลัมน์ H ถูกล้างโดยไม่ตั้งใจ
         const solution =
-            collectInspectionSolution();
+            inspectionMode === "edit" && editingInspectionData
+                ? String(editingInspectionData.solution || "")
+                : "";
 
 
         // --------------------------------------------------
@@ -3041,9 +2850,20 @@ async function saveInspection() {
             inspector:
                 inspector,
 
+            // ใช้ remark เดิมเพื่อรักษา API และโครงสร้าง Sheet A:R
             remark:
                 remark,
 
+            // ชื่อฟิลด์สื่อความหมายใหม่; Backend รุ่นเดิมยังอ่าน remark ได้
+            inspectionReport:
+                remark,
+
+            // รูปเป็น payload ชั่วคราวเพื่อส่ง Telegram เท่านั้น
+            // Backend ต้องไม่เขียน photos ลง Sheet หรือ Drive
+            photos:
+                photos,
+
+            // คงค่า Legacy เดิมเมื่อแก้ไข; ฟอร์มใหม่ไม่มีช่องนี้
             solution:
                 solution,
 
@@ -3277,8 +3097,7 @@ async function saveInspection() {
             saveButton.disabled =
                 false;
 
-
-            saveButton.textContent =
+ saveButton.textContent =
                 originalText ||
                 (
                     inspectionMode === "edit"
@@ -4035,26 +3854,8 @@ function populateInspectionForm(
     if (remark) {
 
         remark.value =
+            inspection.inspectionReport ||
             inspection.remark ||
-            "";
-
-    }
-
-
-    // ----------------------------------------
-    // SOLUTION
-    // ----------------------------------------
-
-    const solution =
-        document.getElementById(
-            "inspection-solution"
-        );
-
-
-    if (solution) {
-
-        solution.value =
-            inspection.solution ||
             "";
 
     }
@@ -4782,60 +4583,22 @@ function resetInspectionForm() {
 
 
     // ----------------------------------------
-    // RESET SOLUTION
+    // RESET REPORT-LEVEL TELEGRAM PHOTOS
     // ----------------------------------------
 
-    const solution =
-        document.getElementById(
-            "inspection-solution"
-        );
+    const photoInput =
+        document.getElementById("inspection-photos");
 
-
-    if (solution) {
-
-        solution.value =
-            "";
-
+    if (photoInput) {
+        photoInput.value = "";
     }
 
-    // ----------------------------------------
-    // RESET INSPECTION PHOTOS
-    // ----------------------------------------
+    const photoPreview =
+        document.getElementById("inspection-photo-preview");
 
-    const photoInputs =
-        document.querySelectorAll(
-            "#inspection-items .inspection-photo-input"
-        );
-
-
-    photoInputs.forEach(
-        function (
-            input
-        ) {
-
-            input.value =
-                "";
-
-        }
-    );
-
-
-    const photoPreviews =
-        document.querySelectorAll(
-            "#inspection-items .inspection-photo-preview"
-        );
-
-
-    photoPreviews.forEach(
-        function (
-            preview
-        ) {
-
-            preview.innerHTML =
-                "";
-
-        }
-    );
+    if (photoPreview) {
+        photoPreview.innerHTML = "";
+    }
 
     // ----------------------------------------
     // SET DEFAULT DATE / TIME
