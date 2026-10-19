@@ -927,22 +927,22 @@
                             </div>
                         </div>
 
-                        <!-- REPORT -->
+                        <!-- ISO REPORT FIELDS: ใช้สำหรับเอกสาร ISO / FM-OP-11 -->
                         <div class="iso-section inspection-report-section">
                             <div class="iso-section-title">
-                                Report / รายงานเพิ่มเติม
+                                ข้อมูลสำหรับเอกสาร ISO
                             </div>
 
                             <div class="form-group">
                                 <label for="inspection-remark">
-                                    รายละเอียดรายงาน
+                                    หมายเหตุ
                                 </label>
 
                                 <textarea
                                     id="inspection-remark"
                                     name="remark"
                                     rows="4"
-                                    placeholder="ระบุรายละเอียดการตรวจ เหตุการณ์ที่พบ หรือรายงานเพิ่มเติม"
+                                    placeholder="ระบุหมายเหตุหรือรายละเอียดประกอบเอกสาร ISO"
                                 ></textarea>
                             </div>
 
@@ -955,8 +955,31 @@
                                     id="inspection-solution"
                                     name="solution"
                                     rows="3"
-                                    placeholder="ระบุแนวทางแก้ไข (ถ้ามี)"
+                                    placeholder="ระบุแนวทางแก้ไขสำหรับเอกสาร ISO (ถ้ามี)"
                                 ></textarea>
+                            </div>
+                        </div>
+
+                        <!-- TELEGRAM REPORT FIELD: แยกจากข้อมูล ISO -->
+                        <div class="iso-section inspection-telegram-report-section">
+                            <div class="iso-section-title">
+                                📣 รายงานการตรวจสำหรับ Telegram
+                            </div>
+
+                            <div class="form-group">
+                                <label for="inspection-report">
+                                    รายงานการตรวจ
+                                </label>
+
+                                <textarea
+                                    id="inspection-report"
+                                    name="inspectionReport"
+                                    rows="4"
+                                    placeholder="ระบุข้อความรายงานที่ต้องการส่งไปยังกลุ่ม Telegram"
+                                ></textarea>
+                                <small class="inspection-upload-help">
+                                    ข้อความนี้ใช้สำหรับแจ้งเตือน Telegram โดยแยกจากหมายเหตุและแนวทางแก้ไขในเอกสาร ISO
+                                </small>
                             </div>
                         </div>
 
