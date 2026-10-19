@@ -5,15 +5,16 @@
  * ======================================================
  *
  * File: inspections.js
- * Version: v2.5.0
- * Updated: 2026-10-15
+ * Version: v2.6.0
+ * Updated: 2026-10-19
  *
- * v2.5.0
- * - ใช้ช่องรายงานการตรวจเพียงช่องเดียว (#inspection-remark)
- * - ย้ายรูปภาพเป็นระดับรายงาน (#inspection-photos) สูงสุด 10 รูป
- * - เตรียมรูปเป็น payload สำหรับ Telegram ไม่แยกรูปตามข้อ
- * - ไม่ล้างค่า solution เก่าขณะแก้ไขข้อมูล Legacy
- * - คง API save/update และโครงสร้างข้อมูลเดิม A:R
+ * v2.6.0
+ * - แยกหมายเหตุ (remark) และแนวทางแก้ไข (solution) สำหรับเอกสาร ISO
+ * - เพิ่มรายงานการตรวจ (inspectionReport) แยกสำหรับ Telegram
+ * - รองรับรูปภาพระดับรายงาน (#inspection-photos) สูงสุด 10 รูป
+ * - ส่งรูปเป็น payload ให้ Backend/Telegram เท่านั้น ไม่บันทึกรูปลง Sheet หรือ Drive
+ * - รักษา Legacy fields, success modal, permission flow, cache และ API เดิม
+ * - คงโครงสร้างชีต Inspections A:R
  *
  * Version History
  *
@@ -1730,6 +1731,37 @@ function collectInspectionRemark() {
 
 
 // ======================================================
+// COLLECT ISO SOLUTION
+// ======================================================
+
+function collectInspectionSolution() {
+
+    const input =
+        document.getElementById("inspection-solution");
+
+    return input
+        ? input.value.trim()
+        : "";
+}
+
+
+// ======================================================
+// COLLECT TELEGRAM INSPECTION REPORT
+// แยกจาก remark และ solution ของเอกสาร ISO
+// ======================================================
+
+function collectInspectionReport() {
+
+    const input =
+        document.getElementById("inspection-report");
+
+    return input
+        ? input.value.trim()
+        : "";
+}
+
+
+// ======================================================
 // GET SELECTED LOCATION
 // ======================================================
 
@@ -2634,15 +2666,38 @@ async function saveInspection() {
         // 7. REMARK / SOLUTION
         // --------------------------------------------------
 
+        // --------------------------------------------------
+        // 7. ISO REMARK / SOLUTION + TELEGRAM REPORT
+        // --------------------------------------------------
+
         const remark =
             collectInspectionRemark();
 
-        // ฟอร์มใหม่ไม่มีช่อง Solution แล้ว แต่เก็บค่าเดิมไว้เมื่อแก้ไข
-        // เพื่อไม่ให้ข้อมูล Legacy ในคอลัมน์ H ถูกล้างโดยไม่ตั้งใจ
+        const solutionInput =
+            document.getElementById("inspection-solution");
+
+        // ถ้าหน้าฟอร์มไม่มีช่อง solution ให้คงค่าเดิมในโหมดแก้ไข
+        // เพื่อป้องกันข้อมูล Legacy ในคอลัมน์ H สูญหาย
         const solution =
-            inspectionMode === "edit" && editingInspectionData
-                ? String(editingInspectionData.solution || "")
-                : "";
+            solutionInput
+                ? collectInspectionSolution()
+                : (
+                    inspectionMode === "edit" && editingInspectionData
+                        ? String(editingInspectionData.solution || "")
+                        : ""
+                );
+
+        const reportInput =
+            document.getElementById("inspection-report");
+
+        const inspectionReport =
+            reportInput
+                ? collectInspectionReport()
+                : (
+                    inspectionMode === "edit" && editingInspectionData
+                        ? String(editingInspectionData.inspectionReport || "")
+                        : ""
+                );
 
 
         // --------------------------------------------------
@@ -2850,22 +2905,23 @@ async function saveInspection() {
             inspector:
                 inspector,
 
-            // ใช้ remark เดิมเพื่อรักษา API และโครงสร้าง Sheet A:R
+            // หมายเหตุสำหรับเอกสาร ISO (คอลัมน์เดิม)
             remark:
                 remark,
 
-            // ชื่อฟิลด์สื่อความหมายใหม่; Backend รุ่นเดิมยังอ่าน remark ได้
+            // แนวทางแก้ไขสำหรับเอกสาร ISO (คอลัมน์เดิม)
+            solution:
+                solution,
+
+            // รายงานการตรวจแยกต่างหากสำหรับ Telegram
+            // Backend ต้องใช้ field นี้ส่งข้อความโดยไม่เขียนทับ remark/solution
             inspectionReport:
-                remark,
+                inspectionReport,
 
             // รูปเป็น payload ชั่วคราวเพื่อส่ง Telegram เท่านั้น
             // Backend ต้องไม่เขียน photos ลง Sheet หรือ Drive
             photos:
                 photos,
-
-            // คงค่า Legacy เดิมเมื่อแก้ไข; ฟอร์มใหม่ไม่มีช่องนี้
-            solution:
-                solution,
 
             documentCode:
                 documentCode,
@@ -3037,6 +3093,21 @@ async function saveInspection() {
             inspectionMode
         );
 
+        // แสดงสถานะ Telegram หาก Backend ส่งผลกลับมา
+        // ไม่เปลี่ยนผลการบันทึกหลัก หากส่ง Telegram ไม่สำเร็จ
+        const telegramStatus = result.telegram || result.telegramStatus || null;
+        if (telegramStatus && telegramStatus.success === false) {
+            console.warn(
+                "บันทึก Inspection สำเร็จ แต่ส่ง Telegram ไม่สำเร็จ:",
+                telegramStatus
+            );
+            const successMessage = document.getElementById("inspection-success-message");
+            if (successMessage) {
+                successMessage.textContent =
+                    "บันทึกข้อมูลสำเร็จ แต่ส่ง Telegram ไม่สำเร็จ กรุณาตรวจสอบระบบ Telegram";
+            }
+        }
+
 
         // --------------------------------------------------
         // 19. RESET FORM
@@ -3097,7 +3168,8 @@ async function saveInspection() {
             saveButton.disabled =
                 false;
 
- saveButton.textContent =
+
+            saveButton.textContent =
                 originalText ||
                 (
                     inspectionMode === "edit"
@@ -3110,8 +3182,6 @@ async function saveInspection() {
     }
 
 }
-
-
 // ======================================================
 // LOAD INSPECTION FOR EDIT
 // ======================================================
@@ -3842,22 +3912,42 @@ function populateInspectionForm(
 
 
     // ----------------------------------------
-    // REMARK
+    // ISO REMARK
     // ----------------------------------------
 
-    const remark =
-        document.getElementById(
-            "inspection-remark"
+    const remarkInput =
+        document.getElementById("inspection-remark");
+
+    if (remarkInput) {
+        remarkInput.value = String(inspection.remark || "");
+    }
+
+    // ----------------------------------------
+    // ISO SOLUTION
+    // ----------------------------------------
+
+    const solutionInput =
+        document.getElementById("inspection-solution");
+
+    if (solutionInput) {
+        solutionInput.value = String(inspection.solution || "");
+    }
+
+    // ----------------------------------------
+    // TELEGRAM INSPECTION REPORT
+    // ----------------------------------------
+
+    const reportInput =
+        document.getElementById("inspection-report");
+
+    if (reportInput) {
+        // Legacy compatibility: รายการเก่าที่ไม่มี inspectionReport
+        // เคยใช้ remark เป็นรายงาน Telegram จึงใช้ remark เป็น fallback เฉพาะข้อมูลเก่า
+        reportInput.value = String(
+            inspection.inspectionReport != null
+                ? inspection.inspectionReport
+                : (inspection.remark || "")
         );
-
-
-    if (remark) {
-
-        remark.value =
-            inspection.inspectionReport ||
-            inspection.remark ||
-            "";
-
     }
 
 
@@ -4575,10 +4665,21 @@ function resetInspectionForm() {
 
 
     if (remark) {
+        remark.value = "";
+    }
 
-        remark.value =
-            "";
+    const solutionInput =
+        document.getElementById("inspection-solution");
 
+    if (solutionInput) {
+        solutionInput.value = "";
+    }
+
+    const reportInput =
+        document.getElementById("inspection-report");
+
+    if (reportInput) {
+        reportInput.value = "";
     }
 
 
