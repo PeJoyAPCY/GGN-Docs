@@ -5,8 +5,14 @@
  * ======================================================
  *
  * File: inspections.js
- * Version: v2.6.1
- * Updated: 2026-10-20
+ * Version: v2.6.2
+ * Updated: 2026-10-23
+ *
+ * v2.6.2
+ * - เพิ่ม Save Lock ตั้งแต่เริ่ม saveInspection ก่อนขั้นตอน async/แปลงรูป
+ * - ปิดปุ่มบันทึกทันที ป้องกันคำขอบันทึกซ้อนจากการคลิกซ้ำ
+ * - ป้องกัน setupInspections ผูก Event ปุ่มบันทึกซ้ำ
+ * - คงโครงสร้างข้อมูลเดิมและการส่ง Telegram ผ่าน Backend เพียงเส้นทางเดิม
  *
  * v2.6.1
  * - แจ้งผลการส่ง Telegram แยกจากผลการบันทึกข้อมูล
@@ -78,6 +84,9 @@
 // Location จาก LocationMaster
 let inspectionMasterLocations = [];
 
+// ป้องกันการบันทึก Inspection ซ้อนจากการคลิกซ้ำ
+let inspectionSaveInProgress = false;
+
 
 // ======================================================
 // SETUP INSPECTION
@@ -101,12 +110,17 @@ function setupInspections() {
     // SAVE BUTTON
     // ----------------------------------------
 
-    if (saveButton) {
+    if (
+        saveButton &&
+        saveButton.dataset.inspectionSaveBound !== "true"
+    ) {
 
         saveButton.addEventListener(
             "click",
             saveInspection
         );
+
+        saveButton.dataset.inspectionSaveBound = "true";
 
     }
 
@@ -115,12 +129,17 @@ function setupInspections() {
     // RESET BUTTON
     // ----------------------------------------
 
-    if (resetButton) {
+    if (
+        resetButton &&
+        resetButton.dataset.inspectionResetBound !== "true"
+    ) {
 
         resetButton.addEventListener(
             "click",
             resetInspectionForm
         );
+
+        resetButton.dataset.inspectionResetBound = "true";
 
     }
 
@@ -2445,13 +2464,19 @@ function updateInspectionFormMode() {
 
 async function saveInspection() {
 
-    console.log(
-        "========== SAVE INSPECTION =========="
-    );
+    // ต้องล็อกก่อนทำงานใด ๆ ที่อาจ await เช่น เตรียม/บีบอัดรูป
+    // การคลิกซ้ำระหว่างรอจะออกจากฟังก์ชันทันที
+    if (inspectionSaveInProgress) {
+        console.warn(
+            "Ignore duplicate saveInspection call while save is in progress."
+        );
+        return;
+    }
 
+    inspectionSaveInProgress = true;
 
     // --------------------------------------------------
-    // SAVE BUTTON
+    // SAVE BUTTON — ปิดทันที ไม่รอจนเตรียมรูปเสร็จ
     // --------------------------------------------------
 
     const saveButton =
@@ -2459,12 +2484,22 @@ async function saveInspection() {
             "save-inspection-button"
         );
 
-
     const originalText =
         saveButton
             ? saveButton.textContent
             : "บันทึก";
 
+    if (saveButton) {
+        saveButton.disabled = true;
+        saveButton.textContent =
+            inspectionMode === "edit"
+                ? "กำลังบันทึกการแก้ไข..."
+                : "กำลังบันทึก...";
+    }
+
+    console.log(
+        "========== SAVE INSPECTION =========="
+    );
 
     try {
 
@@ -2984,25 +3019,9 @@ async function saveInspection() {
 
 
         // --------------------------------------------------
-        // 14. DISABLE SAVE BUTTON
+        // 14. CALL BACKEND
+        // Save lock และการปิดปุ่มถูกตั้งตั้งแต่ต้นฟังก์ชันแล้ว
         // --------------------------------------------------
-
-        if (saveButton) {
-
-            saveButton.disabled =
-                true;
-
-
-            saveButton.textContent =
-                inspectionMode === "edit"
-                    ? "กำลังบันทึกการแก้ไข..."
-                    : "กำลังบันทึก...";
-
-        }
-
-
-        // --------------------------------------------------
-        // 15. CALL BACKEND
         // --------------------------------------------------
 
         let result;
@@ -3169,6 +3188,9 @@ async function saveInspection() {
 
     } finally {
 
+        // ปลดล็อกเมื่อจบทุกเส้นทาง รวมถึง validation return และ error
+        inspectionSaveInProgress = false;
+
         // --------------------------------------------------
         // 21. RESTORE SAVE BUTTON
         // --------------------------------------------------
@@ -3178,7 +3200,7 @@ async function saveInspection() {
             saveButton.disabled =
                 false;
 
- saveButton.textContent =
+            saveButton.textContent =
                 originalText ||
                 (
                     inspectionMode === "edit"
