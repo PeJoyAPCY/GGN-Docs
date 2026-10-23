@@ -1583,190 +1583,62 @@ async function loadInspectionListFilters() {
 }
 
 
-// ======================================================
-// FILTER INSPECTION RECORDS
-// ======================================================
+
+/**
+ * ======================================================
+ * FILTER INSPECTION RECORDS
+ * Delegates filtering to inspection-list-search.js
+ * ======================================================
+ */
 
 function filterInspectionRecords() {
 
-    const dateInput =
-        document.getElementById(
-            "inspection-records-date"
+    if (
+        typeof applyInspectionRecordsFilter !==
+        "function"
+    ) {
+        console.error(
+            "ไม่พบ applyInspectionRecordsFilter() " +
+            "กรุณาตรวจสอบการโหลด inspection-list-search.js"
         );
 
-
-    const inspectorInput =
-        document.getElementById(
-            "inspection-records-inspector"
+        alert(
+            "ระบบค้นหารายการตรวจยังไม่พร้อม กรุณาลองใหม่"
         );
 
+        return;
+    }
 
-    const zoneInput =
-        document.getElementById(
-            "inspection-records-zone"
-        );
-
-
-    const isAdmin =
-        isInspectionListAdmin();
-
-
-    const date =
-        dateInput
-            ? dateInput.value
-            : "";
-
-
-    const inspector =
-        inspectorInput &&
-        isAdmin &&
-        !inspectorInput.disabled
-            ? inspectorInput.value
-            : "";
-
-
-    const zone =
-        zoneInput &&
-        isAdmin &&
-        !zoneInput.disabled
-            ? zoneInput.value
-            : "";
-
-
-    console.log(
-        "ค้นหารายการตรวจ:",
-        {
-            date,
-            inspector,
-            zone:
-                isAdmin
-                    ? zone
-                    : "(User - ใช้ Zone จากสิทธิ์ Backend)",
-            role:
-                getInspectionListCurrentRole()
-        }
-    );
-
-
-    const filtered =
-        inspectionListRecords.filter(
-            function (record) {
-
-                // ----------------------------------------
-                // DATE
-                // ----------------------------------------
-
-                if (
-                    date &&
-                    record.inspectionDate !==
-                    date
-                ) {
-
-                    return false;
-
-                }
-
-
-                // ----------------------------------------
-                // INSPECTOR
-                // ----------------------------------------
-                // เฉพาะ Admin เท่านั้น
-                // User ใช้ข้อมูลที่ Backend กรองมาแล้ว
-
-                if (
-                    isAdmin &&
-                    inspector &&
-                    record.inspectorName !==
-                    inspector
-                ) {
-
-                    return false;
-
-                }
-
-
-                // ----------------------------------------
-                // ZONE
-                // ----------------------------------------
-                // เฉพาะ Admin เท่านั้น
-                // User ไม่มีสิทธิ์เลือก Zone
-
-                if (
-                    isAdmin &&
-                    zone &&
-                    record.zone !==
-                    zone
-                ) {
-
-                    return false;
-
-                }
-
-
-                return true;
-
-            }
-        );
-
-
-    renderInspectionList(
-        filtered
-    );
-
+    applyInspectionRecordsFilter();
 }
 
 
-
-// ======================================================
-// CLEAR FILTER
-// ======================================================
+/**
+ * ======================================================
+ * CLEAR INSPECTION RECORD FILTER
+ * Delegates reset to inspection-list-search.js
+ * ======================================================
+ */
 
 function clearInspectionRecordsFilter() {
 
-    const dateInput =
-        document.getElementById(
-            "inspection-records-date"
+    if (
+        typeof resetInspectionRecordsFilter !==
+        "function"
+    ) {
+        console.error(
+            "ไม่พบ resetInspectionRecordsFilter() " +
+            "กรุณาตรวจสอบการโหลด inspection-list-search.js"
         );
 
-
-    const inspectorInput =
-        document.getElementById(
-            "inspection-records-inspector"
+        alert(
+            "ระบบล้างตัวกรองยังไม่พร้อม กรุณาลองใหม่"
         );
 
-
-    const zoneInput =
-        document.getElementById(
-            "inspection-records-zone"
-        );
-
-
-    if (dateInput) {
-
-        dateInput.value =
-            "";
-
+        return;
     }
 
-
-    if (inspectorInput) {
-
-        inspectorInput.value =
-            "";
-
-    }
-
-
-    if (zoneInput) {
-
-        zoneInput.value =
-            "";
-
-    }
-
-
-    renderInspectionList();
-
+    resetInspectionRecordsFilter();
 }
 
 
