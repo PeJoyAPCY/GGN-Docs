@@ -1566,453 +1566,313 @@ function downloadFMOP11PDF(
 }
 
 
-// ======================================================
-// GENERATE FM-OP-11
-// ======================================================
 
 async function generateFMOP11() {
-
     // ==================================================
     // VALIDATE SELECTION
     // ==================================================
-
     if (
-        !Array.isArray(
-            window.fmop11SelectedRecords
-        ) ||
+        !Array.isArray(window.fmop11SelectedRecords) ||
         window.fmop11SelectedRecords.length === 0
     ) {
-
         alert(
             "ไม่สามารถสร้างเอกสารได้\n\n" +
             "สาเหตุ: ยังไม่ได้เลือกรายการตรวจ"
         );
-
-
         return;
-
     }
-
 
     // ==================================================
     // MAX 14
     // ==================================================
-
-    if (
-        window.fmop11SelectedRecords.length > 14
-    ) {
-
+    if (window.fmop11SelectedRecords.length > 14) {
         alert(
             "ไม่สามารถสร้างเอกสารได้\n\n" +
             "สาเหตุ: เลือกรายการตรวจเกิน 14 จุด"
         );
-
-
         return;
-
     }
-
 
     // ==================================================
     // CURRENT USER
     // ==================================================
-    //
-    // ตรวจเฉพาะว่ามี Session อยู่หรือไม่
-    //
-    // ไม่ส่งชื่อหรือ Email เข้า Generate API
-    //
-    // apiGenerateFMOP11()
-    // จะอ่าน Current User จาก api.js
-    // และส่ง requesterEmail ให้ Backend
-    // ==================================================
+    const user = getCurrentGGNUser();
 
-    const user =
-        getCurrentGGNUser();
-
-
-    if (
-        !user ||
-        !user.email
-    ) {
-
+    if (!user || !user.email) {
         alert(
             "ไม่สามารถสร้างเอกสารได้\n\n" +
             "สาเหตุ: ไม่พบข้อมูลผู้ใช้งาน\n\n" +
             "กรุณาเข้าสู่ระบบใหม่"
         );
-
-
         return;
-
     }
-
 
     // ==================================================
     // VALIDATE RECORD IDs
     // ==================================================
+    const invalidRecord = window.fmop11SelectedRecords.find(
+        function (item) {
+            return !item || !item.recordId;
+        }
+    );
 
-    const invalidRecord =
-        window.fmop11SelectedRecords.find(
-            function (
-                item
-            ) {
-
-                return (
-                    !item ||
-                    !item.recordId
-                );
-
-            }
-        );
-
-
-    if (
-        invalidRecord
-    ) {
-
+    if (invalidRecord) {
         console.error(
             "พบรายการที่ไม่มี recordId:",
             invalidRecord
         );
-
 
         alert(
             "ไม่สามารถสร้างเอกสารได้\n\n" +
             "สาเหตุ: มีรายการตรวจที่ไม่มีรหัส recordId\n\n" +
             "กรุณาล้างรายการที่เลือก แล้วเลือกใหม่"
         );
-
-
         return;
-
     }
-
 
     // ==================================================
     // ELEMENTS
     // ==================================================
+    const generateButton = document.getElementById(
+        "generate-fmop11-button"
+    );
 
-    const generateButton =
-        document.getElementById(
-            "generate-fmop11-button"
-        );
-
-
-    const status =
-        document.getElementById(
-            "fmop11-generation-status"
-        );
-
+    const status = document.getElementById(
+        "fmop11-generation-status"
+    );
 
     // ==================================================
     // DISABLE BUTTON
     // ==================================================
-
     if (generateButton) {
-
-        generateButton.disabled =
-            true;
-
-
-        generateButton.textContent =
-            "กำลังสร้าง...";
-
+        generateButton.disabled = true;
+        generateButton.textContent = "กำลังสร้าง...";
     }
-
-
-    // ==================================================
-    // STATUS
-    // ==================================================
 
     if (status) {
-
-        status.style.display =
-            "block";
-
-
-        status.textContent =
-            "กำลังสร้างเอกสาร FM-OP-11...";
-
+        status.style.display = "block";
+        status.textContent = "กำลังสร้างเอกสาร FM-OP-11...";
     }
 
-
     try {
-
         console.log(
             "กำลังสร้าง FM-OP-11 จาก recordId:",
             window.fmop11SelectedRecords
         );
 
-
         // ==================================================
         // API
         // ==================================================
-        //
-        // สำคัญ:
-        //
-        // ส่งเฉพาะ records
-        //
-        // requesterEmail จะถูกเติมใน api.js
-        // จาก Current User
-        //
-        // Backend จะเป็นผู้ตรวจสอบสิทธิ์
-        // ==================================================
-
-        const data =
-            await apiGenerateFMOP11(
-                window.fmop11SelectedRecords
-            );
-
-
-        console.log(
-            "ผลการสร้าง FM-OP-11:",
-            data
+        const data = await apiGenerateFMOP11(
+            window.fmop11SelectedRecords
         );
 
+        console.log("ผลการสร้าง FM-OP-11:", data);
 
         // ==================================================
         // NO RESPONSE
         // ==================================================
-
-        if (
-            !data
-        ) {
-
+        if (!data) {
             if (status) {
-
-                status.textContent =
-                    "สร้างเอกสารไม่สำเร็จ";
-
+                status.textContent = "สร้างเอกสารไม่สำเร็จ";
             }
-
 
             alert(
                 "สร้างเอกสาร FM-OP-11 ไม่สำเร็จ\n\n" +
                 "สาเหตุ: ไม่ได้รับข้อมูลตอบกลับจาก Backend"
             );
-
-
             return;
-
         }
-
 
         // ==================================================
         // BACKEND FAILURE
         // ==================================================
-
-        if (
-            !data.success
-        ) {
-
+        if (!data.success) {
             if (status) {
-
-                status.textContent =
-                    "สร้างเอกสารไม่สำเร็จ";
-
+                status.textContent = "สร้างเอกสารไม่สำเร็จ";
             }
-
 
             const message =
                 data.message ||
                 "Backend ไม่สามารถสร้างเอกสารได้";
-
 
             console.error(
                 "Backend สร้าง FM-OP-11 ไม่สำเร็จ:",
                 data
             );
 
-
             alert(
                 "สร้างเอกสาร FM-OP-11 ไม่สำเร็จ\n\n" +
-                "สาเหตุ: " +
-                message
+                "สาเหตุ: " + message
             );
-
-
             return;
-
         }
 
-
         // ==================================================
-        // CHECK PDF
+        // VALIDATE PDF RESPONSE
         // ==================================================
-
-        if (
-            !data.pdfBase64
-        ) {
-
-            if (status) {
-
-                status.textContent =
-                    "สร้างเอกสารสำเร็จ แต่ไม่พบไฟล์ PDF";
-
-            }
-
-
-            console.error(
-                "Backend แจ้งว่าสร้างสำเร็จ แต่ไม่มี pdfBase64:",
-                data
-            );
-
-
-            alert(
-                "สร้างเอกสาร FM-OP-11 สำเร็จ\n\n" +
-                "แต่ระบบไม่ได้รับไฟล์ PDF กลับมา\n\n" +
-                "กรุณาตรวจสอบ Backend"
-            );
-
-
-            return;
-
-        }
-
-
-        // ==================================================
-        // DOWNLOAD PDF
-        // ==================================================
-
-        if (status) {
-
-            status.textContent =
-                "กำลังเตรียมไฟล์ PDF สำหรับดาวน์โหลด...";
-
-        }
-
-
+        const pdfBase64 = data.pdfBase64 || "";
+        const pdfFileUrl = data.pdfFileUrl || "";
         const pdfFileName =
             data.pdfFileName ||
             data.fileName ||
             "FM-OP-11.pdf";
 
+        if (!pdfBase64 && !pdfFileUrl) {
+            if (status) {
+                status.textContent =
+                    "สร้างรายงานแล้ว แต่ไม่พบข้อมูล PDF";
+            }
 
-        downloadFMOP11PDF(
-            data.pdfBase64,
-            pdfFileName
-        );
+            console.error(
+                "Backend แจ้งว่าสร้างสำเร็จ " +
+                "แต่ไม่พบ pdfBase64 และ pdfFileUrl:",
+                data
+            );
 
-
-        // ==================================================
-        // SUCCESS
-        // ==================================================
-
-        if (status) {
-
-            status.textContent =
-                "สร้าง FM-OP-11 และดาวน์โหลด PDF สำเร็จ";
-
+            alert(
+                "Backend แจ้งว่าสร้างรายงานสำเร็จ\n\n" +
+                "แต่ไม่ได้ส่งข้อมูล PDF หรือลิงก์ PDF กลับมา\n\n" +
+                "กรุณาตรวจสอบผลการทำงานของ Backend"
+            );
+            return;
         }
 
+        // ==================================================
+        // DOWNLOAD PDF FROM BASE64
+        // ==================================================
+        if (pdfBase64) {
+            if (status) {
+                status.textContent =
+                    "กำลังเตรียมไฟล์ PDF สำหรับดาวน์โหลด...";
+            }
 
+            downloadFMOP11PDF(
+                pdfBase64,
+                pdfFileName
+            );
+
+            if (status) {
+                status.textContent =
+                    "สร้าง FM-OP-11 และดาวน์โหลด PDF สำเร็จ";
+            }
+        }
+
+        // ==================================================
+        // FALLBACK: PDF ALREADY SAVED IN GOOGLE DRIVE
+        // ==================================================
+        else {
+            console.warn(
+                "Backend ไม่ได้ส่ง pdfBase64 " +
+                "จะใช้ pdfFileUrl แทน:",
+                pdfFileUrl
+            );
+
+            if (status) {
+                status.style.display = "block";
+
+                const link = document.createElement("a");
+                link.href = pdfFileUrl;
+                link.target = "_blank";
+                link.rel = "noopener noreferrer";
+                link.textContent = "เปิดไฟล์ PDF ใน Google Drive";
+                link.style.display = "inline-block";
+                link.style.marginTop = "8px";
+
+                status.textContent =
+                    "สร้างรายงานและบันทึก PDF สำเร็จแล้ว ";
+
+                status.appendChild(document.createElement("br"));
+                status.appendChild(link);
+            }
+        }
+
+        // ==================================================
+        // SUCCESS LOG
+        // ==================================================
         console.log(
-            "สร้าง FM-OP-11 และดาวน์โหลด PDF สำเร็จ:",
+            "สร้าง FM-OP-11 สำเร็จ:",
             {
-                documentNo:
-                    data.documentNo,
-
-                fileId:
-                    data.fileId,
-
-                fileUrl:
-                    data.fileUrl,
-
-                fileName:
-                    data.fileName,
-
-                pdfFileName:
-                    data.pdfFileName,
-
-                recordCount:
-                    data.recordCount
+                documentNo: data.documentNo,
+                pdfFileId: data.pdfFileId,
+                pdfFileUrl: data.pdfFileUrl,
+                pdfFileName: data.pdfFileName,
+                fileId: data.fileId,
+                fileUrl: data.fileUrl,
+                fileName: data.fileName,
+                recordCount: data.recordCount,
+                downloadMethod: pdfBase64
+                    ? "Base64"
+                    : "Google Drive URL"
             }
         );
 
+        // ==================================================
+        // SUCCESS MESSAGE
+        // ==================================================
+        const documentInfo = data.documentNo
+            ? "เลขที่เอกสาร: " + data.documentNo + "\n"
+            : "";
 
-        alert(
-            "สร้างเอกสาร FM-OP-11 สำเร็จ\n\n" +
-            (
-                data.documentNo
-                    ? "เลขที่เอกสาร: " +
-                      data.documentNo +
-                      "\n"
-                    : ""
-            ) +
-            (
-                data.recordCount
-                    ? "จำนวนจุดตรวจ: " +
-                      data.recordCount +
-                      " จุด\n"
-                    : ""
-            ) +
-            "\n" +
-            "ระบบดาวน์โหลด PDF ลงเครื่องแล้ว"
-        );
+        const recordInfo = data.recordCount
+            ? "จำนวนจุดตรวจ: " + data.recordCount + " จุด\n"
+            : "";
 
+        if (pdfBase64) {
+            alert(
+                "สร้างเอกสาร FM-OP-11 สำเร็จ\n\n" +
+                documentInfo +
+                recordInfo +
+                "\nระบบเริ่มดาวน์โหลด PDF ลงเครื่องแล้ว"
+            );
+        } else {
+            alert(
+                "สร้างเอกสาร FM-OP-11 สำเร็จ\n\n" +
+                documentInfo +
+                recordInfo +
+                "\nPDF ถูกบันทึกไว้ใน Google Drive แล้ว\n\n" +
+                "กรุณาคลิกลิงก์ " +
+                "\"เปิดไฟล์ PDF ใน Google Drive\" " +
+                "ที่แสดงในหน้าระบบ"
+            );
+        }
 
         // ==================================================
         // CLEAR SELECTION
         // ==================================================
-
         clearFMOP11Selection();
 
-
     } catch (error) {
-
         console.error(
             "สร้าง FM-OP-11 ไม่สำเร็จ:",
             error
         );
 
-
         if (status) {
-
-            status.textContent =
-                "สร้าง FM-OP-11 ไม่สำเร็จ";
-
+            status.textContent = "สร้าง FM-OP-11 ไม่สำเร็จ";
         }
-
 
         alert(
             "สร้างเอกสาร FM-OP-11 ไม่สำเร็จ\n\n" +
             "สาเหตุ: " +
             (
-                error &&
-                error.message
+                error && error.message
                     ? error.message
                     : "ไม่สามารถสร้างหรือดาวน์โหลดไฟล์ PDF ได้"
             ) +
             "\n\nกรุณาตรวจสอบการเชื่อมต่อ แล้วลองใหม่อีกครั้ง"
         );
 
-
     } finally {
-
         // ==================================================
         // RESTORE BUTTON
         // ==================================================
-
         if (generateButton) {
-
             generateButton.disabled =
-                !Array.isArray(
-                    window.fmop11SelectedRecords
-                ) ||
-                window.fmop11SelectedRecords.length ===
-                    0;
+                !Array.isArray(window.fmop11SelectedRecords) ||
+                window.fmop11SelectedRecords.length === 0;
 
-
-            generateButton.textContent =
-                "📄 สร้าง FM-OP-11";
-
+            generateButton.textContent = "📄 สร้าง FM-OP-11";
         }
-
     }
-
 }
-
-
-// ======================================================
-// END FM-OP-11
-// ======================================================
