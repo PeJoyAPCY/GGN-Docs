@@ -112,11 +112,33 @@ function isInspectionListAdmin() {
 
 
 
+
 function canEditInspectionRecord(
     record
 ) {
 
+    // ----------------------------------------
+    // VALIDATE RECORD
+    // ----------------------------------------
+
     if (!record) {
+
+        return false;
+
+    }
+
+
+    // ----------------------------------------
+    // DOCUMENT ALREADY GENERATED
+    // ----------------------------------------
+    // ห้ามแก้ไขรายการที่สร้างเอกสาร ISO แล้ว
+    // ใช้ทั้ง fileId และ fileUrl
+    // มีผลกับ Admin และ User เหมือนกัน
+
+    if (
+        record.fileId ||
+        record.fileUrl
+    ) {
 
         return false;
 
@@ -164,6 +186,7 @@ function canEditInspectionRecord(
     );
 
 }
+
 
 
 
