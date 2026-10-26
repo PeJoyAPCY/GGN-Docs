@@ -1567,56 +1567,91 @@ function downloadFMOP11PDF(
 
 
 
+
 async function generateFMOP11() {
+
     // ==================================================
     // VALIDATE SELECTION
     // ==================================================
+
     if (
-        !Array.isArray(window.fmop11SelectedRecords) ||
+        !Array.isArray(
+            window.fmop11SelectedRecords
+        ) ||
         window.fmop11SelectedRecords.length === 0
     ) {
+
         alert(
             "ไม่สามารถสร้างเอกสารได้\n\n" +
             "สาเหตุ: ยังไม่ได้เลือกรายการตรวจ"
         );
+
         return;
+
     }
+
 
     // ==================================================
     // MAX 14
     // ==================================================
-    if (window.fmop11SelectedRecords.length > 14) {
+
+    if (
+        window.fmop11SelectedRecords.length > 14
+    ) {
+
         alert(
             "ไม่สามารถสร้างเอกสารได้\n\n" +
             "สาเหตุ: เลือกรายการตรวจเกิน 14 จุด"
         );
+
         return;
+
     }
+
 
     // ==================================================
     // CURRENT USER
     // ==================================================
-    const user = getCurrentGGNUser();
 
-    if (!user || !user.email) {
+    const user =
+        getCurrentGGNUser();
+
+
+    if (
+        !user ||
+        !user.email
+    ) {
+
         alert(
             "ไม่สามารถสร้างเอกสารได้\n\n" +
             "สาเหตุ: ไม่พบข้อมูลผู้ใช้งาน\n\n" +
             "กรุณาเข้าสู่ระบบใหม่"
         );
+
         return;
+
     }
+
 
     // ==================================================
     // VALIDATE RECORD IDs
     // ==================================================
-    const invalidRecord = window.fmop11SelectedRecords.find(
-        function (item) {
-            return !item || !item.recordId;
-        }
-    );
+
+    const invalidRecord =
+        window.fmop11SelectedRecords.find(
+            function (item) {
+
+                return (
+                    !item ||
+                    !item.recordId
+                );
+
+            }
+        );
+
 
     if (invalidRecord) {
+
         console.error(
             "พบรายการที่ไม่มี recordId:",
             invalidRecord
@@ -1627,74 +1662,114 @@ async function generateFMOP11() {
             "สาเหตุ: มีรายการตรวจที่ไม่มีรหัส recordId\n\n" +
             "กรุณาล้างรายการที่เลือก แล้วเลือกใหม่"
         );
+
         return;
+
     }
+
 
     // ==================================================
     // ELEMENTS
     // ==================================================
-    const generateButton = document.getElementById(
-        "generate-fmop11-button"
-    );
 
-    const status = document.getElementById(
-        "fmop11-generation-status"
-    );
+    const generateButton =
+        document.getElementById(
+            "generate-fmop11-button"
+        );
+
+    const status =
+        document.getElementById(
+            "fmop11-generation-status"
+        );
+
 
     // ==================================================
     // DISABLE BUTTON
     // ==================================================
+
     if (generateButton) {
+
         generateButton.disabled = true;
-        generateButton.textContent = "กำลังสร้าง...";
+
+        generateButton.textContent =
+            "กำลังสร้าง...";
+
     }
+
+
+    // ==================================================
+    // SHOW LOADING STATUS
+    // ==================================================
 
     if (status) {
+
         status.style.display = "block";
-        status.textContent = "กำลังสร้างเอกสาร FM-OP-11...";
+
+        status.textContent =
+            "กำลังสร้างเอกสาร FM-OP-11...";
+
     }
 
+
     try {
+
         console.log(
             "กำลังสร้าง FM-OP-11 จาก recordId:",
             window.fmop11SelectedRecords
         );
 
+
         // ==================================================
-        // API
+        // CALL EXISTING API
         // ==================================================
-        const data = await apiGenerateFMOP11(
-            window.fmop11SelectedRecords
+        //
+        // ส่งเฉพาะรายการ recordId
+        // api.js เติม requesterEmail ตามระบบเดิม
+        // Backend ตรวจสอบสิทธิ์ตามระบบเดิม
+        // ==================================================
+
+        const data =
+            await apiGenerateFMOP11(
+                window.fmop11SelectedRecords
+            );
+
+
+        console.log(
+            "ผลการสร้าง FM-OP-11:",
+            data
         );
 
-        console.log("ผลการสร้าง FM-OP-11:", data);
 
         // ==================================================
-        // NO RESPONSE
+        // CHECK RESPONSE
         // ==================================================
+
         if (!data) {
-            if (status) {
-                status.textContent = "สร้างเอกสารไม่สำเร็จ";
-            }
 
-            alert(
-                "สร้างเอกสาร FM-OP-11 ไม่สำเร็จ\n\n" +
-                "สาเหตุ: ไม่ได้รับข้อมูลตอบกลับจาก Backend"
+            throw new Error(
+                "ไม่ได้รับข้อมูลตอบกลับจาก Backend"
             );
-            return;
+
         }
+
 
         // ==================================================
         // BACKEND FAILURE
         // ==================================================
+
         if (!data.success) {
-            if (status) {
-                status.textContent = "สร้างเอกสารไม่สำเร็จ";
-            }
 
             const message =
                 data.message ||
                 "Backend ไม่สามารถสร้างเอกสารได้";
+
+            if (status) {
+
+                status.textContent =
+                    "สร้างเอกสารไม่สำเร็จ: " +
+                    message;
+
+            }
 
             console.error(
                 "Backend สร้าง FM-OP-11 ไม่สำเร็จ:",
@@ -1703,154 +1778,412 @@ async function generateFMOP11() {
 
             alert(
                 "สร้างเอกสาร FM-OP-11 ไม่สำเร็จ\n\n" +
-                "สาเหตุ: " + message
+                "สาเหตุ: " +
+                message
             );
+
             return;
+
         }
 
+
         // ==================================================
-        // VALIDATE PDF RESPONSE
+        // GET PDF FILE INFORMATION
         // ==================================================
-        const pdfBase64 = data.pdfBase64 || "";
-        const pdfFileUrl = data.pdfFileUrl || "";
+        //
+        // รองรับผลลัพธ์จาก document.gs:
+        // - pdfFileId
+        // - pdfFileUrl
+        // - pdfFileName
+        //
+        // ไม่บังคับให้ Backend ส่ง pdfBase64
+        // ==================================================
+
         const pdfFileName =
             data.pdfFileName ||
-            data.fileName ||
             "FM-OP-11.pdf";
 
-        if (!pdfBase64 && !pdfFileUrl) {
-            if (status) {
-                status.textContent =
-                    "สร้างรายงานแล้ว แต่ไม่พบข้อมูล PDF";
+        let pdfFileId =
+            String(
+                data.pdfFileId || ""
+            ).trim();
+
+        const pdfFileUrl =
+            String(
+                data.pdfFileUrl || ""
+            ).trim();
+
+
+        // ==================================================
+        // EXTRACT FILE ID FROM PDF URL
+        // ==================================================
+
+        if (
+            !pdfFileId &&
+            pdfFileUrl
+        ) {
+
+            const match =
+                pdfFileUrl.match(
+                    /drive\.google\.com\/file\/d\/([A-Za-z0-9_-]+)/
+                );
+
+            if (match) {
+
+                pdfFileId = match[1];
+
             }
 
+        }
+
+
+        // ==================================================
+        // VALIDATE PDF INFORMATION
+        // ==================================================
+
+        if (
+            !pdfFileId &&
+            !pdfFileUrl
+        ) {
+
             console.error(
-                "Backend แจ้งว่าสร้างสำเร็จ " +
-                "แต่ไม่พบ pdfBase64 และ pdfFileUrl:",
+                "สร้างเอกสารสำเร็จ แต่ไม่พบข้อมูล PDF:",
                 data
             );
 
+            if (status) {
+
+                status.textContent =
+                    "สร้างเอกสารสำเร็จ แต่ไม่พบไฟล์ PDF";
+
+            }
+
             alert(
-                "Backend แจ้งว่าสร้างรายงานสำเร็จ\n\n" +
-                "แต่ไม่ได้ส่งข้อมูล PDF หรือลิงก์ PDF กลับมา\n\n" +
-                "กรุณาตรวจสอบผลการทำงานของ Backend"
+                "สร้างเอกสาร FM-OP-11 สำเร็จ\n\n" +
+                "แต่ Backend ไม่ได้ส่ง pdfFileId หรือ pdfFileUrl กลับมา\n\n" +
+                "กรุณาตรวจสอบผลลัพธ์จาก document.gs"
             );
+
             return;
+
         }
 
+
         // ==================================================
-        // DOWNLOAD PDF FROM BASE64
+        // BUILD PDF URLS
         // ==================================================
-        if (pdfBase64) {
-            if (status) {
-                status.textContent =
-                    "กำลังเตรียมไฟล์ PDF สำหรับดาวน์โหลด...";
+
+        const pdfPreviewUrl =
+            pdfFileId
+                ? "https://drive.google.com/file/d/" +
+                  encodeURIComponent(pdfFileId) +
+                  "/preview"
+                : pdfFileUrl;
+
+        const pdfDownloadUrl =
+            pdfFileId
+                ? "https://drive.google.com/uc?export=download&id=" +
+                  encodeURIComponent(pdfFileId)
+                : pdfFileUrl;
+
+
+        // ==================================================
+        // RENDER PDF PREVIEW
+        // ==================================================
+
+        if (status) {
+
+            // ล้างข้อความหรือ Preview จากรอบก่อน
+            status.replaceChildren();
+
+            status.style.display = "block";
+
+            status.style.boxSizing = "border-box";
+
+            status.style.width = "100%";
+
+
+            // ----------------------------------------------
+            // TITLE
+            // ----------------------------------------------
+
+            const title =
+                document.createElement("h3");
+
+            title.textContent =
+                "สร้างเอกสาร FM-OP-11 สำเร็จ";
+
+            title.style.margin = "0 0 8px";
+
+            status.appendChild(title);
+
+
+            // ----------------------------------------------
+            // DOCUMENT INFORMATION
+            // ----------------------------------------------
+
+            const info =
+                document.createElement("p");
+
+            info.textContent =
+                (data.documentNo
+                    ? "เลขที่เอกสาร: " +
+                      data.documentNo +
+                      " | "
+                    : "") +
+                "ไฟล์: " +
+                pdfFileName +
+                (
+                    data.recordCount
+                        ? " | จำนวนจุดตรวจ: " +
+                          data.recordCount
+                        : ""
+                );
+
+            info.style.margin = "0 0 14px";
+
+            status.appendChild(info);
+
+
+            // ----------------------------------------------
+            // ACTIONS
+            // ----------------------------------------------
+
+            const actions =
+                document.createElement("div");
+
+            actions.style.display = "flex";
+
+            actions.style.flexWrap = "wrap";
+
+            actions.style.gap = "10px";
+
+            actions.style.marginBottom = "14px";
+
+
+            // ----------------------------------------------
+            // OPEN PDF FOR PRINTING
+            // ----------------------------------------------
+
+            const openButton =
+                document.createElement("a");
+
+            openButton.href = pdfPreviewUrl;
+
+            openButton.target = "_blank";
+
+            openButton.rel = "noopener noreferrer";
+
+            openButton.textContent =
+                "เปิด PDF เพื่อพิมพ์";
+
+            openButton.style.display = "inline-block";
+
+            openButton.style.padding = "10px 16px";
+
+            openButton.style.borderRadius = "8px";
+
+            openButton.style.background = "#1769aa";
+
+            openButton.style.color = "#ffffff";
+
+            openButton.style.textDecoration = "none";
+
+            openButton.style.fontWeight = "600";
+
+            actions.appendChild(openButton);
+
+
+            // ----------------------------------------------
+            // DOWNLOAD PDF
+            // ----------------------------------------------
+
+            const downloadButton =
+                document.createElement("a");
+
+            downloadButton.href = pdfDownloadUrl;
+
+            downloadButton.target = "_blank";
+
+            downloadButton.rel = "noopener noreferrer";
+
+            downloadButton.textContent =
+                "ดาวน์โหลด PDF";
+
+            downloadButton.style.display = "inline-block";
+
+            downloadButton.style.padding = "10px 16px";
+
+            downloadButton.style.borderRadius = "8px";
+
+            downloadButton.style.border =
+                "1px solid #b8c7d3";
+
+            downloadButton.style.background = "#ffffff";
+
+            downloadButton.style.color = "#234";
+
+            downloadButton.style.textDecoration = "none";
+
+            downloadButton.style.fontWeight = "600";
+
+            actions.appendChild(downloadButton);
+
+            status.appendChild(actions);
+
+
+            // ----------------------------------------------
+            // PDF VIEWER
+            // ----------------------------------------------
+
+            if (pdfFileId) {
+
+                const viewer =
+                    document.createElement("iframe");
+
+                viewer.src = pdfPreviewUrl;
+
+                viewer.title =
+                    "ตัวอย่างเอกสาร FM-OP-11";
+
+                viewer.loading = "lazy";
+
+                viewer.style.display = "block";
+
+                viewer.style.width = "100%";
+
+                viewer.style.height = "720px";
+
+                viewer.style.maxWidth = "100%";
+
+                viewer.style.border = "1px solid #d6dfe6";
+
+                viewer.style.borderRadius = "8px";
+
+                viewer.style.background = "#ffffff";
+
+                status.appendChild(viewer);
+
+
+                // ------------------------------------------
+                // VIEWER FALLBACK
+                // ------------------------------------------
+
+                const hint =
+                    document.createElement("p");
+
+                hint.textContent =
+                    "หากตัวอย่าง PDF ไม่แสดง ให้กด " +
+                    "“เปิด PDF เพื่อพิมพ์” แล้วสั่งพิมพ์จากหน้าที่เปิดขึ้น";
+
+                hint.style.margin = "10px 0 0";
+
+                hint.style.fontSize = "13px";
+
+                status.appendChild(hint);
+
+            } else {
+
+                // ไม่มี File ID สำหรับฝัง iframe
+                // แต่ยังเปิดไฟล์จาก URL ที่ Backend ส่งมาได้
+
+                const hint =
+                    document.createElement("p");
+
+                hint.textContent =
+                    "ไม่สามารถฝังตัวอย่าง PDF ในหน้านี้ได้ " +
+                    "กรุณากดปุ่มเปิด PDF เพื่อดูและพิมพ์";
+
+                status.appendChild(hint);
+
             }
 
-            downloadFMOP11PDF(
-                pdfBase64,
-                pdfFileName
-            );
-
-            if (status) {
-                status.textContent =
-                    "สร้าง FM-OP-11 และดาวน์โหลด PDF สำเร็จ";
-            }
         }
 
-        // ==================================================
-        // FALLBACK: PDF ALREADY SAVED IN GOOGLE DRIVE
-        // ==================================================
-        else {
-            console.warn(
-                "Backend ไม่ได้ส่ง pdfBase64 " +
-                "จะใช้ pdfFileUrl แทน:",
-                pdfFileUrl
-            );
-
-            if (status) {
-                status.style.display = "block";
-
-                const link = document.createElement("a");
-                link.href = pdfFileUrl;
-                link.target = "_blank";
-                link.rel = "noopener noreferrer";
-                link.textContent = "เปิดไฟล์ PDF ใน Google Drive";
-                link.style.display = "inline-block";
-                link.style.marginTop = "8px";
-
-                status.textContent =
-                    "สร้างรายงานและบันทึก PDF สำเร็จแล้ว ";
-
-                status.appendChild(document.createElement("br"));
-                status.appendChild(link);
-            }
-        }
 
         // ==================================================
-        // SUCCESS LOG
+        // LOG SUCCESS
         // ==================================================
+
         console.log(
             "สร้าง FM-OP-11 สำเร็จ:",
             {
-                documentNo: data.documentNo,
-                pdfFileId: data.pdfFileId,
-                pdfFileUrl: data.pdfFileUrl,
-                pdfFileName: data.pdfFileName,
-                fileId: data.fileId,
-                fileUrl: data.fileUrl,
-                fileName: data.fileName,
-                recordCount: data.recordCount,
-                downloadMethod: pdfBase64
-                    ? "Base64"
-                    : "Google Drive URL"
+                documentNo:
+                    data.documentNo,
+
+                pdfFileId:
+                    data.pdfFileId,
+
+                pdfFileUrl:
+                    data.pdfFileUrl,
+
+                pdfFileName:
+                    pdfFileName,
+
+                recordCount:
+                    data.recordCount,
+
+                spreadsheetFileId:
+                    data.fileId,
+
+                spreadsheetFileUrl:
+                    data.fileUrl
             }
         );
+
 
         // ==================================================
         // SUCCESS MESSAGE
         // ==================================================
-        const documentInfo = data.documentNo
-            ? "เลขที่เอกสาร: " + data.documentNo + "\n"
-            : "";
 
-        const recordInfo = data.recordCount
-            ? "จำนวนจุดตรวจ: " + data.recordCount + " จุด\n"
-            : "";
+        alert(
+            "สร้างเอกสาร FM-OP-11 สำเร็จ\n\n" +
+            (
+                data.documentNo
+                    ? "เลขที่เอกสาร: " +
+                      data.documentNo +
+                      "\n"
+                    : ""
+            ) +
+            (
+                data.recordCount
+                    ? "จำนวนจุดตรวจ: " +
+                      data.recordCount +
+                      " จุด\n"
+                    : ""
+            ) +
+            "\nแสดงตัวอย่าง PDF ในหน้าเว็บแล้ว\n" +
+            "สามารถเปิด PDF เพื่อพิมพ์ หรือดาวน์โหลดได้"
+        );
 
-        if (pdfBase64) {
-            alert(
-                "สร้างเอกสาร FM-OP-11 สำเร็จ\n\n" +
-                documentInfo +
-                recordInfo +
-                "\nระบบเริ่มดาวน์โหลด PDF ลงเครื่องแล้ว"
-            );
-        } else {
-            alert(
-                "สร้างเอกสาร FM-OP-11 สำเร็จ\n\n" +
-                documentInfo +
-                recordInfo +
-                "\nPDF ถูกบันทึกไว้ใน Google Drive แล้ว\n\n" +
-                "กรุณาคลิกลิงก์ " +
-                "\"เปิดไฟล์ PDF ใน Google Drive\" " +
-                "ที่แสดงในหน้าระบบ"
-            );
-        }
 
         // ==================================================
         // CLEAR SELECTION
         // ==================================================
+
         clearFMOP11Selection();
 
+
     } catch (error) {
+
         console.error(
             "สร้าง FM-OP-11 ไม่สำเร็จ:",
             error
         );
 
+
         if (status) {
-            status.textContent = "สร้าง FM-OP-11 ไม่สำเร็จ";
+
+            status.textContent =
+                "สร้าง FM-OP-11 ไม่สำเร็จ: " +
+                (
+                    error && error.message
+                        ? error.message
+                        : "เกิดข้อผิดพลาดที่ไม่ทราบสาเหตุ"
+                );
+
         }
+
 
         alert(
             "สร้างเอกสาร FM-OP-11 ไม่สำเร็จ\n\n" +
@@ -1858,21 +2191,31 @@ async function generateFMOP11() {
             (
                 error && error.message
                     ? error.message
-                    : "ไม่สามารถสร้างหรือดาวน์โหลดไฟล์ PDF ได้"
+                    : "ไม่สามารถสร้างหรือเปิดไฟล์ PDF ได้"
             ) +
             "\n\nกรุณาตรวจสอบการเชื่อมต่อ แล้วลองใหม่อีกครั้ง"
         );
 
+
     } finally {
+
         // ==================================================
         // RESTORE BUTTON
         // ==================================================
+
         if (generateButton) {
+
             generateButton.disabled =
-                !Array.isArray(window.fmop11SelectedRecords) ||
+                !Array.isArray(
+                    window.fmop11SelectedRecords
+                ) ||
                 window.fmop11SelectedRecords.length === 0;
 
-            generateButton.textContent = "📄 สร้าง FM-OP-11";
+            generateButton.textContent =
+                "📄 สร้าง FM-OP-11";
+
         }
+
     }
+
 }
